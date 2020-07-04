@@ -26,7 +26,11 @@ public:
     CClient() = default;
     virtual ~CClient() = default;
 
+    // 暂留 //
     void connectTo(std::string ip, Port port, std::function<void(bool)> callback);
+
+    bool sendMsg(const google::protobuf::Message& message);
+    unsigned int getSocketID();
 
     // ec_net::INetEvent begin
     void onConnectSucceed(const char* strRemoteIp , Port port , SocketId socketId) override;
@@ -35,18 +39,13 @@ public:
     void onParseMessage(const char* msgFullName, const char* pData, size_t size) override;
     // ec_net::INetEvent end
 
-    bool sendMsg(const google::protobuf::Message& message);
-
-    unsigned int getSocketID();
-
-    // lua api begin
+    // lua_api::IClient begin
     void connect(const char* ip, Port port, BuffSize recv, BuffSize send, const char* tag) override;
     void disconnect() override;
     void sendJsonMsg(const char* msgFullName, const char* jsonData) override;
-    // lua api end
+    // lua_api::IClient end
 private:
     unsigned int m_socketID = 0;
-
     char m_msgDataBuff[60 * 1024];
 
     std::unordered_map<uint16_t, ::google::protobuf::Message*> m_msgs;

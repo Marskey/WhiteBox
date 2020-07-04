@@ -9,6 +9,7 @@
 #include "ConfigHelper.h"
 #include "LuaInterface.h"
 #include "LuaScriptSystem.h"
+#include "Session.h"
 
 extern "C" {
 #include "protobuf/protobuflib.h"
@@ -156,7 +157,8 @@ bool CMainWindow::init() {
         return false;
     }
 
-    LuaScriptSystem::singleton().Invoke("_on_proto_reload", &ProtoManager::singleton());
+    LuaScriptSystem::singleton().Invoke("_on_proto_reload"
+                                        , static_cast<lua_api::IProtoManager*>(&ProtoManager::singleton()));
     LOG_INFO("Import proto files completed");
 
     // 填充消息列表
@@ -431,12 +433,11 @@ std::string CMainWindow::highlightJsonData(const QString& jsonData) {
 }
 
 void CMainWindow::onParseMessage(const char* msgFullName, const char* pData, size_t size) {
-    uint16_t nMessageId = 0/*message.getMessageType()*/;
-
     if (ignoreMsgType(msgFullName)) {
         return;
     }
 
+    uint16_t nMessageId = ProtoManager::singleton().getMsgTypeByFullName(msgFullName);
     google::protobuf::Message* pRecvMesage = ProtoManager::singleton().createMessage(msgFullName);
     if (nullptr == pRecvMesage) {
         LOG_INFO("Cannot find code of message({0}:{1})", msgFullName, nMessageId);
@@ -452,17 +453,17 @@ void CMainWindow::onParseMessage(const char* msgFullName, const char* pData, siz
         );
     }
 
-    LuaScriptSystem::singleton().Invoke("_on_message_recev", &m_client, msgFullName, (void*)&pRecvMesage);
+    LuaScriptSystem::singleton().Invoke("_on_message_recv"
+                                        , static_cast<lua_api::IClient*>(&m_client)
+                                        , msgFullName
+                                        , (void*)(&pRecvMesage));
 
     delete pRecvMesage;
-
-    //if (m_loginModule.isReady()) {
-    //    connectStateChange(kConnected);
-    //}
 }
 
 void CMainWindow::onConnectSucceed(const char* strRemoteIp, Port port, SocketId socketId) {
     LOG_INFO("Connect succeed socket id: {0}, ip: {1}:{2} ", socketId, strRemoteIp, port);
+    connectStateChange(kConnected);
     m_client.onConnectSucceed(strRemoteIp, port, socketId);
 }
 
@@ -703,7 +704,7 @@ void CMainWindow::handleConnectBtnClicked() {
     Port port = ipAndPort[1].toUShort();
 
     LuaScriptSystem::singleton().Invoke("_on_connect_btn_click"
-                                        , &m_client
+                                        , static_cast<lua_api::IClient*>(&m_client)
                                         , ip
                                         , port
                                         , ui.cbAccount->currentText().toStdString().c_str());

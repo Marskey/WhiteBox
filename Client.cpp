@@ -12,6 +12,22 @@ void CClient::connectTo(std::string ip, Port port, std::function<void(bool)> cal
     NetManager::singleton().connect(ip.c_str(), port, 131073,131073);
 }
 
+bool CClient::sendMsg(const google::protobuf::Message& message) {
+    // TODO (Marskey): 修改一下
+    if (!message.SerializeToArray(m_msgDataBuff, 60 * 1024)) {
+        return false;
+    }
+
+    return NetManager::singleton().sendProtoMsg(m_socketID
+                                                , message.GetTypeName().c_str()
+                                                , m_msgDataBuff
+                                                , message.ByteSizeLong());
+}
+
+unsigned int CClient::getSocketID() {
+    return m_socketID;
+}
+
 void CClient::disconnect() {
     if (m_socketID != 0) {
         NetManager::singleton().disconnect(m_socketID);
@@ -35,18 +51,6 @@ void CClient::onError(SocketId socketId, ec_net::ENetError error) {
 void CClient::onParseMessage(const char* msgFullName, const char* pData, size_t size) {
 }
 
-bool CClient::sendMsg(const google::protobuf::Message& message) {
-    // TODO (Marskey): 修改一下
-    if (!message.SerializeToArray(m_msgDataBuff, 60 * 1024)) {
-        return false;
-    }
-
-    return NetManager::singleton().sendProtoMsg(m_socketID
-                                                , message.GetTypeName().c_str()
-                                                , m_msgDataBuff
-                                                , message.ByteSizeLong());
-}
-
 void CClient::connect(const char* ip, Port port, BuffSize recv, BuffSize send, const char* tag) {
     NetManager::singleton().connect(ip, port, recv, send);
     m_connectCallback = [this, t = std::string(tag)] (bool bResult) {
@@ -54,24 +58,22 @@ void CClient::connect(const char* ip, Port port, BuffSize recv, BuffSize send, c
             return;
         }
 
-        LuaScriptSystem::singleton().Invoke("_on_client_connected", this, t);
+        LuaScriptSystem::singleton().Invoke("_on_client_connected"
+                                            , static_cast<lua_api::IClient*>(this)
+                                            , t);
     };
 }
 
 void CClient::sendJsonMsg(const char* msgFullName, const char* jsonData) {
     google::protobuf::Message* pMessage = ProtoManager::singleton().createMessage(msgFullName);
     if (pMessage == nullptr) {
-        // TODO (Marskey): 修改一下
+        LOG_WARN("Cannot find the message name:{}", msgFullName);
         return;
     }
 
     google::protobuf::util::JsonStringToMessage(jsonData, pMessage);
 
-    // TODO (Marskey): 错误日志
     if (!sendMsg(*pMessage)) {
+        LOG_WARN("Cannot send the message:{}, json data:{}", msgFullName, jsonData);
     }
-}
-
-unsigned int CClient::getSocketID() {
-    return m_socketID;
 }

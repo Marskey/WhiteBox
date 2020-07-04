@@ -40,12 +40,14 @@ public:
     static std::string highlightJsonData(const QString& jsonData);
 
 public:
+    // ec_net::INetEvent begin
     void onParseMessage(const char* msgFullName, const char* pData, size_t size) override;
     void onConnectSucceed(const char* strRemoteIp
                           , Port port
                           , SocketId socketId) override;
     void onDisconnect(SocketId socketId) override;
     void onError(SocketId socketId, ec_net::ENetError error) override;
+    // ec_net::INetEvent end
 
 public slots:
     void saveCache();

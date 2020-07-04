@@ -35,7 +35,6 @@ public:
     int16_t readInt16(size_t offset) override;
     uint32_t readUint32(size_t offset) override;
     int32_t readInt32(size_t offset) override;
-
     void parseMessage(const char* msgFullName, size_t msgStart, size_t msgSize) override;
 };
 

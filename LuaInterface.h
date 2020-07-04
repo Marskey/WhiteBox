@@ -14,8 +14,7 @@ namespace lua_api
         virtual int16_t readInt16(size_t offset) = 0;
         virtual uint32_t readUint32(size_t offset) = 0;
         virtual int32_t readInt32(size_t offset) = 0;
-
-        virtual void parseMessage(const char* msgFullName, size_t msgStart, BuffSize msgSize) = 0;
+        virtual void parseMessage(const char* msgFullName, size_t msgStart, size_t msgSize) = 0;
     };
 
     class IWirteData

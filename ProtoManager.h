@@ -63,10 +63,10 @@ public:
     std::string getMsgValue(google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd);
     std::string getMsgValue(google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd, int index);
 
-    // lua api begin
+    // lua_api::IProtoManager begin
     void addProtoMessage(int msgType, const char* msgFullName, const char* msgName) override;
     void* getDescriptorPool() override;
-    // lua api end
+    // lua_api::IProtoManager end
 private:
     ImporterInfo m_importerInfo;
     std::unordered_map<uint16_t, MsgInfo> m_mapMsgType2MsgInfo;

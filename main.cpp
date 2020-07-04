@@ -1,13 +1,13 @@
 #include "MainWindow.h"
 #include "ConfigHelper.h"
-#include "windows.h"
+//#include "windows.h"
 
 #include <QtWidgets/QApplication>
 
 int main(int argc, char *argv[])
 {
-    AllocConsole();
-    freopen("CONOUT$", "w+t", stdout);
+    //AllocConsole();
+    //freopen("CONOUT$", "w+t", stdout);
 
     ConfigHelper::singleton().init("config.ini");
 

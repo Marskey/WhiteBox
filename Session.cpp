@@ -173,8 +173,8 @@ void CSession::read() {
             self->m_readData.m_writeSize += size;
 
             while (self->m_readData.m_writeSize > 0) {
-                size_t packetSize = LuaScriptSystem::singleton().Invoke<bool>("_on_read_socket_buffer"
-                                                                              , self->m_readData
+                auto packetSize =  LuaScriptSystem::singleton().Invoke<size_t>("_on_read_socket_buffer"
+                                                                              , static_cast<lua_api::IReadData*>(&self->m_readData)
                                                                               , self->m_readData.m_writeSize);
                 if (0 == packetSize) {
                     break;
@@ -225,7 +225,10 @@ void CSession::write() {
 
 void CSession::sendProtobufMsg(const char* msgFullName, const void* pData, size_t size) {
     CWriteData writeData;
-    LuaScriptSystem::singleton().Invoke("_on_write_socket_buffer", &writeData, msgFullName, (void*)pData, size);
+    LuaScriptSystem::singleton().Invoke("_on_write_socket_buffer"
+                                        , static_cast<lua_api::IWirteData*>(&writeData)
+                                        , msgFullName
+                                        , (void*)pData, size);
 
     if (!writeData.data.empty()) {
         if (writeData.data.size() > m_sendBuffSize) {

@@ -2,14 +2,14 @@
 #include "google/protobuf/dynamic_message.h"
 
 CProtoManager::~CProtoManager() {
-    delete m_importerInfo.pSourceTree;
-    delete m_importerInfo.pCollector;
-    delete m_importerInfo.pImporter;
     delete m_importerInfo.pFactory;
-    m_importerInfo.pSourceTree = nullptr;
-    m_importerInfo.pCollector = nullptr;
-    m_importerInfo.pImporter = nullptr;
     m_importerInfo.pFactory = nullptr;
+    delete m_importerInfo.pSourceTree;
+    m_importerInfo.pSourceTree = nullptr;
+    delete m_importerInfo.pCollector;
+    m_importerInfo.pCollector = nullptr;
+    delete m_importerInfo.pImporter;
+    m_importerInfo.pImporter = nullptr;
 }
 
 bool CProtoManager::init(const std::string& rootPath) {

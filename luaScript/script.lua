@@ -38,7 +38,7 @@ function _on_read_socket_buffer(ReadData, buff_size)
     local msg_head_size = 8
 
     if buff_size < msg_head_size then
-        return 0
+        return
     end
 
     local packet_size = ReadData:readUint16(0)
@@ -69,7 +69,7 @@ function _on_write_socket_buffer(SendData, msg_full_name, protobuf_data, protobu
     SendData:writeBinary(protobuf_data, protobuf_size)
 end
 
-function _on_message_recev(Client, msg_full_name, protobuf_msg)
+function _on_message_recv(Client, msg_full_name, protobuf_msg)
     if msg_full_name == "ProtoMsg.MSG_LS2CL_LOGIN_RSP" then
         local json_data = protobuf.message_jsonencode(protobuf_msg)
         local msg_rsp = json.decode(json_data)
