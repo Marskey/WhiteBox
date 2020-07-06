@@ -1,0 +1,157 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="LineEdit.cpp">
+      <Filter>Widget</Filter>
+    </ClCompile>
+    <ClCompile Include="MsgEditorDialog.cpp">
+      <Filter>Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="MsgIgnoreDialog.cpp">
+      <Filter>Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="MsgDetailDialog.cpp">
+      <Filter>Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="ProtoManager.cpp">
+      <Filter>Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="NetManager.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Session.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWindow.cpp">
+      <Filter>Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="ip4validator.cpp">
+      <Filter>Widget</Filter>
+    </ClCompile>
+    <ClCompile Include="protobuf\protobuf.cpp">
+      <Filter>Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="protobuf\protobuflib.c">
+      <Filter>Protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="Client.cpp">
+      <Filter>Network</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingDialog.cpp">
+      <Filter>Dialog</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigHelper.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ClientEmulator.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="LineEdit.h">
+      <Filter>Widget</Filter>
+    </QtMoc>
+    <QtMoc Include="MsgEditorDialog.h">
+      <Filter>Dialog</Filter>
+    </QtMoc>
+    <QtMoc Include="MsgIgnoreDialog.h">
+      <Filter>Dialog</Filter>
+    </QtMoc>
+    <QtMoc Include="MsgDetailDialog.h">
+      <Filter>Dialog</Filter>
+    </QtMoc>
+    <QtMoc Include="MainWindow.h">
+      <Filter>Dialog</Filter>
+    </QtMoc>
+    <QtMoc Include="SettingDialog.h">
+      <Filter>Dialog</Filter>
+    </QtMoc>
+    <QtMoc Include="ConfigHelper.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="ClientEmulator.qrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="MessageEditor.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="ClientEmulator.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="MessageIgnore.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="MessageDetail.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+    <QtUic Include="Setting.ui">
+      <Filter>Form Files</Filter>
+    </QtUic>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Form Files">
+      <UniqueIdentifier>{99349809-55BA-4b9d-BF79-8FDBB0286EB3}</UniqueIdentifier>
+      <Extensions>ui</Extensions>
+      <ParseFiles>true</ParseFiles>
+    </Filter>
+    <Filter Include="Toolkit">
+      <UniqueIdentifier>{43f825ad-5d66-42f3-90f8-49a6d3fded8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Widget">
+      <UniqueIdentifier>{eeab453d-b521-4b32-bb3b-11d04f9179ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dialog">
+      <UniqueIdentifier>{870ba0d5-3b2a-4794-b8df-f7da9bcc5447}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Network">
+      <UniqueIdentifier>{1f71c8eb-4a33-42df-a57e-c6ab55260b99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Protobuf">
+      <UniqueIdentifier>{91d17bb2-e41f-433b-bb0b-1e43111d34f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lua">
+      <UniqueIdentifier>{95372196-b99d-417c-b75d-1cd88a9a8237}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Log">
+      <UniqueIdentifier>{fe5d998b-025f-4fb5-a256-160c5ebbf974}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ProtoManager.h">
+      <Filter>Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="NetManager.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Session.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="INetEvent.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="ip4validator.h">
+      <Filter>Widget</Filter>
+    </ClInclude>
+    <ClInclude Include="toolkit\Singleton.h">
+      <Filter>Toolkit</Filter>
+    </ClInclude>
+    <ClInclude Include="protobuf\protobuf.h">
+      <Filter>Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="protobuf\protobuflib.h">
+      <Filter>Protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaScriptSystem.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="LogHelper.h">
+      <Filter>Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Client.h">
+      <Filter>Network</Filter>
+    </ClInclude>
+    <ClInclude Include="LuaInterface.h">
+      <Filter>Lua</Filter>
+    </ClInclude>
+    <ClInclude Include="define.h" />
+  </ItemGroup>
+</Project>
