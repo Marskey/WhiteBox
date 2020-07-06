@@ -9,6 +9,13 @@ class CSession;
 typedef std::shared_ptr<CSession> SessionPtr;
 class CNetManager
 {
+struct MessageDataInfo
+{
+    const char* fullName = "";
+    const char* pData = nullptr;
+    size_t size = 0;
+};
+
 public:
     CNetManager();
     virtual ~CNetManager();
@@ -31,7 +38,8 @@ public:
     void handleDisconnect(SocketId socketId);
     void handleError(SocketId socketId, ec_net::ENetError error);
 
-    void handleParseMessage(const char* fullName, const char* pData, size_t size);
+    void handleRecvMessage(const char* fullName, const char* pData, size_t size);
+    void doParseMessage();
 
 private:
     SocketId genSocketId();
@@ -43,6 +51,9 @@ private:
     // 从0 开始自增
     SocketId m_incrediId = 0;
     std::unordered_map<SocketId, SessionPtr> m_mapSessions;
+
+    // 待处理的消息数据信息
+    MessageDataInfo m_messageDataRecv;
 };
 
 typedef CSingleton<CNetManager> NetManager;

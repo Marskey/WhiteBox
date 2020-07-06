@@ -8,7 +8,7 @@
 
 class CSession : public std::enable_shared_from_this<CSession> 
 {
-class CWriteData final : public lua_api::IWirteData
+class CWriteData final : public lua_api::IWriteData
 {
 public:
     std::vector<char> data;
@@ -63,7 +63,6 @@ private:
     SocketId m_id = 0;
     asio::ip::tcp::socket m_socket;
     std::deque<CWriteData> m_sendQueue;
-
     CReadData m_readData;
 
     size_t m_sendBuffSize = 0;

@@ -78,7 +78,7 @@ int32_t CSession::CReadData::readInt32(size_t offset) {
 }
 
 void CSession::CReadData::parseMessage(const char* msgFullName, size_t msgStart, size_t msgSize) {
-    NetManager::singleton().handleParseMessage(msgFullName, m_pReadData + msgStart, msgSize);
+    NetManager::singleton().handleRecvMessage(msgFullName, m_pReadData + msgStart, msgSize);
 }
 
 CSession::CSession(SocketId id, asio::ip::tcp::socket& s, size_t recevBuffSize, size_t sendBuffSize)
@@ -180,9 +180,12 @@ void CSession::read() {
                     break;
                 }
 
+                NetManager::singleton().doParseMessage();
+
                 memmove(self->m_readData.m_pReadData
                         , self->m_readData.m_pReadData + packetSize
                         , self->m_readData.m_dataSize - packetSize);
+
                 self->m_readData.m_writeSize -= packetSize;
             }
 
@@ -226,7 +229,7 @@ void CSession::write() {
 void CSession::sendProtobufMsg(const char* msgFullName, const void* pData, size_t size) {
     CWriteData writeData;
     LuaScriptSystem::singleton().Invoke("_on_write_socket_buffer"
-                                        , static_cast<lua_api::IWirteData*>(&writeData)
+                                        , static_cast<lua_api::IWriteData*>(&writeData)
                                         , msgFullName
                                         , (void*)pData, size);
 

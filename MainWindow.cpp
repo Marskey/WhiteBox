@@ -1029,14 +1029,14 @@ void CMainWindow::luaRegisterCppClass() {
         .endClass();
 
     luabridge::getGlobalNamespace(pLuaState)
-        .beginClass<IWirteData>("IWriteData")
-        .addFunction("writeUint8", &IWirteData::writeUint8)
-        .addFunction("writeUint8", &IWirteData::writeInt8)
-        .addFunction("writeUint16", &IWirteData::writeUint16)
-        .addFunction("writeInt16", &IWirteData::writeInt16)
-        .addFunction("writeUint32", &IWirteData::writeUint32)
-        .addFunction("writeInt32", &IWirteData::writeInt32)
-        .addFunction("writeBinary", &IWirteData::writeBinary)
+        .beginClass<IWriteData>("IWriteData")
+        .addFunction("writeUint8", &IWriteData::writeUint8)
+        .addFunction("writeUint8", &IWriteData::writeInt8)
+        .addFunction("writeUint16", &IWriteData::writeUint16)
+        .addFunction("writeInt16", &IWriteData::writeInt16)
+        .addFunction("writeUint32", &IWriteData::writeUint32)
+        .addFunction("writeInt32", &IWriteData::writeInt32)
+        .addFunction("writeBinary", &IWriteData::writeBinary)
         .endClass();
 
     luabridge::getGlobalNamespace(pLuaState)

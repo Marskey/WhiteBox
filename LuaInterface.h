@@ -17,10 +17,10 @@ namespace lua_api
         virtual void parseMessage(const char* msgFullName, size_t msgStart, size_t msgSize) = 0;
     };
 
-    class IWirteData
+    class IWriteData
     {
     public:
-        virtual ~IWirteData() = default;
+        virtual ~IWriteData() = default;
         virtual void writeUint8(uint8_t value) = 0;
         virtual void writeInt8(int8_t value) = 0;
         virtual void writeUint16(uint16_t value) = 0;

@@ -117,9 +117,15 @@ void CNetManager::handleError(SocketId socketId, ec_net::ENetError error) {
     }
 }
 
-void CNetManager::handleParseMessage(const char* fullName, const char* pData, size_t size) {
+void CNetManager::handleRecvMessage(const char* fullName, const char* pData, size_t size) {
+    m_messageDataRecv.fullName = fullName;
+    m_messageDataRecv.pData = pData; 
+    m_messageDataRecv.size = size;
+}
+
+void CNetManager::doParseMessage() {
     if (m_pNetEvent) {
-        m_pNetEvent->onParseMessage(fullName, pData, size);
+        m_pNetEvent->onParseMessage(m_messageDataRecv.fullName, m_messageDataRecv.pData, m_messageDataRecv.size);
     }
 }
 

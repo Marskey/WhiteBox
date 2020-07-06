@@ -71,7 +71,7 @@
       <AdditionalIncludeDirectories>$(Qt_INCLUDEPATH_);$(ProjectDir)/;E:\MyProjects\ALittle\LuaJIT-2-1-0-beta3\src;$(ProjectDir)/protobuf/include;.\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <PreprocessorDefinitions>$(Qt_DEFINES_);ASIO_STANDALONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>$(Qt_DEFINES_);ASIO_STANDALONE;_WIN32_WINNT=0x0601;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
