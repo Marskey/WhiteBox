@@ -4,7 +4,7 @@
 #include "LogHelper.h"
 
 #include "google/protobuf/compiler/importer.h"
-#include "toolkit/Singleton.h"
+#include "Singleton.h"
 
 class CProtoManager : public lua_api::IProtoManager
 {
@@ -14,7 +14,7 @@ class CProtoManager : public lua_api::IProtoManager
         void AddError(const std::string& filename, int line, int column,
                       const std::string& message) override {
 
-            LogHelper::singleton().logError("Error: import {} failed, line: {}, col: {}. {}", filename, line, column, message);
+            LogHelper::instance().logError("Error: import {} failed, line: {}, col: {}. {}", filename, line, column, message);
         }
     };
 
@@ -29,12 +29,14 @@ class CProtoManager : public lua_api::IProtoManager
 public:
     struct MsgInfo
     {
+        int32_t msgType;
         std::string msgFullName;
         std::string msgName;
 
         friend bool operator==(const MsgInfo& l, const MsgInfo& r) {
             if (l.msgFullName == r.msgFullName
-                && l.msgName == r.msgName) {
+                && l.msgName == r.msgName
+                && l.msgType == r.msgType) {
                 return true;
             }
 
@@ -43,7 +45,8 @@ public:
     };
 
 public:
-    CProtoManager() = default;
+    //CProtoManager() = default;
+    CProtoManager();
     ~CProtoManager();
 
     bool init(const std::string& rootPath);
@@ -58,7 +61,7 @@ public:
 
     uint16_t getMsgTypeByFullName(const std::string& strName);
 
-    MsgInfo getMsgInfoByMsgType(uint16_t msgType);
+    const MsgInfo* getMsgInfoByMsgType(uint16_t msgType);
 
     std::string getMsgValue(google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd);
     std::string getMsgValue(google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd, int index);
@@ -69,7 +72,7 @@ public:
     // lua_api::IProtoManager end
 private:
     ImporterInfo m_importerInfo;
-    std::unordered_map<uint16_t, MsgInfo> m_mapMsgType2MsgInfo;
+    std::unordered_map<std::string, MsgInfo> m_mapMsgFullName2MsgInfo;
 };
 
 typedef CSingleton<CProtoManager> ProtoManager;

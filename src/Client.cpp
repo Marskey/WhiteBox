@@ -20,7 +20,7 @@ CClient::~CClient() {
 void CClient::connectTo(std::string ip, Port port, std::function<void(bool)> callback) {
     m_connectCallback = callback;
 
-    NetManager::singleton().connect(ip.c_str(), port, 131073,131073);
+    NetManager::instance().connect(ip.c_str(), port, 131073,131073);
 }
 
 bool CClient::sendMsg(const google::protobuf::Message& message) {
@@ -33,7 +33,7 @@ bool CClient::sendMsg(const google::protobuf::Message& message) {
         return false;
     }
 
-    return NetManager::singleton().sendProtoMsg(m_socketID
+    return NetManager::instance().sendProtoMsg(m_socketID
                                                 , message.GetTypeName().c_str()
                                                 , m_sendMsgDataBuf.data()
                                                 , message.ByteSizeLong());
@@ -45,7 +45,7 @@ unsigned int CClient::getSocketID() {
 
 void CClient::disconnect() {
     if (m_socketID != 0) {
-        NetManager::singleton().disconnect(m_socketID);
+        NetManager::instance().disconnect(m_socketID);
         m_socketID = 0;
     }
 }
@@ -67,20 +67,20 @@ void CClient::onParseMessage(const char* msgFullName, const char* pData, size_t 
 }
 
 void CClient::connect(const char* ip, Port port, BuffSize recv, BuffSize send, const char* tag) {
-    NetManager::singleton().connect(ip, port, recv, send);
+    NetManager::instance().connect(ip, port, recv, send);
     m_connectCallback = [this, t = std::string(tag)] (bool bResult) {
         if (!bResult) {
             return;
         }
 
-        LuaScriptSystem::singleton().Invoke("__APP_on_client_connected"
+        LuaScriptSystem::instance().Invoke("__APP_on_client_connected"
                                             , static_cast<lua_api::IClient*>(this)
                                             , t);
     };
 }
 
 void CClient::sendJsonMsg(const char* msgFullName, const char* jsonData) {
-    google::protobuf::Message* pMessage = ProtoManager::singleton().createMessage(msgFullName);
+    google::protobuf::Message* pMessage = ProtoManager::instance().createMessage(msgFullName);
     if (pMessage == nullptr) {
         LOG_WARN("Cannot find the message name:{}", msgFullName);
         return;

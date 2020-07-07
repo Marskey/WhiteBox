@@ -49,10 +49,10 @@ end
 
 -- __APP_on_read_socket_buffer
 -- 每当客户端接收到网络数据包后被调用, 需要在该函数中对数据块进行拆包操作（解决粘包问题）
--- @param ReadData Cpp IRead类指针 网络数据包块，注册函数看文本最后
+-- @param ISocketReader Cpp IRead类指针 网络数据包块，注册函数看文本最后
 -- @param buff_size 网络数据包块的大小
 -- @returns packet_size 返回拆包后一个包的大小，如果返回0则会继续等待数据包到来后被调用
-function __APP_on_read_socket_buffer(ReadData, buff_size)
+function __APP_on_read_socket_buffer(ISocketReader, buff_size)
     -- 以下是范例
 
     if buff_size < msg_head_size then
@@ -68,19 +68,19 @@ function __APP_on_read_socket_buffer(ReadData, buff_size)
     -- }
     -- 可知包头大小是6
 
-    local packet_size = ReadData:readUint16(0)
+    local packet_size = ISocketReader:readUint16(0)
     if packet_size <= 0 then
         return 0
     end
 
-    local msg_type = ReadData:readUint16(2)
+    local msg_type = ISocketReader:readUint16(2)
     if msg_type == 0 then
         return 0
     end
 
-    local flag = ReadData:readUint8(4)
+    local flag = ISocketReader:readUint8(4)
 
-    local opt = ReadData:readUint8(5)
+    local opt = ISocketReader:readUint8(5)
 
     local msg_full_name = get_full_name_by_type[msg_type]
     local msg_size = packet_size - msg_head_size
@@ -88,36 +88,36 @@ function __APP_on_read_socket_buffer(ReadData, buff_size)
     -- 用bindMessage来告诉应用程序需要解析的消息结构，因为消息数据在包头之后
     -- ，所以第二个参数传入的是偏移一个包头大小的字节数
 
-    ReadData:bindMessage(msg_full_name, 0 + msg_head_size, msg_size)
+    ISocketReader:bindMessage(msg_full_name, 0 + msg_head_size, msg_size)
     return packet_size
 end
 
 -- __APP_on_write_socket_buffer
 -- 每当客户端发送数据包前被调用，需要在此实现对数据包头的添加
--- @param SendData Cpp ISendData类指针 待发送的网络数据包块，注册函数看文本最后
+-- @param ISocketReader Cpp ISendData类指针 待发送的网络数据包块，注册函数看文本最后
 -- @param msg_full_name 待发送的protobuf message的全名（package name.message）
 -- @param protobuf_data protobuf message cpp数据地址指针
 -- @param protobuf_size protobuf message 数据大小
-function __APP_on_write_socket_buffer(SendData, msg_full_name, protobuf_data, protobuf_size)
+function __APP_on_write_socket_buffer(ISocketReader, msg_full_name, protobuf_data, protobuf_size)
     -- 以下是范例
     -- 此范例展示了如何向socket缓冲区写入包数据
     local msg_type = get_type_by_full_name[msg_full_name]
     if msg_type == nil then
         return
     end
-    SendData:writeUint16(protobuf_size + msg_head_size)
-    SendData:writeUint16(msg_type)
-    SendData:writeUint8(0)
-    SendData:writeUint8(1)
-    SendData:writeBinary(protobuf_data, protobuf_size)
+    ISocketReader:writeUint16(protobuf_size + msg_head_size)
+    ISocketReader:writeUint16(msg_type)
+    ISocketReader:writeUint8(0)
+    ISocketReader:writeUint8(1)
+    ISocketReader:writeBinary(protobuf_data, protobuf_size)
 end
 
 -- __APP_on_message_recv
 -- protobuf message 数据解析完成后调用
--- @param Client Cpp IClient类指针 用来连接，断开，发送数据等，注册函数看文本最后
+-- @param IClient Cpp IClient类指针 用来连接，断开，发送数据等，注册函数看文本最后
 -- @param msg_full_name 待发送的protobuf message的全名（package name.message）
 -- @param protobuf_msg protobuf message 数据地址指针，不可直接操作，需要配合protobuf库
-function __APP_on_message_recv(Client, msg_full_name, protobuf_msg)
+function __APP_on_message_recv(IClient, msg_full_name, protobuf_msg)
     -- 以下是范例
     -- 此范例展示了如何利用protobuf库来把cpp的protobuf message类指针转换成JSON格式
     -- 再通过json.lua转换成lua的table类型来使用，从而利用回包数据内容
@@ -127,11 +127,11 @@ function __APP_on_message_recv(Client, msg_full_name, protobuf_msg)
         local json_data = protobuf.message_jsonencode(protobuf_msg)
         local msg_rsp = json.decode(json_data)
 
-        Client:disconnect()
+        IClient:disconnect()
         if msg_rsp.ret_code == "eMEC_SUCCESS" then
             g_reserve_data.player_id = msg_rsp.player_id
             g_reserve_data.login_session = msg_rsp.login_session
-            Client:connect(msg_rsp.ip, msg_rsp.port, 131073, 131073, "GS")
+            IClient:connect(msg_rsp.ip, msg_rsp.port, 131073, 131073, "GS")
         end
         return
 
@@ -142,60 +142,60 @@ function __APP_on_message_recv(Client, msg_full_name, protobuf_msg)
 
     -- 如果回包不是成功则断开连接
         if msg_rsp.ret_code ~= "eMEC_SUCCESS" then
-            Client:disconnect()
+            IClient:disconnect()
         end
         return
 
     -- 发送心跳包
     elseif msg_full_name == "ProtoMsg.MSG_CLIENT_KEEP_LIVE_REQ" then
-        Client:sendJsonMsg("ProtoMsg.MSG_CLIENT_KEEP_LIVE_RSP", "{}")
+        IClient:sendJsonMsg("ProtoMsg.MSG_CLIENT_KEEP_LIVE_RSP", "{}")
         return
     end
 end
 
 -- __APP_on_connect_btn_click
 -- 当程序界面上的连接按钮被点击后调用，在此开始登入流程等操作
--- @param Client Cpp IClient类指针 用来连接，断开，发送数据等，注册函数看文本最后
+-- @param IClient Cpp IClient类指针 用来连接，断开，发送数据等，注册函数看文本最后
 -- @param ip 界面上填写的ip地址
 -- @param port 界面上填写的端口号
 -- @param account 界面上填写的账户ID
-function __APP_on_connect_btn_click(Client, ip, port, account)
+function __APP_on_connect_btn_click(IClient, ip, port, account)
     -- 以下是范例
     g_reserve_data.account = account
     -- 连接login服务器
-    Client:connect(ip, port, 131073, 131073, "LS")
+    IClient:connect(ip, port, 131073, 131073, "LS")
 end
 
 -- __APP_on_client_connected
 -- 当socket链路连接成功后被调用
--- @param Client Cpp IClient类指针 用来连接，断开，发送数据等，注册函数看文本最后
+-- @param IClient Cpp IClient类指针 用来连接，断开，发送数据等，注册函数看文本最后
 -- @param tag IClient 的connect函数中传入的自定义tag
-function __APP_on_client_connected(Client, tag)
+function __APP_on_client_connected(IClient, tag)
     -- 以下是范例
     -- 如果连接的是tag==“LS”的login服务器
     if tag == "LS" then
         local register_req = {}
         register_req.info = {}
         register_req.info.server_type = 1
-        Client:sendJsonMsg("ProtoMsg.MSG_SERVER_REGIST_REQ", json.encode(register_req))
+        IClient:sendJsonMsg("ProtoMsg.MSG_SERVER_REGIST_REQ", json.encode(register_req))
 
         local login_req = {}
         login_req.player_id = 0
         login_req.account = g_reserve_data.account
-        Client:sendJsonMsg("ProtoMsg.MSG_CL2LS_LOGIN_REQ", json.encode(login_req))
+        IClient:sendJsonMsg("ProtoMsg.MSG_CL2LS_LOGIN_REQ", json.encode(login_req))
 
     -- 如果连接的是tag==“GS”的game服务器
     elseif tag == "GS" then
         local register_req = {}
         register_req.info = {}
         register_req.info.server_type = 1
-        Client:sendJsonMsg("ProtoMsg.MSG_SERVER_REGIST_REQ", json.encode(register_req))
+        IClient:sendJsonMsg("ProtoMsg.MSG_SERVER_REGIST_REQ", json.encode(register_req))
 
         local login_req = {}
         login_req.player_id = g_reserve_data.player_id
         login_req.account = g_reserve_data.account
         login_req.login_session = g_reserve_data.login_session
-        Client:sendJsonMsg("ProtoMsg.MSG_CL2GS_LOGIN_REQ", json.encode(login_req))
+        IClient:sendJsonMsg("ProtoMsg.MSG_CL2GS_LOGIN_REQ", json.encode(login_req))
     else
         --错误显示
     end
@@ -207,7 +207,7 @@ end
 -- class ISocketReader
 -- {
 -- public:
---     virtual ~IReadData() = default;
+--     virtual ~ISocketReader() = default;
 --     /**
 --      * 这个函数用来从socket传冲区中读取uint8类型的数据
 --      * @param offset 指定偏移的字节数. 范围必须满足 0 <= offset <= buf.size - 1.
@@ -257,7 +257,7 @@ end
 -- class ISocketWriter
 -- {
 -- public:
---     virtual ~IWriteData() = default;
+--     virtual ~ISocketWriter() = default;
 --     /**
 --      * 这个函数用来写入uint8类型的数据到socket缓存区
 --      * @param offset 指定偏移字节数来写入
@@ -303,7 +303,7 @@ end
 --     virtual ~IProtoManager() = default;
 --     /**
 --      * 这个函数用来添加protobuf消息到应用程序左侧的消息协议列表
---      * @param msgType 消息协议类型（ID）
+--      * @param msgType 消息协议类型（ID）如果没有可填0
 --      * @param msgFullName protobuf message的全名
 --      * @param msgName protobuf message的名字
 --      */
@@ -327,6 +327,7 @@ end
 --      * @param port 远端的端口号.
 --      * @param recv socket 接收缓冲区的最大大小
 --      * @param send socket 发送缓冲区的最大大小
+--      * @param tag 这个会原封不动的传递给 __APP_on_message_recv 函数
 --      */
 --     virtual void connect(const char* ip, Port port, BuffSize recv, BuffSize send, const char* tag) = 0;
 --     /**

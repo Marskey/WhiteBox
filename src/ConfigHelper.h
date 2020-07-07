@@ -1,8 +1,7 @@
 #pragma once
 
-#include "toolkit/Singleton.h"
+#include "Singleton.h"
 #include <QSettings>
-#include <unordered_set>
 #include <google/protobuf/util/json_util.h>
 
 class QCheckBox;

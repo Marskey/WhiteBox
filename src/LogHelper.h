@@ -1,6 +1,6 @@
 #pragma once
 
-#include "toolkit/Singleton.h"
+#include "Singleton.h"
 #include "fmt/format.h"
 
 class CLogPrinter
@@ -43,7 +43,7 @@ void CLogHelper::logDebug(const char* text, Args&&... args) {
     if (m_pPrinter) {
         m_pPrinter->onPrintInfo(message);
     } else {
-        printf(message.c_str());
+        printf("%s\n", message.c_str());
     }
 }
 
@@ -53,7 +53,7 @@ void CLogHelper::logInfo(const char* text, Args&&... args) {
     if (m_pPrinter) {
         m_pPrinter->onPrintInfo(message);
     } else {
-        printf(message.c_str());
+        printf("%s\n", message.c_str());
     }
 }
 
@@ -63,7 +63,7 @@ void CLogHelper::logWarning(const char* text, Args&&... args) {
     if (m_pPrinter) {
         m_pPrinter->onPrintWarning(message);
     } else {
-        printf(message.c_str());
+        printf("%s\n", message.c_str());
     }
 }
 
@@ -73,24 +73,24 @@ void CLogHelper::logError(const char* text, Args&&... args) {
     if (m_pPrinter) {
         m_pPrinter->onPrintError(message);
     } else {
-        printf(message.c_str());
+        printf("%s\n", message.c_str());
     }
 }
 
 #define LOG_DEG(formatStr, ...) do {\
-    LogHelper::singleton().logDebug(formatStr, __VA_ARGS__); \
+    LogHelper::instance().logDebug(formatStr, __VA_ARGS__); \
 } while (0)
 
 #define LOG_INFO(formatStr, ...) do {\
-    LogHelper::singleton().logInfo(formatStr, __VA_ARGS__); \
+    LogHelper::instance().logInfo(formatStr, __VA_ARGS__); \
 } while (0)
 
 #define LOG_WARN(formatStr, ...) do {\
-    LogHelper::singleton().logWarning(formatStr, __VA_ARGS__); \
+    LogHelper::instance().logWarning(formatStr, __VA_ARGS__); \
 } while (0)
 
 #define LOG_ERR(formatStr, ...) do {\
-    LogHelper::singleton().logError(formatStr, __VA_ARGS__); \
+    LogHelper::instance().logError(formatStr, __VA_ARGS__); \
 } while (0)
 
 typedef CSingleton<CLogHelper> LogHelper;

@@ -41,10 +41,10 @@ CMainWindow::CMainWindow(QWidget* parent)
     setWindowTitle(WINDOWS_TITLE);
 
     // 恢复上次的布局大小
-    restoreGeometry(ConfigHelper::singleton().getMainWindowGeometry());
-    restoreState(ConfigHelper::singleton().getMainWindowState());
-    ui.splitterH->restoreState(ConfigHelper::singleton().getSplitterH());
-    ui.splitterV->restoreState(ConfigHelper::singleton().getSplitterV());
+    restoreGeometry(ConfigHelper::instance().getMainWindowGeometry());
+    restoreState(ConfigHelper::instance().getMainWindowState());
+    ui.splitterH->restoreState(ConfigHelper::instance().getSplitterH());
+    ui.splitterV->restoreState(ConfigHelper::instance().getSplitterV());
 
     {
         auto* pLineEdit = new CLineEdit(ui.cbAccount);
@@ -54,7 +54,7 @@ CMainWindow::CMainWindow(QWidget* parent)
     ui.cbAccount->view()->installEventFilter(m_cbKeyPressFilter);
 
     // 读取用户名
-    ConfigHelper::singleton().restoreWidgetComboxState("Account", *ui.cbAccount);
+    ConfigHelper::instance().restoreWidgetComboxState("Account", *ui.cbAccount);
 
     {
         auto* pLineEdit = new CLineEdit(ui.cbIp);
@@ -66,15 +66,18 @@ CMainWindow::CMainWindow(QWidget* parent)
     ui.cbIp->view()->installEventFilter(m_cbKeyPressFilter);
 
     // 读取ip端口
-    ConfigHelper::singleton().restoreWidgetComboxState("Ip_Port", *ui.cbIp);
+    ConfigHelper::instance().restoreWidgetComboxState("Ip_Port", *ui.cbIp);
 
     // 读取是否自动显示最新
-    ConfigHelper::singleton().restoreWidgetCheckboxState("AutoShowDetail", *ui.checkIsAutoDetail);
+    ConfigHelper::instance().restoreWidgetCheckboxState("AutoShowDetail", *ui.checkIsAutoDetail);
 
     ui.listMessage->installEventFilter(m_listMessageKeyFilter);
     ui.listRecentMessage->installEventFilter(m_listMessageKeyFilter);
 
-    ui.editSearchDetail->setStyleSheet(ConfigHelper::singleton().getStyleSheetLineEditNormal());
+    ui.editSearchDetail->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditNormal());
+
+    // 给log窗口添加右键菜单
+    ui.listLogs->setContextMenuPolicy(Qt::CustomContextMenu);
 
     ui.btnSend->setDisabled(true);
 
@@ -87,6 +90,7 @@ CMainWindow::CMainWindow(QWidget* parent)
     QObject::connect(ui.listLogs, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this, SLOT(handleListLogItemCurrentItemChanged(QListWidgetItem*, QListWidgetItem*)));
     QObject::connect(ui.listLogs, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(handleListLogItemClicked(QListWidgetItem*)));
     QObject::connect(ui.listLogs->model(), SIGNAL(rowsInserted(const QModelIndex&, int, int)), this, SLOT(handleLogInfoAdded(const QModelIndex&, int, int)));
+    QObject::connect(ui.listLogs, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(handleListLogCustomContextMenuRequested(const QPoint&)));
 
     QObject::connect(ui.editSearch, SIGNAL(textChanged(const QString&)), this, SLOT(handleFilterTextChanged(const QString&)));
 
@@ -121,12 +125,12 @@ CMainWindow::~CMainWindow() {
 }
 
 bool CMainWindow::init() {
-    if (ConfigHelper::singleton().isFirstCreateFile()) {
+    if (ConfigHelper::instance().isFirstCreateFile()) {
         auto* pDlg = new CSettingDialog(this);
         pDlg->init();
         int ret = pDlg->exec();
         if (ret == QDialog::Rejected) {
-            ConfigHelper::singleton().deleteConfigFile();
+            ConfigHelper::instance().deleteConfigFile();
             exit(0);
         }
         delete pDlg;
@@ -134,21 +138,21 @@ bool CMainWindow::init() {
 
     // 初始化日志服务
     m_pPrinter = new CECPrinter(ui.listLogs);
-    LogHelper::singleton().setPrinter(m_pPrinter);
+    LogHelper::instance().setPrinter(m_pPrinter);
 
     // 初始化通信服务
-    NetManager::singleton().init(this);
+    NetManager::instance().init(this);
     LOG_INFO("Initiated network");
 
     // 注册lua
-    LuaScriptSystem::singleton().Setup();
-    luaopen_protobuf(LuaScriptSystem::singleton().GetLuaState());
+    LuaScriptSystem::instance().Setup();
+    luaopen_protobuf(LuaScriptSystem::instance().GetLuaState());
     luaRegisterCppClass();
     LOG_INFO("Initiated lua script system");
 
-    QString luaScriptPath = ConfigHelper::singleton().getLuaScriptPath();
+    QString luaScriptPath = ConfigHelper::instance().getLuaScriptPath();
     LOG_INFO("Loading lua script: \"{}\"", luaScriptPath.toStdString());
-    if (!LuaScriptSystem::singleton().RunScript(luaScriptPath.toStdString().c_str())) {
+    if (!LuaScriptSystem::instance().RunScript(luaScriptPath.toStdString().c_str())) {
         LOG_ERR("Error: Load lua script: \"{}\" failed!", luaScriptPath.toStdString());
         return false;
     }
@@ -160,12 +164,12 @@ bool CMainWindow::init() {
         return false;
     }
 
-    LuaScriptSystem::singleton().Invoke("__APP_on_proto_reload"
-                                        , static_cast<lua_api::IProtoManager*>(&ProtoManager::singleton()));
+    LuaScriptSystem::instance().Invoke("__APP_on_proto_reload"
+                                        , static_cast<lua_api::IProtoManager*>(&ProtoManager::instance()));
     LOG_INFO("Import proto files completed");
 
     // 填充消息列表
-    std::list<CProtoManager::MsgInfo> listNames = ProtoManager::singleton().getMsgInfos();
+    std::list<CProtoManager::MsgInfo> listNames = ProtoManager::instance().getMsgInfos();
     auto it = listNames.begin();
     for (; it != listNames.end(); ++it) {
         auto* pListItem = new QListWidgetItem(ui.listMessage);
@@ -242,7 +246,7 @@ google::protobuf::Message* CMainWindow::getMessageByName(const char* name) {
 google::protobuf::Message* CMainWindow::getOrCreateMessageByName(const char* name) {
     auto itr = m_mapMessages.find(name);
     if (itr == m_mapMessages.end()) {
-        auto* pMessage = ProtoManager::singleton().createMessage(name);
+        auto* pMessage = ProtoManager::instance().createMessage(name);
         if (nullptr == pMessage) {
             LOG_INFO("Cannot find code of message({0})", name);
             return nullptr;
@@ -256,7 +260,7 @@ google::protobuf::Message* CMainWindow::getOrCreateMessageByName(const char* nam
 }
 
 void CMainWindow::saveCache() {
-    const std::string& path = ConfigHelper::singleton().getCachePath().toStdString();
+    const std::string& path = ConfigHelper::instance().getCachePath().toStdString();
     QFile jsonFile(path.c_str());
     jsonFile.open(QIODevice::WriteOnly | QIODevice::Text);
     if (!jsonFile.isOpen()) {
@@ -289,10 +293,10 @@ void CMainWindow::saveCache() {
 }
 
 void CMainWindow::loadCache() {
-    std::string path = ConfigHelper::singleton().getCachePath().toStdString();
+    std::string path = ConfigHelper::instance().getCachePath().toStdString();
     if (path.empty()) {
         path = "./cache.json";
-        ConfigHelper::singleton().saveCachePath(path.c_str());
+        ConfigHelper::instance().saveCachePath(path.c_str());
     }
 
     QFile jsonFile(path.c_str());
@@ -342,7 +346,7 @@ void CMainWindow::loadCache() {
                     std::string msgFullName = pItem->data(Qt::UserRole).toString().toStdString();
                     if (msgFullName == msgName) {
                         pItem->setIcon(QIcon(":/EmulatorClient/icon1.ico"));
-                        google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::singleton().getJsonPrintOption());
+                        google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
                         pItem->setToolTip(msgStr.c_str());
                     }
                 }
@@ -380,7 +384,7 @@ void CMainWindow::clearCache() {
 }
 
 void CMainWindow::update() {
-    NetManager::singleton().run();
+    NetManager::instance().run();
 }
 
 void CMainWindow::openSettingDlg() {
@@ -440,8 +444,8 @@ void CMainWindow::onParseMessage(const char* msgFullName, const char* pData, siz
         return;
     }
 
-    uint16_t nMessageId = ProtoManager::singleton().getMsgTypeByFullName(msgFullName);
-    google::protobuf::Message* pRecvMesage = ProtoManager::singleton().createMessage(msgFullName);
+    uint16_t nMessageId = ProtoManager::instance().getMsgTypeByFullName(msgFullName);
+    google::protobuf::Message* pRecvMesage = ProtoManager::instance().createMessage(msgFullName);
     if (nullptr == pRecvMesage) {
         LOG_INFO("Cannot find code of message({0}:{1})", msgFullName, nMessageId);
         return;
@@ -449,13 +453,14 @@ void CMainWindow::onParseMessage(const char* msgFullName, const char* pData, siz
 
     if (pRecvMesage->ParseFromArray(pData, size)) {
         std::string msgStr;
-        google::protobuf::util::MessageToJsonString(*pRecvMesage, &msgStr, ConfigHelper::singleton().getJsonPrintOption());
-        addDetailLogInfo(fmt::format("Received {0}({1}) size: {2}", msgFullName, nMessageId, pRecvMesage->ByteSize())
-                            , highlightJsonData(msgStr.c_str())
-                            , QColor(57, 115, 157)
+        google::protobuf::util::MessageToJsonString(*pRecvMesage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
+        addDetailLogInfo(msgFullName
+                         , fmt::format("Received {0}({1}) size: {2}", msgFullName, nMessageId, pRecvMesage->ByteSize()).c_str()
+                         , highlightJsonData(msgStr.c_str()).c_str()
+                         , QColor(57, 115, 157)
         );
 
-        LuaScriptSystem::singleton().Invoke("__APP_on_message_recv"
+        LuaScriptSystem::instance().Invoke("__APP_on_message_recv"
                                             , static_cast<lua_api::IClient*>(&m_client)
                                             , msgFullName
                                             , (void*)(&pRecvMesage));
@@ -482,8 +487,8 @@ void CMainWindow::onError(SocketId socketId, ec_net::ENetError error) {
     switch (error) {
     case ec_net::eNET_CONNECT_FAIL:
         {
-            Port port = NetManager::singleton().getRemotePort(socketId);
-            std::string strRemoteIp = NetManager::singleton().getRemoteIP(socketId);
+            Port port = NetManager::instance().getRemotePort(socketId);
+            std::string strRemoteIp = NetManager::instance().getRemoteIP(socketId);
 
             LOG_ERR("Connect {0}:{1} failed", strRemoteIp, port);
             connectStateChange(kDisconnect);
@@ -524,14 +529,14 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
     }
 
     auto* pDlg = new CMsgEditorDialog(this);
-    pDlg->restoreGeometry(ConfigHelper::singleton().getSubWindowGeometry());
+    pDlg->restoreGeometry(ConfigHelper::instance().getSubWindowGeometry());
     pDlg->initDialogByMessage(pMessage);
 
     int ret = pDlg->exec();
     if (ret == QDialog::Accepted) {
-        pMessage->CopyFrom(*pDlg->getMessage());
+        pMessage->CopyFrom(pDlg->getMessage());
         std::string msgStr;
-        google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::singleton().getJsonPrintOption());
+        google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
         if (!msgStr.empty()) {
             pItem->setIcon(QIcon(":/EmulatorClient/icon1.ico"));
             pItem->setToolTip(msgStr.c_str());
@@ -543,7 +548,7 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
         }
     }
 
-    ConfigHelper::singleton().saveSubWindowGeometry(pDlg->saveGeometry());
+    ConfigHelper::instance().saveSubWindowGeometry(pDlg->saveGeometry());
     delete pDlg;
 
     if (pMessage->ByteSize() == 0) {
@@ -610,16 +615,55 @@ void CMainWindow::handleListLogItemClicked(QListWidgetItem* pItem) {
     handleListLogItemCurrentItemChanged(pItem, nullptr);
 }
 
+void CMainWindow::handleListLogCustomContextMenuRequested(const QPoint& pos) {
+    QListWidgetItem* pCurItem = ui.listLogs->itemAt(pos);
+    if (nullptr == pCurItem) {
+        return;
+    }
+
+    if (pCurItem->data(Qt::UserRole).toString().isEmpty()) {
+        return;
+    }
+
+    QMenu* popMenu = new QMenu(this);
+    QAction* pAddIgnore = new QAction(tr("Add to ignore list"), this);
+    popMenu->addAction(pAddIgnore);
+    connect(pAddIgnore, SIGNAL(triggered()), this, SLOT(handleListLogActionAddToIgnoreList()));
+    popMenu->exec(QCursor::pos());
+    delete popMenu;
+    delete pAddIgnore;
+}
+
+void CMainWindow::handleListLogActionAddToIgnoreList() {
+    QListWidgetItem* pCurItem = ui.listLogs->currentItem();
+    if (nullptr == pCurItem) {
+        return;
+    }
+
+    QString msgFullName = pCurItem->data(Qt::UserRole + 1).toString();
+    if (msgFullName.isEmpty()) {
+        return;
+    }
+
+    m_setIgnoredReceiveMsgType.insert(msgFullName.toStdString());
+    ui.lableIgnoreCnt->setText(std::to_string(m_setIgnoredReceiveMsgType.size()).c_str());
+}
+
 void CMainWindow::handleFilterTextChanged(const QString& text) {
     // 搜索栏搜索逻辑
     for (int i = 0; i < ui.listMessage->count(); ++i) {
-        ui.listMessage->setItemHidden(ui.listMessage->item(i), !text.isEmpty());
+        ui.listMessage->item(i)->setHidden(!text.isEmpty());
     }
 
     bool bIsNumberic = false;
     int msgTypeNum = text.toInt(&bIsNumberic);
     if (bIsNumberic) {
-        std::string strMsgName = ProtoManager::singleton().getMsgInfoByMsgType(msgTypeNum).msgName;
+        const CProtoManager::MsgInfo* pMsgInfo = ProtoManager::instance().getMsgInfoByMsgType(msgTypeNum);
+        if (nullptr == pMsgInfo) {
+            return;
+        }
+
+        std::string strMsgName = pMsgInfo->msgName;
         QList<QListWidgetItem*> listFound = ui.listMessage->findItems(strMsgName.c_str(), Qt::MatchCaseSensitive);
         for (int i = 0; i < listFound.count(); ++i) {
             listFound[i]->setHidden(false);
@@ -663,8 +707,10 @@ void CMainWindow::handleSendBtnClicked() {
     if (nullptr != pMessage) {
         m_client.sendMsg(*pMessage);
         std::string msgStr;
-        google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::singleton().getJsonPrintOption());
-        addDetailLogInfo(fmt::format("Sent Message {}", selectMsgName.toStdString()), highlightJsonData(msgStr.c_str()), Qt::black);
+        google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
+        addDetailLogInfo(msgFullName.c_str()
+                         , fmt::format("Sent Message {}", selectMsgName.toStdString()).c_str()
+                         , highlightJsonData(msgStr.c_str()).c_str(), Qt::black);
 
         if (0 == ui.listRecentMessage->findItems(selectMsgName, Qt::MatchExactly).count()) {
             auto* pItem = new QListWidgetItem(selectMsgName, ui.listRecentMessage);
@@ -682,14 +728,14 @@ void CMainWindow::handleConnectBtnClicked() {
     unsigned int socketID = m_client.getSocketID();
     if (0 != socketID) {
         LOG_INFO("Disconnecting...");
-        NetManager::singleton().disconnect(socketID);
+        NetManager::instance().disconnect(socketID);
         connectStateChange(kDisconnect);
         return;
     }
 
     // 判断是不是新的ip和端口，如果是，添加历史
     addNewItemIntoCombox(*ui.cbIp);
-    ConfigHelper::singleton().saveWidgetComboxState("Ip_Port", *ui.cbIp);
+    ConfigHelper::instance().saveWidgetComboxState("Ip_Port", *ui.cbIp);
 
     QStringList ipAndPort = ui.cbIp->currentText().split(":");
     if (ipAndPort.size() != 2) {
@@ -703,12 +749,12 @@ void CMainWindow::handleConnectBtnClicked() {
     }
 
     addNewItemIntoCombox(*ui.cbAccount);
-    ConfigHelper::singleton().saveWidgetComboxState("Account", *ui.cbAccount);
+    ConfigHelper::instance().saveWidgetComboxState("Account", *ui.cbAccount);
 
     std::string ip = ipAndPort[0].toStdString();
     Port port = ipAndPort[1].toUShort();
 
-    LuaScriptSystem::singleton().Invoke("__APP_on_connect_btn_click"
+    LuaScriptSystem::instance().Invoke("__APP_on_connect_btn_click"
                                         , static_cast<lua_api::IClient*>(&m_client)
                                         , ip
                                         , port
@@ -731,7 +777,7 @@ void CMainWindow::handleSearchDetailTextChanged() {
 
     m_vecSearchPos.clear();
     m_searchResultIdx = -1;
-    ui.editSearchDetail->setStyleSheet(ConfigHelper::singleton().getStyleSheetLineEditNormal());
+    ui.editSearchDetail->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditNormal());
 
     if (document->isEmpty()) {
         return;
@@ -777,7 +823,7 @@ void CMainWindow::handleSearchDetailTextChanged() {
         if (!m_vecSearchPos.empty()) {
             m_searchResultIdx = 0;
         } else {
-            ui.editSearchDetail->setStyleSheet(ConfigHelper::singleton().getStyleSheetLineEditError());
+            ui.editSearchDetail->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditError());
         }
     }
 
@@ -951,11 +997,11 @@ void CMainWindow::handleLogInfoAdded(const QModelIndex& parent, int start, int e
 }
 
 void CMainWindow::closeEvent(QCloseEvent* event) {
-    ConfigHelper::singleton().saveMainWindowGeometry(saveGeometry());
-    ConfigHelper::singleton().saveMainWindowState(saveState());
-    ConfigHelper::singleton().saveSplitterH(ui.splitterH->saveState());
-    ConfigHelper::singleton().saveSplitterV(ui.splitterV->saveState());
-    ConfigHelper::singleton().saveWidgetCheckboxState("AutoShowDetail", *ui.checkIsAutoDetail);
+    ConfigHelper::instance().saveMainWindowGeometry(saveGeometry());
+    ConfigHelper::instance().saveMainWindowState(saveState());
+    ConfigHelper::instance().saveSplitterH(ui.splitterH->saveState());
+    ConfigHelper::instance().saveSplitterV(ui.splitterV->saveState());
+    ConfigHelper::instance().saveWidgetCheckboxState("AutoShowDetail", *ui.checkIsAutoDetail);
 
     // 自动保存cache
     saveCache();
@@ -989,7 +1035,7 @@ void CMainWindow::addNewItemIntoCombox(QComboBox& combox) {
     int cbIdx = combox.findText(combox.currentText());
     if (-1 == cbIdx) {
         combox.insertItem(0, combox.currentText());
-        if (combox.count() > ConfigHelper::singleton().getHistroyComboxItemMaxCnt()) {
+        if (combox.count() > ConfigHelper::instance().getHistroyComboxItemMaxCnt()) {
             combox.removeItem(combox.count() - 1);
         }
     } else {
@@ -1001,17 +1047,17 @@ void CMainWindow::addNewItemIntoCombox(QComboBox& combox) {
 }
 
 bool CMainWindow::importProtos() {
-    QString strRootPath = ConfigHelper::singleton().getProtoRootPath();
-    QString strLoadPath = ConfigHelper::singleton().getProtoFilesLoadPath();
+    QString strRootPath = ConfigHelper::instance().getProtoRootPath();
+    QString strLoadPath = ConfigHelper::instance().getProtoFilesLoadPath();
 
     QDir rootPath = strRootPath;
-    ProtoManager::singleton().init(rootPath.absolutePath().toStdString());
+    ProtoManager::instance().init(rootPath.absolutePath().toStdString());
 
     bool bSuccess = false;
     QDirIterator it(strLoadPath, QStringList() << "*.proto", QDir::Files, QDirIterator::Subdirectories);
     while (it.hasNext()) {
         QString virtualPath = rootPath.relativeFilePath(it.next());
-        bSuccess |= ProtoManager::singleton().importProto(virtualPath.toStdString());
+        bSuccess |= ProtoManager::instance().importProto(virtualPath.toStdString());
     }
 
     if (!bSuccess) {
@@ -1024,7 +1070,7 @@ bool CMainWindow::importProtos() {
 }
 
 void CMainWindow::luaRegisterCppClass() {
-    auto* pLuaState = LuaScriptSystem::singleton().GetLuaState();
+    auto* pLuaState = LuaScriptSystem::instance().GetLuaState();
     if (nullptr == pLuaState) {
         return;
     }
@@ -1065,14 +1111,16 @@ void CMainWindow::luaRegisterCppClass() {
         .endClass();
 }
 
-void CMainWindow::addDetailLogInfo(std::string msg, std::string detail, QColor color /*= QColor(Qt::GlobalColor(0))*/) {
+void CMainWindow::addDetailLogInfo(const char* msgFullName, const char* msg, const char* detail, QColor color /*= QColor(Qt::GlobalColor(0))*/) {
     time_t t = time(nullptr);
     char tmp[64];
     strftime(tmp, sizeof(tmp), "[%X] ", localtime(&t));
 
-    msg = tmp + msg;
-    auto* pListWidgetItem = new QListWidgetItem(msg.c_str(), ui.listLogs);
-    pListWidgetItem->setData(Qt::UserRole, detail.c_str());
+    std::string data = tmp;
+    data.append(msg);
+    auto* pListWidgetItem = new QListWidgetItem(data.c_str(), ui.listLogs);
+    pListWidgetItem->setData(Qt::UserRole, detail);
+    pListWidgetItem->setData(Qt::UserRole + 1, msgFullName);
 
     if (QColor(Qt::GlobalColor(0)) != color) {
         pListWidgetItem->setForeground(color);

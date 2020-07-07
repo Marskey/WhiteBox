@@ -16,7 +16,7 @@ public:
     ~CMsgEditorDialog();
 
     void initDialogByMessage(const ::google::protobuf::Message* pMessage);
-    const ::google::protobuf::Message* getMessage();
+    const ::google::protobuf::Message& getMessage();
 
 private:
     void createWidget(QFormLayout& layout, std::string strFiledName, const google::protobuf::FieldDescriptor* pDescriptor);

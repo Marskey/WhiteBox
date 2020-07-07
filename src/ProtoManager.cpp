@@ -1,6 +1,9 @@
 #include "ProtoManager.h"
 #include "google/protobuf/dynamic_message.h"
 
+CProtoManager::CProtoManager() {
+}
+
 CProtoManager::~CProtoManager() {
     delete m_importerInfo.pFactory;
     m_importerInfo.pFactory = nullptr;
@@ -31,7 +34,7 @@ bool CProtoManager::importProto(const std::string& virtualFilePath) {
 
 std::list<CProtoManager::MsgInfo> CProtoManager::getMsgInfos() {
     std::list<MsgInfo> listMsgs;
-    for (const auto& pair : m_mapMsgType2MsgInfo) {
+    for (const auto& pair : m_mapMsgFullName2MsgInfo) {
         listMsgs.emplace_back(pair.second);
     }
 
@@ -57,23 +60,22 @@ google::protobuf::Message* CProtoManager::createMessage(const char* msgFullName)
 }
 
 uint16_t CProtoManager::getMsgTypeByFullName(const std::string& strName) {
-    auto it = m_mapMsgType2MsgInfo.begin();
-    for (; it != m_mapMsgType2MsgInfo.end(); ++it) {
-        if (it->second.msgFullName == strName) {
-            return it->first;
-        }
+    auto it = m_mapMsgFullName2MsgInfo.find(strName);
+    if (it != m_mapMsgFullName2MsgInfo.end()) {
+        return it->second.msgType;
     }
 
     return 0;
 }
 
-CProtoManager::MsgInfo CProtoManager::getMsgInfoByMsgType(uint16_t msgType) {
-    auto it = m_mapMsgType2MsgInfo.find(msgType);
-    if (it != m_mapMsgType2MsgInfo.end()) {
-        return it->second;
+const CProtoManager::MsgInfo* CProtoManager::getMsgInfoByMsgType(uint16_t msgType) {
+    for (auto& [key, value] : m_mapMsgFullName2MsgInfo) {
+        if (msgType = value.msgType) {
+            return &value;
+        }
     }
 
-    return std::move(MsgInfo());
+    return nullptr;
 }
 
 std::string CProtoManager::getMsgValue(google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd) {
@@ -211,8 +213,10 @@ std::string CProtoManager::getMsgValue(google::protobuf::Message& message, const
 }
 
 void CProtoManager::addProtoMessage(int msgType, const char* msgFullName, const char* msgName) {
-    MsgInfo msg{ msgFullName, msgName };
-    m_mapMsgType2MsgInfo[msgType] = msg;
+    MsgInfo& msgInfo = m_mapMsgFullName2MsgInfo[msgFullName];
+    msgInfo.msgType = msgType;
+    msgInfo.msgFullName = msgFullName;
+    msgInfo.msgName = msgName;
 }
 
 void* CProtoManager::getDescriptorPool() {

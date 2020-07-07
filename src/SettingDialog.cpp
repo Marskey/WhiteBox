@@ -19,9 +19,9 @@ CSettingDialog::~CSettingDialog()
 }
 
 void CSettingDialog::init() {
-    editRootPath->setText(ConfigHelper::singleton().getProtoRootPath());
-    editLoadPath->setText(ConfigHelper::singleton().getProtoFilesLoadPath());
-    editScriptPath->setText(ConfigHelper::singleton().getLuaScriptPath());
+    editRootPath->setText(ConfigHelper::instance().getProtoRootPath());
+    editLoadPath->setText(ConfigHelper::instance().getProtoFilesLoadPath());
+    editScriptPath->setText(ConfigHelper::instance().getLuaScriptPath());
 
     checkAvailable();
 }
@@ -35,7 +35,7 @@ void CSettingDialog::handleSelectRootBtnClicked() {
     fileDialog->setViewMode(QFileDialog::Detail);
     if (fileDialog->exec()) {
         editRootPath->setText(fileDialog->selectedFiles()[0]);
-        ConfigHelper::singleton().saveProtoRootPath(fileDialog->selectedFiles()[0]);
+        ConfigHelper::instance().saveProtoRootPath(fileDialog->selectedFiles()[0]);
     }
 
     if (!editRootPath->text().isEmpty()
@@ -53,7 +53,7 @@ void CSettingDialog::handleSelectLoadBtnClicked() {
     fileDialog->setViewMode(QFileDialog::Detail);
     if (fileDialog->exec()) {
         editLoadPath->setText(fileDialog->selectedFiles()[0]);
-        ConfigHelper::singleton().saveProtoFilesLoadPath(fileDialog->selectedFiles()[0]);
+        ConfigHelper::instance().saveProtoFilesLoadPath(fileDialog->selectedFiles()[0]);
     }
 }
 
@@ -66,7 +66,7 @@ void CSettingDialog::handleSelectScriptBtnClicked() {
     fileDialog->setViewMode(QFileDialog::Detail);
     if (fileDialog->exec()) {
         editScriptPath->setText(fileDialog->selectedFiles()[0]);
-        ConfigHelper::singleton().saveLuaScriptPath(fileDialog->selectedFiles()[0]);
+        ConfigHelper::instance().saveLuaScriptPath(fileDialog->selectedFiles()[0]);
     }
 }
 
@@ -74,9 +74,9 @@ void CSettingDialog::handlePathChanged(const QString& newText) {
     if (!editRootPath->text().isEmpty()
         && !editLoadPath->text().isEmpty()
         && !editScriptPath->text().isEmpty()) {
-        ConfigHelper::singleton().saveProtoRootPath(editRootPath->text());
-        ConfigHelper::singleton().saveProtoFilesLoadPath(editLoadPath->text());
-        ConfigHelper::singleton().saveLuaScriptPath(editScriptPath->text());
+        ConfigHelper::instance().saveProtoRootPath(editRootPath->text());
+        ConfigHelper::instance().saveProtoFilesLoadPath(editLoadPath->text());
+        ConfigHelper::instance().saveLuaScriptPath(editScriptPath->text());
         okButton->setEnabled(true);
     } else {
         okButton->setEnabled(false);

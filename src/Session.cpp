@@ -175,14 +175,14 @@ void CSession::read() {
             self->m_readData.writeSize += size;
 
             while (self->m_readData.writeSize > 0) {
-                auto packetSize =  LuaScriptSystem::singleton().Invoke<size_t>("__APP_on_read_socket_buffer"
+                auto packetSize =  LuaScriptSystem::instance().Invoke<size_t>("__APP_on_read_socket_buffer"
                                                                               , static_cast<lua_api::ISocketReader*>(&self->m_readData)
                                                                               , self->m_readData.writeSize);
                 if (0 == packetSize) {
                     break;
                 }
 
-                NetManager::singleton().handleParseMessage(self->m_readData.messageFullName
+                NetManager::instance().handleParseMessage(self->m_readData.messageFullName
                                                            , self->m_readData.pMessageData
                                                            , self->m_readData.messageSize);
 
@@ -197,9 +197,9 @@ void CSession::read() {
         }
         );
     } catch (std::exception& e) {
-        printf("%s", e.what());
+        printf("%s\n", e.what());
     } catch (...) {
-        printf("unknown exception");
+        printf("unknown exception\n");
     }
 }
 
@@ -232,7 +232,7 @@ void CSession::write() {
 
 void CSession::sendProtobufMsg(const char* msgFullName, const void* pData, size_t size) {
     CWriteData writeData;
-    LuaScriptSystem::singleton().Invoke("__APP_on_write_socket_buffer"
+    LuaScriptSystem::instance().Invoke("__APP_on_write_socket_buffer"
                                         , static_cast<lua_api::ISocketWriter*>(&writeData)
                                         , msgFullName
                                         , (void*)pData, size);
@@ -253,15 +253,15 @@ SocketId CSession::getSocketId() {
 }
 
 void CSession::handleError(ec_net::ENetError error) {
-    NetManager::singleton().handleError(m_id, error);
+    NetManager::instance().handleError(m_id, error);
 }
 
 void CSession::handleConnectSucceed() {
-    NetManager::singleton().handleConnectSucceed(m_id);
+    NetManager::instance().handleConnectSucceed(m_id);
 }
 
 void CSession::handleDisconnect() {
-    NetManager::singleton().handleDisconnect(getSocketId());
+    NetManager::instance().handleDisconnect(getSocketId());
 }
 
 void CSession::freeSendBuf() {

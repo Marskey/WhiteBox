@@ -6,7 +6,7 @@
 #include "LuaBridge/LuaBridge.h"
 #include <string>
 
-#include "toolkit/Singleton.h"
+#include "Singleton.h"
 #include "LogHelper.h"
 
 class CLuaScriptSystem
@@ -102,7 +102,7 @@ private:
         content.append("\n");
         CallStack(L, 0, content);
         //printf("%s\n", content.c_str());
-        LogHelper::singleton().logError("Error: lua error -- {}", content.c_str());
+        LogHelper::instance().logError("Error: lua error -- {}", content.c_str());
 
         return 0;
     }
@@ -115,7 +115,7 @@ private:
         content.append("\n");
         CallStack(L, 0, content);
         //printf("%s\n", content.c_str());
-        LogHelper::singleton().logError("Error: lua error -- {}", content.c_str());
+        LogHelper::instance().logError("Error: lua error -- {}", content.c_str());
     }
 
     // 边界条件
@@ -154,8 +154,8 @@ public:
             content.append("attempt to call global '");
             content.append(name);
             content.append("' (not a function)");
-            //printf(content.c_str());
-            LogHelper::singleton().logError("Error: lua invoke error -- {}", content.c_str());
+            //printf("%s\n", content.c_str());
+            LogHelper::instance().logError("Error: lua invoke error -- {}", content.c_str());
         }
 
         lua_remove(m_L, errfunc);
@@ -178,8 +178,8 @@ public:
             content.append("attempt to call global '");
             content.append(name);
             content.append("' (not a function)");
-            //printf(content.c_str());
-            LogHelper::singleton().logError("Error: lua invoke error -- {}", content.c_str());
+            //printf("%s\n", content.c_str());
+            LogHelper::instance().logError("Error: lua invoke error -- {}", content.c_str());
         }
 
         lua_remove(m_L, errfunc);

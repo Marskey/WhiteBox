@@ -19,6 +19,8 @@ CMsgEditorDialog::CMsgEditorDialog(QWidget *parent)
 }
 
 CMsgEditorDialog::~CMsgEditorDialog() {
+    delete m_pMessage;
+    m_pMessage = nullptr;
 }
 
 void CMsgEditorDialog::initDialogByMessage(const ::google::protobuf::Message* pMessage) {
@@ -28,7 +30,8 @@ void CMsgEditorDialog::initDialogByMessage(const ::google::protobuf::Message* pM
     // 设置标题
     labelTitle->setText(m_pMessage->GetTypeName().c_str());
 
-    auto* pFormLayout = new QFormLayout;
+    auto* scrollAreaContent = new QWidget(this);
+    auto* pFormLayout = new QFormLayout(scrollAreaContent);
 
     int cnt = pMessage->GetDescriptor()->field_count();
     for (int i = 0; i < cnt; ++i) {
@@ -36,13 +39,12 @@ void CMsgEditorDialog::initDialogByMessage(const ::google::protobuf::Message* pM
         createWidget(*pFormLayout, pFd->name(), pFd);
     }
 
-    auto* scrollAreaContent = new QWidget;
     scrollAreaContent->setLayout(pFormLayout);
     scrollArea->setWidget(scrollAreaContent);
 }
 
-const ::google::protobuf::Message* CMsgEditorDialog::getMessage() {
-    return m_pMessage;
+const ::google::protobuf::Message& CMsgEditorDialog::getMessage() {
+    return *m_pMessage;
 }
 
 void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledName, const google::protobuf::FieldDescriptor* pDescriptor) {
@@ -50,7 +52,10 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
         return;
     }
 
-    auto* pFieldLabel = new QLabel(fmt::format("<h6>{1}</h6> <span style=\"color: #569ad6\">{0}</span>", pDescriptor->cpp_type_name(), strFiledName).c_str());
+    auto* pFieldLabel = new QLabel(fmt::format("<h6>{1}</h6> <span style=\"color: #569ad6\">{0}</span>"
+                                               , pDescriptor->cpp_type_name()
+                                               , strFiledName).c_str()
+                                   , this);
 
     if (pDescriptor->is_repeated()) {
         if (pDescriptor->type() == google::protobuf::FieldDescriptor::TYPE_MESSAGE) {
@@ -71,7 +76,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
             registerBtn(pBtn4, pDescriptor->number());
             connect(pBtn4, SIGNAL(clicked()), this, SLOT(handleClearBtn()));
 
-            auto* pHBoxLayout = new QHBoxLayout;
+            auto* pHBoxLayout = new QHBoxLayout(this);
             pHBoxLayout->addWidget(pBtn1);
             pHBoxLayout->addWidget(pBtn2);
             pHBoxLayout->addWidget(pBtn3);
@@ -82,18 +87,17 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
             pListWidget->setObjectName(listName.c_str());
             int size = m_pMessage->GetReflection()->FieldSize(*m_pMessage, pDescriptor);
             for (int i = 0; i < size; ++i) {
-                pListWidget->addItem(ProtoManager::singleton().getMsgValue(*m_pMessage, pDescriptor, i).c_str());
+                pListWidget->addItem(ProtoManager::instance().getMsgValue(*m_pMessage, pDescriptor, i).c_str());
             }
 
-            auto* pVBoxLayout = new QVBoxLayout;
+            auto* pVBoxLayout = new QVBoxLayout(this);
             pVBoxLayout->addLayout(pHBoxLayout);
             pVBoxLayout->addWidget(pListWidget);
 
             layout.addRow(pFieldLabel, pVBoxLayout);
-            return;
         } else {
             // repeated input
-            auto* pHBoxLayout = new QHBoxLayout;
+            auto* pHBoxLayout = new QHBoxLayout(this);
             if (pDescriptor->type() == google::protobuf::FieldDescriptor::TYPE_ENUM) {
                 const google::protobuf::EnumDescriptor* pEd = pDescriptor->enum_type();
 
@@ -149,15 +153,14 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
 
             int size = m_pMessage->GetReflection()->FieldSize(*m_pMessage, pDescriptor);
             for (int i = 0; i < size; ++i) {
-                pListWidget->addItem(ProtoManager::singleton().getMsgValue(*m_pMessage, pDescriptor, i).c_str());
+                pListWidget->addItem(ProtoManager::instance().getMsgValue(*m_pMessage, pDescriptor, i).c_str());
             }
 
-            auto* pVBoxLayout = new QVBoxLayout;
+            auto* pVBoxLayout = new QVBoxLayout(this);
             pVBoxLayout->addLayout(pHBoxLayout);
             pVBoxLayout->addWidget(pListWidget);
 
             layout.addRow(pFieldLabel, pVBoxLayout);
-            return;
         }
     } else {
         google::protobuf::FieldDescriptor::Type filedType = pDescriptor->type();
@@ -254,7 +257,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
                 break;
             case google::protobuf::FieldDescriptor::TYPE_MESSAGE:
             {
-                auto* pHBoxLayout = new QHBoxLayout;
+                auto* pHBoxLayout = new QHBoxLayout(this);
                 auto* pBtn1 = new QPushButton("Edit", this);
                 registerBtn(pBtn1, pDescriptor->number());
                 pHBoxLayout->addWidget(pBtn1);
@@ -269,7 +272,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
                 std::string textEditName = "textedit_" + std::to_string(pDescriptor->number());
                 pTextEdit->setReadOnly(true);
                 pTextEdit->setObjectName(textEditName.c_str());
-                auto* pVBoxLayout = new QVBoxLayout;
+                auto* pVBoxLayout = new QVBoxLayout(this);
                 pVBoxLayout->addLayout(pHBoxLayout);
                 pVBoxLayout->addWidget(pTextEdit);
                 auto& message = m_pMessage->GetReflection()->GetMessage(*m_pMessage, pDescriptor);
@@ -287,7 +290,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
 }
 
 void CMsgEditorDialog::handleComboxIndexChanged(int index) {
-    QComboBox* pCB = (QComboBox*)sender();
+    auto* pCB = static_cast<QComboBox*>(sender());
     if (pCB->objectName().isEmpty()) {
         return;
     }
@@ -311,7 +314,7 @@ void CMsgEditorDialog::handleComboxIndexChanged(int index) {
 }
 
 void CMsgEditorDialog::handleLineEdit(const QString& text) {
-    CLineEdit* pLE = (CLineEdit*)sender();
+    auto* pLE = static_cast<CLineEdit*>(sender());
     if (pLE->objectName().isEmpty()) {
         return;
     }
@@ -367,7 +370,7 @@ void CMsgEditorDialog::handleMessageEdit() {
     pDlg->initDialogByMessage(pEditMessage);
     int ret = pDlg->exec();
     if (ret == QDialog::Accepted) {
-        pEditMessage->CopyFrom(*pDlg->getMessage());
+        pEditMessage->CopyFrom(pDlg->getMessage());
         if (pBtn->parentWidget() != nullptr) {
             if (pBtn->parentWidget()->layout() != nullptr) {
                 std::string textEditName = "textedit_" + std::to_string(pFd->number());
@@ -396,7 +399,7 @@ void CMsgEditorDialog::handleMessageAddBtn() {
     pDlg->initDialogByMessage(pNewMessage);
     int ret = pDlg->exec();
     if (ret == QDialog::Accepted) {
-        pNewMessage->CopyFrom(*pDlg->getMessage());
+        pNewMessage->CopyFrom(pDlg->getMessage());
 
         if (pBtn->parentWidget() != nullptr) {
             if (pBtn->parentWidget()->layout() != nullptr) {
@@ -426,7 +429,7 @@ void CMsgEditorDialog::handleMessageInsertBtn() {
     pDlg->initDialogByMessage(pNewMessage);
     int ret = pDlg->exec();
     if (ret == QDialog::Accepted) {
-        pNewMessage->CopyFrom(*pDlg->getMessage());
+        pNewMessage->CopyFrom(pDlg->getMessage());
 
         if (pBtn->parentWidget() != nullptr) {
             if (pBtn->parentWidget()->layout() != nullptr) {
@@ -453,7 +456,7 @@ void CMsgEditorDialog::handleMessageInsertBtn() {
 }
 
 void CMsgEditorDialog::handleRemoveBtn() {
-    QPushButton* pBtn = (QPushButton*)sender();
+    auto* pBtn = static_cast<QPushButton*>(sender());
     int messageIdx = getBtnRegisterIndex(pBtn);
 
     const google::protobuf::FieldDescriptor* pFd = m_pMessage->GetDescriptor()->FindFieldByNumber(messageIdx);
@@ -465,7 +468,7 @@ void CMsgEditorDialog::handleRemoveBtn() {
     if (pBtn->parentWidget() != nullptr) {
         if (pBtn->parentWidget()->layout() != nullptr) {
             std::string listName = "list_" + std::to_string(messageIdx);
-            QListWidget* pListWidget = pBtn->parentWidget()->findChild<QListWidget*>(listName.c_str());
+            auto* pListWidget = pBtn->parentWidget()->findChild<QListWidget*>(listName.c_str());
             if (nullptr == pListWidget) {
                 return;
             }
@@ -486,7 +489,7 @@ void CMsgEditorDialog::handleRemoveBtn() {
 }
 
 void CMsgEditorDialog::handleValueAddBtn() {
-    QPushButton* pBtn = (QPushButton*)sender();
+    auto* pBtn = static_cast<QPushButton*>(sender());
     int messageIdx = getBtnRegisterIndex(pBtn);
 
     const google::protobuf::FieldDescriptor* pfd = m_pMessage->GetDescriptor()->FindFieldByNumber(messageIdx);
@@ -502,21 +505,21 @@ void CMsgEditorDialog::handleValueAddBtn() {
         if (pBtn->parentWidget()->layout() != nullptr) {
             if (pfd->type() == google::protobuf::FieldDescriptor::TYPE_ENUM) {
                 std::string cbName = "cb_" + std::to_string(messageIdx);
-                QComboBox* pCbEdit = pBtn->parentWidget()->findChild<QComboBox*>(cbName.c_str());
+                auto* pCbEdit = pBtn->parentWidget()->findChild<QComboBox*>(cbName.c_str());
                 if (pCbEdit != nullptr) {
                     value = std::to_string(pfd->enum_type()->FindValueByName(pCbEdit->currentText().toStdString().c_str())->number());
                     textValue = pCbEdit->currentText().toStdString();
                 }
             } else if (pfd->type() == google::protobuf::FieldDescriptor::TYPE_BOOL) {
                 std::string cbName = "cb_" + std::to_string(messageIdx);
-                QComboBox* pCbEdit = pBtn->parentWidget()->findChild<QComboBox*>(cbName.c_str());
+                auto* pCbEdit = pBtn->parentWidget()->findChild<QComboBox*>(cbName.c_str());
                 if (pCbEdit != nullptr) {
                     value = std::to_string(pCbEdit->currentIndex());
                     textValue = pCbEdit->currentText().toStdString();
                 }
             } else {
                 std::string lineEditName = "lineEdit_" + std::to_string(messageIdx);
-                CLineEdit* pLineEdit = pBtn->parentWidget()->findChild<CLineEdit*>(lineEditName.c_str());
+                auto* pLineEdit = pBtn->parentWidget()->findChild<CLineEdit*>(lineEditName.c_str());
                 if (pLineEdit != nullptr) {
                     value = pLineEdit->text().toStdString();
                     textValue = value;
@@ -536,11 +539,11 @@ void CMsgEditorDialog::handleValueAddBtn() {
     google::protobuf::FieldDescriptor::Type filedType = pfd->type();
     if (filedType != google::protobuf::FieldDescriptor::TYPE_STRING
         && filedType != google::protobuf::FieldDescriptor::TYPE_BYTES) {
-        // checkif is numberic
-        for (int i = 0; i < value.length(); ++i) {
+        // check if is numberic
+        for (auto i = 0; i < value.length(); ++i) {
             if (!isdigit(value[i])) {
                 QMessageBox msgBox;
-                msgBox.setText("you need enter digits.");
+                msgBox.setText("You need enter digits.");
                 msgBox.exec();
                 return;
             }
@@ -586,7 +589,7 @@ void CMsgEditorDialog::handleValueAddBtn() {
 }
 
 void CMsgEditorDialog::handleValueInsertBtn() {
-    QPushButton* pBtn = (QPushButton*)sender();
+    auto* pBtn = static_cast<QPushButton*>(sender());
     int messageIdx = getBtnRegisterIndex(pBtn);
 
     const google::protobuf::FieldDescriptor* pfd = m_pMessage->GetDescriptor()->FindFieldByNumber(messageIdx);
@@ -602,21 +605,21 @@ void CMsgEditorDialog::handleValueInsertBtn() {
         if (pBtn->parentWidget()->layout() != nullptr) {
             if (pfd->type() == google::protobuf::FieldDescriptor::TYPE_ENUM) {
                 std::string cbName = "cb_" + std::to_string(messageIdx);
-                QComboBox* pCbEdit = pBtn->parentWidget()->findChild<QComboBox*>(cbName.c_str());
+                auto* pCbEdit = pBtn->parentWidget()->findChild<QComboBox*>(cbName.c_str());
                 if (pCbEdit != nullptr) {
                     value = std::to_string(pfd->enum_type()->FindValueByName(pCbEdit->currentText().toStdString().c_str())->number());
                     textValue = pCbEdit->currentText().toStdString();
                 }
             } else if (pfd->type() == google::protobuf::FieldDescriptor::TYPE_BOOL) {
                 std::string cbName = "cb_" + std::to_string(messageIdx);
-                QComboBox* pCbEdit = pBtn->parentWidget()->findChild<QComboBox*>(cbName.c_str());
+                auto* pCbEdit = pBtn->parentWidget()->findChild<QComboBox*>(cbName.c_str());
                 if (pCbEdit != nullptr) {
                     value = std::to_string(pCbEdit->currentIndex());
                     textValue = pCbEdit->currentText().toStdString();
                 }
             } else {
                 std::string lineEditName = "lineEdit_" + std::to_string(messageIdx);
-                CLineEdit* pLineEdit = pBtn->parentWidget()->findChild<CLineEdit*>(lineEditName.c_str());
+                auto* pLineEdit = pBtn->parentWidget()->findChild<CLineEdit*>(lineEditName.c_str());
                 if (pLineEdit != nullptr) {
                     value = pLineEdit->text().toStdString();
                     textValue = value;
@@ -640,7 +643,7 @@ void CMsgEditorDialog::handleValueInsertBtn() {
         for (int i = 0; i < value.length(); ++i) {
             if (!isdigit(value[i])) {
                 QMessageBox msgBox;
-                msgBox.setText("you need enter digits.");
+                msgBox.setText("You need enter digits.");
                 msgBox.exec();
                 return;
             }
@@ -696,7 +699,7 @@ void CMsgEditorDialog::handleValueInsertBtn() {
 }
 
 void CMsgEditorDialog::handleClearBtn() {
-    QPushButton* pBtn = (QPushButton*)sender();
+    auto* pBtn = static_cast<QPushButton*>(sender());
     int messageIdx = getBtnRegisterIndex(pBtn);
 
     const google::protobuf::FieldDescriptor* pFd = m_pMessage->GetDescriptor()->FindFieldByNumber(messageIdx);
@@ -708,7 +711,7 @@ void CMsgEditorDialog::handleClearBtn() {
     if (pBtn->parentWidget() != nullptr) {
         if (pBtn->parentWidget()->layout() != nullptr) {
             std::string listName = "list_" + std::to_string(messageIdx);
-            QListWidget* pListWidget = pBtn->parentWidget()->findChild<QListWidget*>(listName.c_str());
+            auto* pListWidget = pBtn->parentWidget()->findChild<QListWidget*>(listName.c_str());
             if (nullptr == pListWidget) {
                 return;
             }

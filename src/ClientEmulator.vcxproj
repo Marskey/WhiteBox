@@ -142,7 +142,7 @@
     <ClInclude Include="protobuf\protobuf.h" />
     <ClInclude Include="protobuf\protobuflib.h" />
     <ClInclude Include="LuaScriptSystem.h" />
-    <ClInclude Include="toolkit\Singleton.h" />
+    <ClInclude Include="Singleton.h" />
     <QtMoc Include="LineEdit.h" />
     <ClInclude Include="INetEvent.h" />
     <ClInclude Include="ip4validator.h" />

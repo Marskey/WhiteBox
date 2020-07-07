@@ -2,7 +2,6 @@
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMessageBox>
-#include <sstream>
 
 #include "ProtoManager.h"
 
@@ -23,21 +22,20 @@ CMsgIgnoreDialog::~CMsgIgnoreDialog() {
 }
 
 void CMsgIgnoreDialog::init(std::unordered_set<std::string>& setIgnoredMsg) {
-    std::list<CProtoManager::MsgInfo> listNames = ProtoManager::singleton().getMsgInfos();
+    std::list<CProtoManager::MsgInfo> listNames = ProtoManager::instance().getMsgInfos();
     {
         listMsgRight->clear();
         auto it = setIgnoredMsg.begin();
         for (; it != setIgnoredMsg.end(); ++it) {
-            //CProtoManager::MsgInfo msgInfo = ProtoManager::singleton().getMsgInfoByMsgType(*it);
             CProtoManager::MsgInfo msgInfo;
-            std::for_each(listNames.begin(), listNames.end(), [&msgInfo, ignoreName = *it](const auto& pair) {
-                if (pair.msgFullName == ignoreName) {
-                    msgInfo.msgFullName = pair.msgFullName;
-                    msgInfo.msgName = pair.msgName;
+            for (auto& info : listNames) {
+                if (info.msgFullName == *it) {
+                    msgInfo = info;
+                    break;
                 }
-            });
+            }
 
-            auto* pListItem = new QListWidgetItem();
+            auto* pListItem = new QListWidgetItem(listMsgRight);
             pListItem->setText(msgInfo.msgName.c_str());
             pListItem->setData(Qt::UserRole, msgInfo.msgFullName.c_str());
             listMsgRight->addItem(pListItem);
@@ -49,7 +47,7 @@ void CMsgIgnoreDialog::init(std::unordered_set<std::string>& setIgnoredMsg) {
         listMsgLeft->clear();
         auto it = listNames.begin();
         for (; it != listNames.end(); ++it) {
-            auto* pListItem = new QListWidgetItem();
+            auto* pListItem = new QListWidgetItem(listMsgLeft);
             pListItem->setText(it->msgName.c_str());
             pListItem->setData(Qt::UserRole, it->msgFullName.c_str());
             listMsgLeft->addItem(pListItem);
@@ -76,7 +74,12 @@ void CMsgIgnoreDialog::filterMessage(const QString& filterText, QListWidget& lis
     bool bIsNumberic = false;
     int msgTypeNum = filterText.toInt(&bIsNumberic); 
     if (bIsNumberic) {
-        std::string strMsgName = ProtoManager::singleton().getMsgInfoByMsgType(msgTypeNum).msgName;
+        const CProtoManager::MsgInfo* pMsgInfo = ProtoManager::instance().getMsgInfoByMsgType(msgTypeNum);
+        if (nullptr == pMsgInfo) {
+            return;
+        }
+
+        std::string strMsgName = pMsgInfo->msgName;
         QList<QListWidgetItem*> listFound = listWidget.findItems(strMsgName.c_str(), Qt::MatchCaseSensitive);
         for (int i = 0; i < listFound.count(); ++i) {
             listFound[i]->setHidden(false);
@@ -105,8 +108,8 @@ void CMsgIgnoreDialog::handleAll2RightBtnClicked() {
     for (int i = 0; i < listMsgLeft->count(); ++i) {
         QListWidgetItem* pItem = listMsgLeft->item(i);
         if (!pItem->isHidden()) {
-            listMsgRight->addItem(new QListWidgetItem(*pItem));
-            delete listMsgLeft->takeItem(i);
+            pItem = listMsgLeft->takeItem(i);
+            listMsgRight->addItem(pItem);
             i--;
         }
     }
@@ -118,8 +121,8 @@ void CMsgIgnoreDialog::handleAll2LeftBtnClicked() {
     for (int i = 0; i < listMsgRight->count(); ++i) {
         QListWidgetItem* pItem = listMsgRight->item(i);
         if (!pItem->isHidden()) {
-            listMsgLeft->addItem(new QListWidgetItem(*pItem));
-            delete listMsgRight->takeItem(i);
+            pItem = listMsgRight->takeItem(i);
+            listMsgLeft->addItem(pItem);
             i--;
         }
     }
@@ -129,9 +132,8 @@ void CMsgIgnoreDialog::handleAll2LeftBtnClicked() {
 void CMsgIgnoreDialog::handleOne2RightBtnClicked() {
     QList<QListWidgetItem*> listSelected = listMsgLeft->selectedItems();
     for (int i = 0; i < listSelected.count(); ++i) {
-        QListWidgetItem* pItem = new QListWidgetItem(*listSelected[i]);
+        auto* pItem = listMsgLeft->takeItem(i);
         listMsgRight->addItem(pItem);
-        delete listSelected[i];
     }
     filterMessage(editFilterRight->text(), *listMsgRight);
 }
@@ -139,9 +141,8 @@ void CMsgIgnoreDialog::handleOne2RightBtnClicked() {
 void CMsgIgnoreDialog::handleOne2LeftBtnClicked() {
     QList<QListWidgetItem*> listSelected = listMsgRight->selectedItems();
     for (int i = 0; i < listSelected.count(); ++i) {
-        QListWidgetItem* pItem = new QListWidgetItem(*listSelected[i]);
+        auto* pItem = listMsgRight->takeItem(i);
         listMsgLeft->addItem(pItem);
-        delete listSelected[i];
     }
     filterMessage(editFilterLeft->text(), *listMsgLeft);
 }

@@ -93,9 +93,6 @@
       <Extensions>ui</Extensions>
       <ParseFiles>true</ParseFiles>
     </Filter>
-    <Filter Include="Toolkit">
-      <UniqueIdentifier>{43f825ad-5d66-42f3-90f8-49a6d3fded8c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Widget">
       <UniqueIdentifier>{eeab453d-b521-4b32-bb3b-11d04f9179ad}</UniqueIdentifier>
     </Filter>
@@ -131,9 +128,6 @@
     <ClInclude Include="ip4validator.h">
       <Filter>Widget</Filter>
     </ClInclude>
-    <ClInclude Include="toolkit\Singleton.h">
-      <Filter>Toolkit</Filter>
-    </ClInclude>
     <ClInclude Include="protobuf\protobuf.h">
       <Filter>Protobuf</Filter>
     </ClInclude>
@@ -153,5 +147,6 @@
       <Filter>Lua</Filter>
     </ClInclude>
     <ClInclude Include="define.h" />
+    <ClInclude Include="Singleton.h" />
   </ItemGroup>
 </Project>

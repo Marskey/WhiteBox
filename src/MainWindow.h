@@ -62,6 +62,9 @@ public slots:
 
     void handleListLogItemCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
     void handleListLogItemClicked(QListWidgetItem* pItem);
+    void handleListLogCustomContextMenuRequested(const QPoint& pos);
+    void handleListLogActionAddToIgnoreList();
+
     void handleFilterTextChanged(const QString& text);
     void handleSendBtnClicked();
     void handleConnectBtnClicked();
@@ -95,7 +98,7 @@ private:
     ///注册类对象给lua
     void luaRegisterCppClass();
 
-    void addDetailLogInfo(std::string msg, std::string detail, QColor color = QColor(Qt::GlobalColor(0)));
+    void addDetailLogInfo(const char* msgFullName, const char* msg, const char* detail, QColor color = QColor(Qt::GlobalColor(0)));
 
     void connectStateChange(EConnectState state);
 
@@ -195,11 +198,11 @@ protected:
                         std::string detail = modelIdx.data(Qt::ToolTipRole).toString().toStdString();
 
                         if (detail.empty()) {
-                            google::protobuf::Message* pMessage = ProtoManager::singleton().createMessage(msgFullName.toStdString().c_str());
+                            google::protobuf::Message* pMessage = ProtoManager::instance().createMessage(msgFullName.toStdString().c_str());
                             if (pMessage == nullptr) {
                                 return false;
                             }
-                            google::protobuf::util::MessageToJsonString(*pMessage, &detail, ConfigHelper::singleton().getJsonPrintOption());
+                            google::protobuf::util::MessageToJsonString(*pMessage, &detail, ConfigHelper::instance().getJsonPrintOption());
                             delete pMessage;
                         }
 
