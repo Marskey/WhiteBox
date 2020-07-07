@@ -13,6 +13,11 @@ CConfigHelper::CConfigHelper(QObject* parent) : QObject(parent) {
     m_protoJsonOption.preserve_proto_field_names = true;
 }
 
+CConfigHelper::~CConfigHelper() {
+    delete m_pSettings;
+    m_pSettings = nullptr;
+}
+
 bool CConfigHelper::init(const QString& configuration) {
     m_configFile = configuration;
     QFile file = QFile(m_configFile);

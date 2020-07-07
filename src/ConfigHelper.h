@@ -13,6 +13,7 @@ class CConfigHelper : public QObject
 
 public:
     CConfigHelper(QObject *parent = nullptr);
+    ~CConfigHelper();
 
     bool init(const QString &configuration);
 

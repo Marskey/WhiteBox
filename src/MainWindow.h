@@ -75,6 +75,9 @@ public slots:
     void handleSearchLogBtnNextResult();
 
     void handleBtnIgnoreMsgClicked();
+
+    void handleBtnClearLogClicked();
+
     void handleLogInfoAdded(const QModelIndex& parent, int start, int end);
 
 protected:
@@ -142,7 +145,7 @@ public:
         strftime(tmp, sizeof(tmp), "[%X] ", localtime(&t));
 
         msg = tmp + msg;
-        auto* pListWidgetItem = new QListWidgetItem(msg.c_str());
+        auto* pListWidgetItem = new QListWidgetItem(msg.c_str(), m_logWidget);
 
         if (QColor(Qt::GlobalColor(0)) != color) {
             pListWidgetItem->setForeground(color);

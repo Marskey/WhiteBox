@@ -9,13 +9,6 @@ class CSession;
 typedef std::shared_ptr<CSession> SessionPtr;
 class CNetManager
 {
-struct MessageDataInfo
-{
-    const char* fullName = "";
-    const char* pData = nullptr;
-    size_t size = 0;
-};
-
 public:
     CNetManager();
     virtual ~CNetManager();

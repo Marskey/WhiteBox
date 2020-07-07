@@ -77,10 +77,10 @@ int32_t CSession::CReadData::readInt32(size_t offset) {
     return *reinterpret_cast<int32_t*>(pReadData + offset);
 }
 
-void CSession::CReadData::bindMessage(const char* msgFullName, size_t msgStart, size_t msgSize) {
+void CSession::CReadData::bindMessage(const char* msgFullName, size_t offset, size_t size) {
     messageFullName = msgFullName;
-    pMessageData = pReadData + msgStart;
-    messageSize = msgSize;
+    pMessageData = pReadData + offset;
+    messageSize = size;
 }
 
 CSession::CSession(SocketId id, asio::ip::tcp::socket& s, size_t recevBuffSize, size_t sendBuffSize)
@@ -175,8 +175,8 @@ void CSession::read() {
             self->m_readData.writeSize += size;
 
             while (self->m_readData.writeSize > 0) {
-                auto packetSize =  LuaScriptSystem::singleton().Invoke<size_t>("_on_read_socket_buffer"
-                                                                              , static_cast<lua_api::IReadData*>(&self->m_readData)
+                auto packetSize =  LuaScriptSystem::singleton().Invoke<size_t>("__APP_on_read_socket_buffer"
+                                                                              , static_cast<lua_api::ISocketReader*>(&self->m_readData)
                                                                               , self->m_readData.writeSize);
                 if (0 == packetSize) {
                     break;
@@ -213,10 +213,10 @@ void CSession::write() {
         return;
     }
 
-    CWriteData& writeData = m_sendQueue.front();
+    auto& writeData = m_sendQueue.front();
     asio::async_write(m_socket
                       , asio::buffer(writeData.data.data(), writeData.data.size())
-                      , [self = shared_from_this()](std::error_code ec, std::size_t) {
+                      , [self = shared_from_this()](std::error_code ec, std::size_t size) {
         if (ec) {
             // 释放内存
             self->close(true);
@@ -232,8 +232,8 @@ void CSession::write() {
 
 void CSession::sendProtobufMsg(const char* msgFullName, const void* pData, size_t size) {
     CWriteData writeData;
-    LuaScriptSystem::singleton().Invoke("_on_write_socket_buffer"
-                                        , static_cast<lua_api::IWriteData*>(&writeData)
+    LuaScriptSystem::singleton().Invoke("__APP_on_write_socket_buffer"
+                                        , static_cast<lua_api::ISocketWriter*>(&writeData)
                                         , msgFullName
                                         , (void*)pData, size);
 

@@ -9,6 +9,14 @@ CClient::CClient() {
     m_sendMsgDataBuf.reserve(MAX_BUFF_SIZE);
 }
 
+CClient::~CClient() {
+    m_sendMsgDataBuf.clear();
+    for (auto& pair : m_msgs) {
+        delete pair.second;
+    }
+    m_msgs.clear();
+}
+
 void CClient::connectTo(std::string ip, Port port, std::function<void(bool)> callback) {
     m_connectCallback = callback;
 
@@ -65,7 +73,7 @@ void CClient::connect(const char* ip, Port port, BuffSize recv, BuffSize send, c
             return;
         }
 
-        LuaScriptSystem::singleton().Invoke("_on_client_connected"
+        LuaScriptSystem::singleton().Invoke("__APP_on_client_connected"
                                             , static_cast<lua_api::IClient*>(this)
                                             , t);
     };
@@ -83,4 +91,5 @@ void CClient::sendJsonMsg(const char* msgFullName, const char* jsonData) {
     if (!sendMsg(*pMessage)) {
         LOG_WARN("Cannot send the message:{}, json data:{}", msgFullName, jsonData);
     }
+    delete pMessage;
 }

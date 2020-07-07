@@ -40,11 +40,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IntDir>$(SolutionDir)BuildTemp/$(Platform)/$(Configuration)/$(ProjectName)/</IntDir>
+    <IntDir>$(SolutionDir)buildTemp/$(Platform)/$(Configuration)/$(ProjectName)/</IntDir>
     <OutDir>$(SolutionDir)bin/$(Platform)/$(Configuration)/$(ProjectName)/</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IntDir>$(SolutionDir)BuildTemp/$(Platform)/$(Configuration)/$(ProjectName)/</IntDir>
+    <IntDir>$(SolutionDir)buildTemp/$(Platform)/$(Configuration)/$(ProjectName)/</IntDir>
     <OutDir>$(SolutionDir)bin/$(Platform)/$(Configuration)/$(ProjectName)/</OutDir>
   </PropertyGroup>
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt_defaults.props')">
@@ -78,7 +78,7 @@
       <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(Qt_LIBPATH_);$(SolutionDir)/thirdparty/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libprotobufd.lib;lua54.lib;fmtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libprotobufd.lib;lua54d.lib;fmtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

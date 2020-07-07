@@ -8,7 +8,7 @@
 
 class CSession : public std::enable_shared_from_this<CSession> 
 {
-class CWriteData final : public lua_api::IWriteData
+class CWriteData final : public lua_api::ISocketWriter
 {
 public:
     std::vector<char> data;
@@ -22,7 +22,7 @@ public:
     void writeBinary(void* pData, size_t size) override;
 };
 
-class CReadData final : public lua_api::IReadData
+class CReadData final : public lua_api::ISocketReader
 {
 public:
     char* pReadData = nullptr;
@@ -33,15 +33,13 @@ public:
     const char* pMessageData = nullptr;
     size_t messageSize = 0;
 
-    // lua_api::IReadData begin
     uint8_t readUint8(size_t offset) override;
     int8_t readInt8(size_t offset) override;
     uint16_t readUint16(size_t offset) override;
     int16_t readInt16(size_t offset) override;
     uint32_t readUint32(size_t offset) override;
     int32_t readInt32(size_t offset) override;
-    void bindMessage(const char* msgFullName, size_t msgStart, size_t msgSize) override;
-    // lua_api::IReadData end
+    void bindMessage(const char* msgFullName, size_t offset, size_t size) override;
 };
 
 public:

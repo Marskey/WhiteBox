@@ -11,7 +11,7 @@ class CClient : public ec_net::INetEvent, public lua_api::IClient
 
 public:
     CClient();
-    virtual ~CClient() = default;
+    virtual ~CClient();
 
     // 暂留 //
     void connectTo(std::string ip, Port port, std::function<void(bool)> callback);

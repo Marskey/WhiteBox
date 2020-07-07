@@ -258,7 +258,26 @@
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="5,0,3,1,1">
+          <layout class="QHBoxLayout" name="horizontalLayout_10" stretch="0,5,0,3,1,1">
+           <item>
+            <widget class="QPushButton" name="btnClearLog">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>40</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>Clear</string>
+             </property>
+            </widget>
+           </item>
            <item>
             <spacer name="horizontalSpacer_3">
              <property name="orientation">

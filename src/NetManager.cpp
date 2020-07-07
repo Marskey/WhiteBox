@@ -99,6 +99,8 @@ void CNetManager::handleDisconnect(SocketId socketId) {
     if (m_pNetEvent) {
         m_pNetEvent->onDisconnect(socketId);
     }
+
+    m_mapSessions.erase(socketId);
 }
 
 void CNetManager::handleError(SocketId socketId, ec_net::ENetError error) {

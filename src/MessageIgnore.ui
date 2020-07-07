@@ -45,7 +45,7 @@
          <item>
           <widget class="QListWidget" name="listMsgLeft">
            <property name="selectionMode">
-            <enum>QAbstractItemView::MultiSelection</enum>
+            <enum>QAbstractItemView::ExtendedSelection</enum>
            </property>
            <property name="selectionBehavior">
             <enum>QAbstractItemView::SelectItems</enum>
@@ -113,7 +113,7 @@
          <item>
           <widget class="QListWidget" name="listMsgRight">
            <property name="selectionMode">
-            <enum>QAbstractItemView::MultiSelection</enum>
+            <enum>QAbstractItemView::ExtendedSelection</enum>
            </property>
           </widget>
          </item>

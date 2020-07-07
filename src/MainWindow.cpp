@@ -9,7 +9,6 @@
 #include "ConfigHelper.h"
 #include "LuaInterface.h"
 #include "LuaScriptSystem.h"
-#include "Session.h"
 
 extern "C" {
 #include "protobuf/protobuflib.h"
@@ -18,7 +17,6 @@ extern "C" {
 #include <QTime>
 #include <QTimer>
 #include <QMessageBox>
-#include <fstream>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonDocument>
@@ -49,7 +47,7 @@ CMainWindow::CMainWindow(QWidget* parent)
     ui.splitterV->restoreState(ConfigHelper::singleton().getSplitterV());
 
     {
-        auto* pLineEdit = new CLineEdit(this);
+        auto* pLineEdit = new CLineEdit(ui.cbAccount);
         pLineEdit->setPlaceholderText("Account");
         ui.cbAccount->setLineEdit(pLineEdit);
     }
@@ -59,8 +57,8 @@ CMainWindow::CMainWindow(QWidget* parent)
     ConfigHelper::singleton().restoreWidgetComboxState("Account", *ui.cbAccount);
 
     {
-        auto* pLineEdit = new CLineEdit(this);
-        auto* pAddrValidator = new IP4Validator(this);
+        auto* pLineEdit = new CLineEdit(ui.cbIp);
+        auto* pAddrValidator = new IP4Validator(ui.cbIp);
         pLineEdit->setValidator(pAddrValidator);
         pLineEdit->setPlaceholderText("IP:Port");
         ui.cbIp->setLineEdit(pLineEdit);
@@ -103,6 +101,7 @@ CMainWindow::CMainWindow(QWidget* parent)
     QObject::connect(ui.btnLogNextResult, SIGNAL(clicked()), this, SLOT(handleSearchLogBtnNextResult()));
 
     QObject::connect(ui.btnIgnoreMsg, SIGNAL(clicked()), this, SLOT(handleBtnIgnoreMsgClicked()));
+    QObject::connect(ui.btnClearLog, SIGNAL(clicked()), this, SLOT(handleBtnClearLogClicked()));
 
     QObject::connect(ui.actionSave, &QAction::triggered, this, &CMainWindow::saveCache);
     QObject::connect(ui.actionLoad, &QAction::triggered, this, &CMainWindow::loadCache);
@@ -114,6 +113,11 @@ CMainWindow::~CMainWindow() {
     delete m_cbKeyPressFilter;
     delete m_listMessageKeyFilter;
     delete m_pPrinter;
+
+    for (auto& pair : m_mapMessages) {
+        delete pair.second;
+    }
+    m_mapMessages.clear();
 }
 
 bool CMainWindow::init() {
@@ -125,6 +129,7 @@ bool CMainWindow::init() {
             ConfigHelper::singleton().deleteConfigFile();
             exit(0);
         }
+        delete pDlg;
     }
 
     // 初始化日志服务
@@ -155,7 +160,7 @@ bool CMainWindow::init() {
         return false;
     }
 
-    LuaScriptSystem::singleton().Invoke("_on_proto_reload"
+    LuaScriptSystem::singleton().Invoke("__APP_on_proto_reload"
                                         , static_cast<lua_api::IProtoManager*>(&ProtoManager::singleton()));
     LOG_INFO("Import proto files completed");
 
@@ -163,7 +168,7 @@ bool CMainWindow::init() {
     std::list<CProtoManager::MsgInfo> listNames = ProtoManager::singleton().getMsgInfos();
     auto it = listNames.begin();
     for (; it != listNames.end(); ++it) {
-        auto* pListItem = new QListWidgetItem();
+        auto* pListItem = new QListWidgetItem(ui.listMessage);
         pListItem->setText(it->msgName.c_str());
         pListItem->setData(Qt::UserRole, it->msgFullName.c_str());
         ui.listMessage->addItem(pListItem);
@@ -180,7 +185,6 @@ bool CMainWindow::init() {
     pMainTimer->start();
 
     LOG_INFO("Ready.             - Version {}.{}.{} By marskey.", g_version.main, g_version.sub, g_version.build);
-
     return true;
 }
 
@@ -388,6 +392,7 @@ void CMainWindow::openSettingDlg() {
         QMessageBox::information(this, "", "Modified successfuly, restart the program.");
         exit(0);
     }
+    delete pDlg;
 }
 
 std::string CMainWindow::highlightJsonData(const QString& jsonData) {
@@ -445,12 +450,12 @@ void CMainWindow::onParseMessage(const char* msgFullName, const char* pData, siz
     if (pRecvMesage->ParseFromArray(pData, size)) {
         std::string msgStr;
         google::protobuf::util::MessageToJsonString(*pRecvMesage, &msgStr, ConfigHelper::singleton().getJsonPrintOption());
-        addDetailLogInfo(fmt::format("Recieved {0}({1}) size: {2}", msgFullName, nMessageId, pRecvMesage->ByteSize())
+        addDetailLogInfo(fmt::format("Received {0}({1}) size: {2}", msgFullName, nMessageId, pRecvMesage->ByteSize())
                             , highlightJsonData(msgStr.c_str())
                             , QColor(57, 115, 157)
         );
 
-        LuaScriptSystem::singleton().Invoke("_on_message_recv"
+        LuaScriptSystem::singleton().Invoke("__APP_on_message_recv"
                                             , static_cast<lua_api::IClient*>(&m_client)
                                             , msgFullName
                                             , (void*)(&pRecvMesage));
@@ -662,7 +667,7 @@ void CMainWindow::handleSendBtnClicked() {
         addDetailLogInfo(fmt::format("Sent Message {}", selectMsgName.toStdString()), highlightJsonData(msgStr.c_str()), Qt::black);
 
         if (0 == ui.listRecentMessage->findItems(selectMsgName, Qt::MatchExactly).count()) {
-            auto* pItem = new QListWidgetItem(selectMsgName);
+            auto* pItem = new QListWidgetItem(selectMsgName, ui.listRecentMessage);
             pItem->setToolTip(msgStr.c_str());
             ui.listRecentMessage->insertItem(0, pItem);
         }
@@ -703,7 +708,7 @@ void CMainWindow::handleConnectBtnClicked() {
     std::string ip = ipAndPort[0].toStdString();
     Port port = ipAndPort[1].toUShort();
 
-    LuaScriptSystem::singleton().Invoke("_on_connect_btn_click"
+    LuaScriptSystem::singleton().Invoke("__APP_on_connect_btn_click"
                                         , static_cast<lua_api::IClient*>(&m_client)
                                         , ip
                                         , port
@@ -933,6 +938,10 @@ void CMainWindow::handleBtnIgnoreMsgClicked() {
     delete pDlg;
 }
 
+void CMainWindow::handleBtnClearLogClicked() {
+    ui.listLogs->clear();
+}
+
 void CMainWindow::handleLogInfoAdded(const QModelIndex& parent, int start, int end) {
     handleSearchLogTextChanged();
 
@@ -1016,27 +1025,30 @@ bool CMainWindow::importProtos() {
 
 void CMainWindow::luaRegisterCppClass() {
     auto* pLuaState = LuaScriptSystem::singleton().GetLuaState();
+    if (nullptr == pLuaState) {
+        return;
+    }
     using namespace  lua_api; 
     luabridge::getGlobalNamespace(pLuaState)
-        .beginClass<IReadData>("IReadData")
-        .addFunction("readUint8", &IReadData::readUint8)
-        .addFunction("readInt8", &IReadData::readInt8)
-        .addFunction("readUint16", &IReadData::readUint16)
-        .addFunction("readInt16", &IReadData::readInt16)
-        .addFunction("readUint32", &IReadData::readUint32)
-        .addFunction("readInt32", &IReadData::readInt32)
-        .addFunction("bindMessage", &IReadData::bindMessage)
+        .beginClass<ISocketReader>("ISocketReader")
+        .addFunction("readUint8", &ISocketReader::readUint8)
+        .addFunction("readInt8", &ISocketReader::readInt8)
+        .addFunction("readUint16", &ISocketReader::readUint16)
+        .addFunction("readInt16", &ISocketReader::readInt16)
+        .addFunction("readUint32", &ISocketReader::readUint32)
+        .addFunction("readInt32", &ISocketReader::readInt32)
+        .addFunction("bindMessage", &ISocketReader::bindMessage)
         .endClass();
 
     luabridge::getGlobalNamespace(pLuaState)
-        .beginClass<IWriteData>("IWriteData")
-        .addFunction("writeUint8", &IWriteData::writeUint8)
-        .addFunction("writeUint8", &IWriteData::writeInt8)
-        .addFunction("writeUint16", &IWriteData::writeUint16)
-        .addFunction("writeInt16", &IWriteData::writeInt16)
-        .addFunction("writeUint32", &IWriteData::writeUint32)
-        .addFunction("writeInt32", &IWriteData::writeInt32)
-        .addFunction("writeBinary", &IWriteData::writeBinary)
+        .beginClass<ISocketWriter>("ISocketWriter")
+        .addFunction("writeUint8", &ISocketWriter::writeUint8)
+        .addFunction("writeUint8", &ISocketWriter::writeInt8)
+        .addFunction("writeUint16", &ISocketWriter::writeUint16)
+        .addFunction("writeInt16", &ISocketWriter::writeInt16)
+        .addFunction("writeUint32", &ISocketWriter::writeUint32)
+        .addFunction("writeInt32", &ISocketWriter::writeInt32)
+        .addFunction("writeBinary", &ISocketWriter::writeBinary)
         .endClass();
 
     luabridge::getGlobalNamespace(pLuaState)
@@ -1059,7 +1071,7 @@ void CMainWindow::addDetailLogInfo(std::string msg, std::string detail, QColor c
     strftime(tmp, sizeof(tmp), "[%X] ", localtime(&t));
 
     msg = tmp + msg;
-    auto* pListWidgetItem = new QListWidgetItem(msg.c_str());
+    auto* pListWidgetItem = new QListWidgetItem(msg.c_str(), ui.listLogs);
     pListWidgetItem->setData(Qt::UserRole, detail.c_str());
 
     if (QColor(Qt::GlobalColor(0)) != color) {
