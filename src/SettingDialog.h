@@ -10,7 +10,7 @@ public:
     CSettingDialog(QWidget *parent);
     ~CSettingDialog();
 
-    void init();
+    void init(bool bFirstOpen);
 
 public slots:
     void handleSelectRootBtnClicked();

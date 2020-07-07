@@ -93,7 +93,11 @@ protected:
     void addNewItemIntoCombox(QComboBox& combox);
 
 private:
-    bool importProtos();
+    void clearProto();
+    bool loadProto();
+    bool loadLua();
+
+    void doReload();
 
     ///注册类对象给lua
     void luaRegisterCppClass();
@@ -155,7 +159,7 @@ public:
         }
 
         m_logWidget->addItem(pListWidgetItem);
-
+        m_logWidget->update();
     }
 
     QListWidget* m_logWidget = nullptr;

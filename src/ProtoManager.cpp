@@ -5,14 +5,7 @@ CProtoManager::CProtoManager() {
 }
 
 CProtoManager::~CProtoManager() {
-    delete m_importerInfo.pFactory;
-    m_importerInfo.pFactory = nullptr;
-    delete m_importerInfo.pSourceTree;
-    m_importerInfo.pSourceTree = nullptr;
-    delete m_importerInfo.pCollector;
-    m_importerInfo.pCollector = nullptr;
-    delete m_importerInfo.pImporter;
-    m_importerInfo.pImporter = nullptr;
+    clear();
 }
 
 bool CProtoManager::init(const std::string& rootPath) {
@@ -22,6 +15,30 @@ bool CProtoManager::init(const std::string& rootPath) {
     m_importerInfo.pImporter = new google::protobuf::compiler::Importer(m_importerInfo.pSourceTree, m_importerInfo.pCollector);
     m_importerInfo.pFactory = new google::protobuf::DynamicMessageFactory();
     return true;
+}
+
+void CProtoManager::clear() {
+    m_mapMsgFullName2MsgInfo.clear();
+
+    if (m_importerInfo.pFactory) {
+        delete m_importerInfo.pFactory;
+        m_importerInfo.pFactory = nullptr;
+    }
+
+    if (m_importerInfo.pSourceTree) {
+        delete m_importerInfo.pSourceTree;
+        m_importerInfo.pSourceTree = nullptr;
+    }
+
+    if (m_importerInfo.pCollector) {
+        delete m_importerInfo.pCollector;
+        m_importerInfo.pCollector = nullptr;
+    }
+
+    if (m_importerInfo.pImporter) {
+        delete m_importerInfo.pImporter;
+        m_importerInfo.pImporter = nullptr;
+    }
 }
 
 bool CProtoManager::importProto(const std::string& virtualFilePath) {

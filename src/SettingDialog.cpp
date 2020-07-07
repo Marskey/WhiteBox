@@ -18,12 +18,17 @@ CSettingDialog::~CSettingDialog()
 {
 }
 
-void CSettingDialog::init() {
+void CSettingDialog::init(bool bFirstOpen) {
     editRootPath->setText(ConfigHelper::instance().getProtoRootPath());
     editLoadPath->setText(ConfigHelper::instance().getProtoFilesLoadPath());
     editScriptPath->setText(ConfigHelper::instance().getLuaScriptPath());
 
     checkAvailable();
+    if (bFirstOpen) {
+        okButton->setText("Ok");
+    } else {
+        okButton->setText("Reload");
+    }
 }
 
 void CSettingDialog::handleSelectRootBtnClicked() {

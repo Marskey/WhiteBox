@@ -51,6 +51,8 @@ public:
 
     bool init(const std::string& rootPath);
 
+    void clear();
+
     bool importProto(const std::string& virtualFilePath);
 
     std::list<MsgInfo> getMsgInfos();

@@ -127,7 +127,7 @@ CMainWindow::~CMainWindow() {
 bool CMainWindow::init() {
     if (ConfigHelper::instance().isFirstCreateFile()) {
         auto* pDlg = new CSettingDialog(this);
-        pDlg->init();
+        pDlg->init(true);
         int ret = pDlg->exec();
         if (ret == QDialog::Rejected) {
             ConfigHelper::instance().deleteConfigFile();
@@ -144,41 +144,15 @@ bool CMainWindow::init() {
     NetManager::instance().init(this);
     LOG_INFO("Initiated network");
 
-    // 注册lua
-    LuaScriptSystem::instance().Setup();
-    luaopen_protobuf(LuaScriptSystem::instance().GetLuaState());
-    luaRegisterCppClass();
-    LOG_INFO("Initiated lua script system");
-
-    QString luaScriptPath = ConfigHelper::instance().getLuaScriptPath();
-    LOG_INFO("Loading lua script: \"{}\"", luaScriptPath.toStdString());
-    if (!LuaScriptSystem::instance().RunScript(luaScriptPath.toStdString().c_str())) {
-        LOG_ERR("Error: Load lua script: \"{}\" failed!", luaScriptPath.toStdString());
+    // 加载lua
+    if (!loadLua()) {
         return false;
     }
-    LOG_INFO("Lua script: \"{}\" loaded", luaScriptPath.toStdString());
 
     // 加载proto文件
-    LOG_INFO("Importing proto files...");
-    if (!importProtos()) {
+    if (!loadProto()) {
         return false;
     }
-
-    LuaScriptSystem::instance().Invoke("__APP_on_proto_reload"
-                                        , static_cast<lua_api::IProtoManager*>(&ProtoManager::instance()));
-    LOG_INFO("Import proto files completed");
-
-    // 填充消息列表
-    std::list<CProtoManager::MsgInfo> listNames = ProtoManager::instance().getMsgInfos();
-    auto it = listNames.begin();
-    for (; it != listNames.end(); ++it) {
-        auto* pListItem = new QListWidgetItem(ui.listMessage);
-        pListItem->setText(it->msgName.c_str());
-        pListItem->setData(Qt::UserRole, it->msgFullName.c_str());
-        ui.listMessage->addItem(pListItem);
-    }
-
-    ui.labelMsgCnt->setText(std::to_string(ui.listMessage->count()).c_str());
 
     // 加载缓存 
     loadCache();
@@ -186,7 +160,7 @@ bool CMainWindow::init() {
     // 启动主定时器
     auto* pMainTimer = new QTimer(this);
     connect(pMainTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::update));
-    pMainTimer->start();
+    pMainTimer->start(40);
 
     LOG_INFO("Ready.             - Version {}.{}.{} By marskey.", g_version.main, g_version.sub, g_version.build);
     return true;
@@ -297,8 +271,10 @@ void CMainWindow::loadCache() {
     if (path.empty()) {
         path = "./cache.json";
         ConfigHelper::instance().saveCachePath(path.c_str());
+        return;
     }
 
+    LOG_INFO("Loading cache...");
     QFile jsonFile(path.c_str());
     jsonFile.open(QIODevice::ReadOnly | QIODevice::Text);
     if (!jsonFile.isOpen()) {
@@ -377,10 +353,19 @@ void CMainWindow::clearCache() {
     for (int i = 0; i < ui.listMessage->count(); ++i) {
         QListWidgetItem* pListWidgetItem = ui.listMessage->item(i);
         if (nullptr != pListWidgetItem) {
-            pListWidgetItem->setTextColor(Qt::black);
+            pListWidgetItem->setIcon(QIcon());
+            pListWidgetItem->setToolTip("");
         }
     }
-    QMessageBox::information(this, "", fmt::format("Cleared {0} messages.", count).c_str());
+    ui.labelCacheCnt->setText("0");
+
+    for (int i = 0; i < ui.listRecentMessage->count(); ++i) {
+        QListWidgetItem* pListWidgetItem = ui.listRecentMessage->item(i);
+        if (nullptr != pListWidgetItem) {
+            pListWidgetItem->setToolTip("");
+        }
+    }
+    //QMessageBox::information(this, "", fmt::format("Cleared {0} messages.", count).c_str());
 }
 
 void CMainWindow::update() {
@@ -389,12 +374,10 @@ void CMainWindow::update() {
 
 void CMainWindow::openSettingDlg() {
     auto* pDlg = new CSettingDialog(this);
-    pDlg->init();
+    pDlg->init(false);
     int ret = pDlg->exec();
     if (ret == QDialog::Accepted) {
-        // TODO (Marskey): reload proto
-        QMessageBox::information(this, "", "Modified successfuly, restart the program.");
-        exit(0);
+        doReload();
     }
     delete pDlg;
 }
@@ -996,6 +979,30 @@ void CMainWindow::handleLogInfoAdded(const QModelIndex& parent, int start, int e
     }
 }
 
+void CMainWindow::doReload() {
+    m_client.disconnect();
+
+    // 关闭lua
+    LuaScriptSystem::instance().Shutdown();
+
+    clearProto();
+    clearCache();
+
+    LOG_INFO("Reloading lua script path: \"{}\"..."
+             , ConfigHelper::instance().getLuaScriptPath().toStdString());
+    loadLua();
+    LOG_INFO("Reloading proto files from Root:\"{}\", Load Path:\"{}\"..."
+             , ConfigHelper::instance().getProtoRootPath().toStdString()
+             , ConfigHelper::instance().getProtoFilesLoadPath().toStdString());
+
+    loadProto();
+    // 加载缓存 
+    LOG_INFO("Reloading cache..."
+             , ConfigHelper::instance().getProtoRootPath().toStdString()
+             , ConfigHelper::instance().getProtoFilesLoadPath().toStdString());
+    loadCache();
+}
+
 void CMainWindow::closeEvent(QCloseEvent* event) {
     ConfigHelper::instance().saveMainWindowGeometry(saveGeometry());
     ConfigHelper::instance().saveMainWindowState(saveState());
@@ -1046,7 +1053,8 @@ void CMainWindow::addNewItemIntoCombox(QComboBox& combox) {
     combox.setCurrentIndex(0);
 }
 
-bool CMainWindow::importProtos() {
+bool CMainWindow::loadProto() {
+    LOG_INFO("Importing proto files...");
     QString strRootPath = ConfigHelper::instance().getProtoRootPath();
     QString strLoadPath = ConfigHelper::instance().getProtoFilesLoadPath();
 
@@ -1054,9 +1062,9 @@ bool CMainWindow::importProtos() {
     ProtoManager::instance().init(rootPath.absolutePath().toStdString());
 
     bool bSuccess = false;
-    QDirIterator it(strLoadPath, QStringList() << "*.proto", QDir::Files, QDirIterator::Subdirectories);
-    while (it.hasNext()) {
-        QString virtualPath = rootPath.relativeFilePath(it.next());
+    QDirIterator dirIt(strLoadPath, QStringList() << "*.proto", QDir::Files, QDirIterator::Subdirectories);
+    while (dirIt.hasNext()) {
+        QString virtualPath = rootPath.relativeFilePath(dirIt.next());
         bSuccess |= ProtoManager::instance().importProto(virtualPath.toStdString());
     }
 
@@ -1064,9 +1072,48 @@ bool CMainWindow::importProtos() {
         LOG_ERR("Import proto failed, check the path is correct.\nProtoRootPath: {0}\nProtoLoadPath: {1}"
                 , strRootPath.toStdString()
                 , strLoadPath.toStdString());
+        return false;
     }
 
-    return bSuccess;
+    LuaScriptSystem::instance().Invoke("__APP_on_proto_reload"
+                                        , static_cast<lua_api::IProtoManager*>(&ProtoManager::instance()));
+
+    // 填充消息列表
+    std::list<CProtoManager::MsgInfo> listNames = ProtoManager::instance().getMsgInfos();
+    auto it = listNames.begin();
+    for (; it != listNames.end(); ++it) {
+        auto* pListItem = new QListWidgetItem(ui.listMessage);
+        pListItem->setText(it->msgName.c_str());
+        pListItem->setData(Qt::UserRole, it->msgFullName.c_str());
+        ui.listMessage->addItem(pListItem);
+    }
+
+    ui.labelMsgCnt->setText(std::to_string(ui.listMessage->count()).c_str());
+    LOG_INFO("Import proto files completed");
+    return true;
+}
+
+bool CMainWindow::loadLua() {
+    LuaScriptSystem::instance().Setup();
+    luaopen_protobuf(LuaScriptSystem::instance().GetLuaState());
+    luaRegisterCppClass();
+    LOG_INFO("Initiated lua script system");
+
+    QString luaScriptPath = ConfigHelper::instance().getLuaScriptPath();
+    LOG_INFO("Loading lua script: \"{}\"", luaScriptPath.toStdString());
+    if (!LuaScriptSystem::instance().RunScript(luaScriptPath.toStdString().c_str())) {
+        LOG_ERR("Error: Load lua script: \"{}\" failed!", luaScriptPath.toStdString());
+        return false;
+    }
+    LOG_INFO("Lua script: \"{}\" loaded", luaScriptPath.toStdString());
+    return true;
+}
+
+void CMainWindow::clearProto() {
+    ui.labelMsgCnt->setText("0");
+    ui.listMessage->clear();
+    ui.listRecentMessage->clear();
+    ProtoManager::instance().clear();
 }
 
 void CMainWindow::luaRegisterCppClass() {
