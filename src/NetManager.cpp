@@ -107,6 +107,10 @@ void CNetManager::handleError(SocketId socketId, ec_net::ENetError error) {
     if (m_pNetEvent) {
         m_pNetEvent->onError(socketId, error);
     }
+
+    if (error != ec_net::eNET_SEND_OVERFLOW) {
+        m_mapSessions.erase(socketId);
+    }
 }
 
 void CNetManager::handleParseMessage(const char* fullName, const char* pData, size_t size) {

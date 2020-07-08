@@ -13,8 +13,7 @@ public:
     void init(bool bFirstOpen);
 
 public slots:
-    void handleSelectRootBtnClicked();
-    void handleSelectLoadBtnClicked();
+    void handleSelectProtoBtnClicked();
     void handleSelectScriptBtnClicked();
     void handlePathChanged(const QString& newText);
 

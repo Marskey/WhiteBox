@@ -33,11 +33,9 @@ public:
     QByteArray getSplitterH() const;
     QByteArray getSplitterV() const;
 
-    void saveProtoRootPath(const QString& path);
-    void saveProtoFilesLoadPath(const QString& path);
+    void saveProtoPath(const QString& path);
 
-    QString getProtoRootPath() const;
-    QString getProtoFilesLoadPath() const;
+    QString getProtoPath() const;
 
     void saveWidgetComboxState(const QString& name, const QComboBox& combox);
     void restoreWidgetComboxState(const QString& name, QComboBox& combox);

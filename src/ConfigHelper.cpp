@@ -85,20 +85,12 @@ QByteArray CConfigHelper::getSplitterV() const {
     return m_pSettings->value("/Window/SplitterVertical").toByteArray();
 }
 
-void CConfigHelper::saveProtoRootPath(const QString& path) {
-    m_pSettings->setValue("/Protobuf/ProtoRootPath", path);
+void CConfigHelper::saveProtoPath(const QString& path) {
+    m_pSettings->setValue("/Protobuf/ProtoPath", path);
 }
 
-void CConfigHelper::saveProtoFilesLoadPath(const QString& path) {
-    m_pSettings->setValue("/Protobuf/ProtoLoadPath", path);
-}
-
-QString CConfigHelper::getProtoRootPath() const {
-    return m_pSettings->value("/Protobuf/ProtoRootPath").toString();
-}
-
-QString CConfigHelper::getProtoFilesLoadPath() const {
-    return m_pSettings->value("/Protobuf/ProtoLoadPath").toString();
+QString CConfigHelper::getProtoPath() const {
+    return m_pSettings->value("/Protobuf/ProtoPath").toString();
 }
 
 void CConfigHelper::saveWidgetComboxState(const QString& name, const QComboBox& combox) {

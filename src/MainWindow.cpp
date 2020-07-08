@@ -238,7 +238,7 @@ void CMainWindow::saveCache() {
     QFile jsonFile(path.c_str());
     jsonFile.open(QIODevice::WriteOnly | QIODevice::Text);
     if (!jsonFile.isOpen()) {
-        QMessageBox::warning(this, "", fmt::format("Cannot create: {0}", path).c_str());
+        QMessageBox::warning(this, "", fmt::format("Cannot save cache file: {0}", path).c_str());
         return;
     }
 
@@ -461,7 +461,7 @@ void CMainWindow::onConnectSucceed(const char* strRemoteIp, Port port, SocketId 
 }
 
 void CMainWindow::onDisconnect(SocketId socketId) {
-    LOG_INFO("Connection closed socket id: {}", socketId);
+    LOG_INFO("You close connection, socket id: {}", socketId);
     connectStateChange(kDisconnect);
     m_client.onDisconnect(socketId);
 }
@@ -480,8 +480,8 @@ void CMainWindow::onError(SocketId socketId, ec_net::ENetError error) {
     case ec_net::eNET_SEND_OVERFLOW:
         LOG_ERR("Send buffer overflow!");
         break;
-    case ec_net::eNET_PARSER_NULL:
-        LOG_ERR("Parser cannot be null, check if set parser");
+    case ec_net::eNET_DISCONNECT_BY_REMOTE:
+        LOG_ERR("Connection closed by remote, socket id: {}", socketId);
         connectStateChange(kDisconnect);
         break;
     default:;
@@ -991,15 +991,11 @@ void CMainWindow::doReload() {
     LOG_INFO("Reloading lua script path: \"{}\"..."
              , ConfigHelper::instance().getLuaScriptPath().toStdString());
     loadLua();
-    LOG_INFO("Reloading proto files from Root:\"{}\", Load Path:\"{}\"..."
-             , ConfigHelper::instance().getProtoRootPath().toStdString()
-             , ConfigHelper::instance().getProtoFilesLoadPath().toStdString());
-
+    LOG_INFO("Reloading proto files from path:\"{}\"..."
+             , ConfigHelper::instance().getProtoPath().toStdString());
     loadProto();
     // 加载缓存 
-    LOG_INFO("Reloading cache..."
-             , ConfigHelper::instance().getProtoRootPath().toStdString()
-             , ConfigHelper::instance().getProtoFilesLoadPath().toStdString());
+    LOG_INFO("Reloading cache...");
     loadCache();
 }
 
@@ -1055,23 +1051,19 @@ void CMainWindow::addNewItemIntoCombox(QComboBox& combox) {
 
 bool CMainWindow::loadProto() {
     LOG_INFO("Importing proto files...");
-    QString strRootPath = ConfigHelper::instance().getProtoRootPath();
-    QString strLoadPath = ConfigHelper::instance().getProtoFilesLoadPath();
-
-    QDir rootPath = strRootPath;
-    ProtoManager::instance().init(rootPath.absolutePath().toStdString());
+    QString strPath = ConfigHelper::instance().getProtoPath();
+    QDir protoDir = strPath;
+    ProtoManager::instance().init(protoDir.absolutePath().toStdString());
 
     bool bSuccess = false;
-    QDirIterator dirIt(strLoadPath, QStringList() << "*.proto", QDir::Files, QDirIterator::Subdirectories);
+    QDirIterator dirIt(strPath, QStringList() << "*.proto", QDir::Files, QDirIterator::Subdirectories);
     while (dirIt.hasNext()) {
-        QString virtualPath = rootPath.relativeFilePath(dirIt.next());
+        QString virtualPath = protoDir.relativeFilePath(dirIt.next());
         bSuccess |= ProtoManager::instance().importProto(virtualPath.toStdString());
     }
 
     if (!bSuccess) {
-        LOG_ERR("Import proto failed, check the path is correct.\nProtoRootPath: {0}\nProtoLoadPath: {1}"
-                , strRootPath.toStdString()
-                , strLoadPath.toStdString());
+        LOG_ERR("Import proto failed, check the path is correct.\nProtoPath: {}", strPath.toStdString());
         return false;
     }
 
