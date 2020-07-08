@@ -46,16 +46,16 @@ CMainWindow::CMainWindow(QWidget* parent)
     ui.splitterH->restoreState(ConfigHelper::instance().getSplitterH());
     ui.splitterV->restoreState(ConfigHelper::instance().getSplitterV());
 
+    // 用户名
     {
         auto* pLineEdit = new CLineEdit(ui.cbAccount);
         pLineEdit->setPlaceholderText("Account");
         ui.cbAccount->setLineEdit(pLineEdit);
     }
     ui.cbAccount->view()->installEventFilter(m_cbKeyPressFilter);
-
-    // 读取用户名
     ConfigHelper::instance().restoreWidgetComboxState("Account", *ui.cbAccount);
 
+    // ip端口
     {
         auto* pLineEdit = new CLineEdit(ui.cbIp);
         auto* pAddrValidator = new IP4Validator(ui.cbIp);
@@ -64,9 +64,16 @@ CMainWindow::CMainWindow(QWidget* parent)
         ui.cbIp->setLineEdit(pLineEdit);
     }
     ui.cbIp->view()->installEventFilter(m_cbKeyPressFilter);
-
-    // 读取ip端口
     ConfigHelper::instance().restoreWidgetComboxState("Ip_Port", *ui.cbIp);
+
+    // 可选项参数
+    {
+        auto* pLineEdit = new CLineEdit(ui.cbIp);
+        pLineEdit->setPlaceholderText("Optional");
+        ui.cbOptionalParam->setLineEdit(pLineEdit);
+    }
+    ui.cbOptionalParam->view()->installEventFilter(m_cbKeyPressFilter);
+    ConfigHelper::instance().restoreWidgetComboxState("OptionalParam", *ui.cbOptionalParam);
 
     // 读取是否自动显示最新
     ConfigHelper::instance().restoreWidgetCheckboxState("AutoShowDetail", *ui.checkIsAutoDetail);
@@ -231,6 +238,28 @@ google::protobuf::Message* CMainWindow::getOrCreateMessageByName(const char* nam
     }
 
     return itr->second;
+}
+
+int CMainWindow::addTimer(int interval) {
+    return startTimer(interval);
+}
+
+void CMainWindow::deleteTimer(int timerId) {
+    if (timerId > 0) {
+        killTimer(timerId);
+    }
+}
+
+void CMainWindow::logInfo(const char* message) {
+    LOG_INFO(message);
+}
+
+void CMainWindow::logWarn(const char* message) {
+    LOG_WARN(message);
+}
+
+void CMainWindow::logErr(const char* message) {
+    LOG_ERR(message);
 }
 
 void CMainWindow::saveCache() {
@@ -464,6 +493,7 @@ void CMainWindow::onDisconnect(SocketId socketId) {
     LOG_INFO("You close connection, socket id: {}", socketId);
     connectStateChange(kDisconnect);
     m_client.onDisconnect(socketId);
+    LuaScriptSystem::instance().Invoke("__APP_on_client_disconnected", socketId);
 }
 
 void CMainWindow::onError(SocketId socketId, ec_net::ENetError error) {
@@ -718,7 +748,6 @@ void CMainWindow::handleConnectBtnClicked() {
 
     // 判断是不是新的ip和端口，如果是，添加历史
     addNewItemIntoCombox(*ui.cbIp);
-    ConfigHelper::instance().saveWidgetComboxState("Ip_Port", *ui.cbIp);
 
     QStringList ipAndPort = ui.cbIp->currentText().split(":");
     if (ipAndPort.size() != 2) {
@@ -732,7 +761,10 @@ void CMainWindow::handleConnectBtnClicked() {
     }
 
     addNewItemIntoCombox(*ui.cbAccount);
-    ConfigHelper::instance().saveWidgetComboxState("Account", *ui.cbAccount);
+
+    if (!ui.cbOptionalParam->currentText().isEmpty()) {
+        addNewItemIntoCombox(*ui.cbOptionalParam);
+    }
 
     std::string ip = ipAndPort[0].toStdString();
     Port port = ipAndPort[1].toUShort();
@@ -741,7 +773,8 @@ void CMainWindow::handleConnectBtnClicked() {
                                         , static_cast<lua_api::IClient*>(&m_client)
                                         , ip
                                         , port
-                                        , ui.cbAccount->currentText().toStdString().c_str());
+                                        , ui.cbAccount->currentText().toStdString().c_str()
+                                        , ui.cbOptionalParam->currentText().toStdString().c_str());
 
     connectStateChange(kConnecting);
     LOG_INFO("Connecting to {}:{}...", ip, port);
@@ -1000,6 +1033,9 @@ void CMainWindow::doReload() {
 }
 
 void CMainWindow::closeEvent(QCloseEvent* event) {
+    ConfigHelper::instance().saveWidgetComboxState("Account", *ui.cbAccount);
+    ConfigHelper::instance().saveWidgetComboxState("Ip_Port", *ui.cbIp);
+    ConfigHelper::instance().saveWidgetComboxState("OptionalParam", *ui.cbOptionalParam);
     ConfigHelper::instance().saveMainWindowGeometry(saveGeometry());
     ConfigHelper::instance().saveMainWindowState(saveState());
     ConfigHelper::instance().saveSplitterH(ui.splitterH->saveState());
@@ -1008,6 +1044,10 @@ void CMainWindow::closeEvent(QCloseEvent* event) {
 
     // 自动保存cache
     saveCache();
+}
+
+void CMainWindow::timerEvent(QTimerEvent* event) {
+    LuaScriptSystem::instance().Invoke("__APP_on_timer", event->timerId());
 }
 
 void CMainWindow::keyPressEvent(QKeyEvent* event) {
@@ -1148,6 +1188,17 @@ void CMainWindow::luaRegisterCppClass() {
         .addFunction("disconnect", &IClient::disconnect)
         .addFunction("sendJsonMsg", &IClient::sendJsonMsg)
         .endClass();
+
+    luabridge::getGlobalNamespace(pLuaState)
+        .beginClass<IMainApp>("IApp")
+        .addFunction("addTimer", &IMainApp::addTimer)
+        .addFunction("deleteTimer", &IMainApp::deleteTimer)
+        .addFunction("logInfo", &IMainApp::logInfo)
+        .addFunction("logWarn", &IMainApp::logWarn)
+        .addFunction("logErr", &IMainApp::logErr)
+        .endClass();
+
+    luabridge::setGlobal(pLuaState, static_cast<IMainApp*>(this), "App");
 }
 
 void CMainWindow::addDetailLogInfo(const char* msgFullName, const char* msg, const char* detail, QColor color /*= QColor(Qt::GlobalColor(0))*/) {

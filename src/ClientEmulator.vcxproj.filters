@@ -29,12 +29,6 @@
     <ClCompile Include="ip4validator.cpp">
       <Filter>Widget</Filter>
     </ClCompile>
-    <ClCompile Include="protobuf\protobuf.cpp">
-      <Filter>Protobuf</Filter>
-    </ClCompile>
-    <ClCompile Include="protobuf\protobuflib.c">
-      <Filter>Protobuf</Filter>
-    </ClCompile>
     <ClCompile Include="Client.cpp">
       <Filter>Network</Filter>
     </ClCompile>
@@ -42,6 +36,12 @@
       <Filter>Dialog</Filter>
     </ClCompile>
     <ClCompile Include="ConfigHelper.cpp" />
+    <ClCompile Include="protobuf\protobuf.cpp">
+      <Filter>Lua\protobuf</Filter>
+    </ClCompile>
+    <ClCompile Include="protobuf\protobuflib.c">
+      <Filter>Lua\protobuf</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ClientEmulator.rc" />
@@ -111,6 +111,9 @@
     <Filter Include="Log">
       <UniqueIdentifier>{fe5d998b-025f-4fb5-a256-160c5ebbf974}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lua\protobuf">
+      <UniqueIdentifier>{2e787ad2-881a-4366-93a0-8ee33dabf23b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ProtoManager.h">
@@ -128,12 +131,6 @@
     <ClInclude Include="ip4validator.h">
       <Filter>Widget</Filter>
     </ClInclude>
-    <ClInclude Include="protobuf\protobuf.h">
-      <Filter>Protobuf</Filter>
-    </ClInclude>
-    <ClInclude Include="protobuf\protobuflib.h">
-      <Filter>Protobuf</Filter>
-    </ClInclude>
     <ClInclude Include="LuaScriptSystem.h">
       <Filter>Lua</Filter>
     </ClInclude>
@@ -148,5 +145,11 @@
     </ClInclude>
     <ClInclude Include="define.h" />
     <ClInclude Include="Singleton.h" />
+    <ClInclude Include="protobuf\protobuf.h">
+      <Filter>Lua\protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="protobuf\protobuflib.h">
+      <Filter>Lua\protobuf</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

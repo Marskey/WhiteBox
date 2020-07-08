@@ -18,7 +18,7 @@ class ShowItemDetailKeyFilter;
 class DeleteHighlightedItemFilter;
 class CECPrinter;
 
-class CMainWindow : public QMainWindow, public ec_net::INetEvent
+class CMainWindow : public QMainWindow, public ec_net::INetEvent, public lua_api::IMainApp
 {
     enum EConnectState
     {
@@ -86,6 +86,7 @@ public slots:
 protected:
     // 程序关闭时候的事件
     void closeEvent(QCloseEvent* event) override;
+    void timerEvent(QTimerEvent *event) override;
 
     // 按键事件
     void keyPressEvent(QKeyEvent* event) override;
@@ -110,6 +111,13 @@ private:
     google::protobuf::Message* getMessageByName(const char* name);
     google::protobuf::Message* getOrCreateMessageByName(const char* name);
 
+    // lua_api::IMainApp begin
+    int addTimer(int interval) override;
+    void deleteTimer(int timerId) override;
+    void logInfo(const char* message) override;
+    void logWarn(const char* message) override;
+    void logErr(const char* message) override;
+    // lua_api::IMainApp end
 private:
     Ui::ClientEmulatorClass ui;
     MapMessages m_mapMessages;

@@ -59,32 +59,32 @@ namespace lua_api
         virtual ~ISocketWriter() = default;
         /**
          * This function is used to write a uint8 data to socket write buffer.
-         * @param offset Number of bytes to skip before starting to write.
+         * @param value the uint8 data to write
          */
         virtual void writeUint8(uint8_t value) = 0;
         /**
          * This function is used to write a int8 data to socket write buffer.
-         * @param offset Number of bytes to skip before starting to write.
+         * @param value the int8 data to write
          */
         virtual void writeInt8(int8_t value) = 0;
         /**
          * This function is used to write a uint16 data to socket write buffer.
-         * @param offset Number of bytes to skip before starting to write.
+         * @param value the uint16 data to write
          */
         virtual void writeUint16(uint16_t value) = 0;
         /**
          * This function is used to write a int16 data to socket write buffer.
-         * @param offset Number of bytes to skip before starting to write.
+         * @param value the int16 data to write
          */
         virtual void writeInt16(int16_t value) = 0;
         /**
          * This function is used to write a uint32 data to socket write buffer.
-         * @param offset Number of bytes to skip before starting to write.
+         * @param value the uint32 data to write
          */
         virtual void writeUint32(uint32_t value) = 0;
         /**
          * This function is used to write a int32 data to socket write buffer.
-         * @param offset Number of bytes to skip before starting to write.
+         * @param value the int32 data to write
          */
         virtual void writeInt32(int32_t value) = 0;
         /**
@@ -111,6 +111,41 @@ namespace lua_api
          * @returns return google::protobuf::DescriptorPool* 
          */
         virtual void* getDescriptorPool() = 0;
+    };
+
+    /**
+     * This is main application instance. will always alive through all to the end.
+     */
+    class IMainApp
+    {
+    public:
+        virtual ~IMainApp() = default;
+        /**
+         * This function is used to add timer
+         * @param interval milliseconds 
+         * @returns return timer id 
+         */
+        virtual int addTimer(int interval) = 0;
+        /**
+         * This function is used to delete timer
+         * @param timerId 
+         */
+        virtual void deleteTimer(int timerId) = 0;
+        /**
+         * This function is used to print into log list
+         * @param message 
+         */
+        virtual void logInfo(const char* message) = 0;
+        /**
+         * This function is used to print warning log list
+         * @param message 
+         */
+        virtual void logWarn(const char* message) = 0;
+        /**
+         * This function is used to print error log list
+         * @param message 
+         */
+        virtual void logErr(const char* message) = 0;
     };
 
     class IClient
