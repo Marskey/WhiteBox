@@ -13,29 +13,26 @@ public:
     CClient();
     virtual ~CClient();
 
-    // 暂留 //
-    void connectTo(std::string ip, Port port, std::function<void(bool)> callback);
-
     bool sendMsg(const google::protobuf::Message& message);
     unsigned int getSocketID();
+    void setName(const char* name);
 
     // ec_net::INetEvent begin
     void onConnectSucceed(const char* strRemoteIp , Port port , SocketId socketId) override;
     void onDisconnect(SocketId socketId) override;
     void onError(SocketId socketId, ec_net::ENetError error) override;
-    void onParseMessage(const char* msgFullName, const char* pData, size_t size) override;
+    void onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) override;
     // ec_net::INetEvent end
 
     // lua_api::IClient begin
-    void connect(const char* ip, Port port, BuffSize recv, BuffSize send, const char* tag) override;
+    void connect(const char* ip, Port port, BuffSize recv, BuffSize send) override;
     void disconnect() override;
     bool isConnected() override;
+    const char* getName() override;
     void sendJsonMsg(const char* msgFullName, const char* jsonData) override;
     // lua_api::IClient end
 private:
-    unsigned int m_socketID = 0;
+    unsigned int m_socketId = 0;
+    std::string m_name;
     std::vector<char> m_sendMsgDataBuf;
-
-    std::unordered_map<uint16_t, ::google::protobuf::Message*> m_msgs;
-    std::function<void(bool)> m_connectCallback;
 };

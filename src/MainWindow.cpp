@@ -125,10 +125,15 @@ CMainWindow::~CMainWindow() {
     delete m_listMessageKeyFilter;
     delete m_pPrinter;
 
-    for (auto& pair : m_mapMessages) {
-        delete pair.second;
+    for (auto& [key, value] : m_mapMessages) {
+        delete value;
     }
     m_mapMessages.clear();
+
+    for (auto& [key, client] : m_mapClients) {
+        delete client;
+    }
+    m_mapClients.clear();
 }
 
 bool CMainWindow::init() {
@@ -142,7 +147,6 @@ bool CMainWindow::init() {
         }
         delete pDlg;
     }
-
     // 初始化日志服务
     m_pPrinter = new CECPrinter(ui.listLogs);
     LogHelper::instance().setPrinter(m_pPrinter);
@@ -205,6 +209,7 @@ void CMainWindow::connectStateChange(EConnectState state) {
     default:
         break;
     }
+    m_btnConnectState = state;
 }
 
 bool CMainWindow::ignoreMsgType(std::string msgFullName) {
@@ -240,6 +245,15 @@ google::protobuf::Message* CMainWindow::getOrCreateMessageByName(const char* nam
     return itr->second;
 }
 
+CClient* CMainWindow::getClientBySocketId(SocketId id) {
+    for (auto& [key, client] : m_mapClients) {
+        if (id == client->getSocketID()) {
+            return client;
+        }
+    }
+    return nullptr;
+}
+
 int CMainWindow::addTimer(int interval) {
     return startTimer(interval);
 }
@@ -250,8 +264,24 @@ void CMainWindow::deleteTimer(int timerId) {
     }
 }
 
-lua_api::IClient* CMainWindow::getClient() {
-    return &m_client;
+lua_api::IClient* CMainWindow::createClient(const char* name) {
+    if (getClient(name) != nullptr) {
+        LOG_ERR("Already have a client named \"{}\"", name); 
+        return nullptr;
+    }
+
+    auto* pClient =  new CClient();
+    pClient->setName(name);
+    m_mapClients[name] = pClient;
+    return pClient;
+}
+
+lua_api::IClient* CMainWindow::getClient(const char* name) {
+    auto it = m_mapClients.find(name);
+    if (it != m_mapClients.end()) {
+        return it->second;
+    }
+    return nullptr;
 }
 
 void CMainWindow::saveCache() {
@@ -391,6 +421,12 @@ void CMainWindow::clearCache() {
 
 void CMainWindow::update() {
     NetManager::instance().run();
+
+    for (auto& client : m_listClientsToDel) {
+        m_mapClients.erase(client->getName());
+        delete client;
+    }
+    m_listClientsToDel.clear();
 }
 
 void CMainWindow::openSettingDlg() {
@@ -443,7 +479,7 @@ std::string CMainWindow::highlightJsonData(const QString& jsonData) {
     return result.toStdString();
 }
 
-void CMainWindow::onParseMessage(const char* msgFullName, const char* pData, size_t size) {
+void CMainWindow::onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) {
     if (ignoreMsgType(msgFullName)) {
         return;
     }
@@ -459,15 +495,23 @@ void CMainWindow::onParseMessage(const char* msgFullName, const char* pData, siz
         std::string msgStr;
         google::protobuf::util::MessageToJsonString(*pRecvMesage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
         addDetailLogInfo(msgFullName
-                         , fmt::format("Received {0}({1}) size: {2}", msgFullName, nMessageId, pRecvMesage->ByteSize()).c_str()
+                         , fmt::format("Received {}({}) size: {}"
+                                       , msgFullName
+                                       , nMessageId
+                                       , pRecvMesage->ByteSize()).c_str()
                          , highlightJsonData(msgStr.c_str()).c_str()
                          , QColor(57, 115, 157)
         );
 
+        CClient* pClient = getClientBySocketId(socketId);
+        if (nullptr == pClient) {
+            LOG_WARN("Cannot find client whose socket id is {}.", socketId);
+            return;
+        }
         LuaScriptSystem::instance().Invoke("__APP_on_message_recv"
-                                            , static_cast<lua_api::IClient*>(&m_client)
-                                            , msgFullName
-                                            , (void*)(&pRecvMesage));
+                                           , static_cast<lua_api::IClient*>(pClient)
+                                           , msgFullName
+                                           , (void*)(&pRecvMesage));
     } else {
         LOG_ERR("Protobuf message {}({}) parse failed!", msgFullName, nMessageId);
     }
@@ -478,13 +522,31 @@ void CMainWindow::onParseMessage(const char* msgFullName, const char* pData, siz
 void CMainWindow::onConnectSucceed(const char* strRemoteIp, Port port, SocketId socketId) {
     LOG_INFO("Connect succeed socket id: {0}, ip: {1}:{2} ", socketId, strRemoteIp, port);
     connectStateChange(kConnected);
-    m_client.onConnectSucceed(strRemoteIp, port, socketId);
+
+    for (auto& [key, client] : m_mapClients) {
+        if (client->getSocketID() == socketId) {
+            ui.cbClientName->addItem(client->getName());
+            client->onConnectSucceed(strRemoteIp, port, socketId);
+            break;
+        }
+    }
 }
 
 void CMainWindow::onDisconnect(SocketId socketId) {
     LOG_INFO("Connection closed, socket id: {}", socketId);
     connectStateChange(kDisconnect);
-    m_client.onDisconnect(socketId);
+
+    for (auto& [key, client] : m_mapClients) {
+        if (client->getSocketID() == socketId) {
+            client->onDisconnect(socketId);
+            m_listClientsToDel.emplace_back(client);
+            int cbIdx = ui.cbClientName->findText(client->getName());
+            if (-1 != cbIdx) {
+                ui.cbClientName->removeItem(cbIdx);
+            }
+            break;
+        }
+    }
 }
 
 void CMainWindow::onError(SocketId socketId, ec_net::ENetError error) {
@@ -504,7 +566,12 @@ void CMainWindow::onError(SocketId socketId, ec_net::ENetError error) {
     default:;
     }
 
-    m_client.onError(socketId, error);
+    for (auto& [key, client] : m_mapClients) {
+        if (client->getSocketID() == socketId) {
+            client->onError(socketId, error);
+            break;
+        }
+    }
 }
 
 void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
@@ -681,8 +748,20 @@ void CMainWindow::handleFilterTextChanged(const QString& text) {
 }
 
 void CMainWindow::handleSendBtnClicked() {
-    if (!m_client.isConnected()) {
-        QMessageBox::warning(nullptr, "", "Please connect to server first");
+    QString clientName = ui.cbClientName->currentText();
+    if (clientName.isEmpty()) {
+        QMessageBox::warning(nullptr, "", "Please select a client first");
+        return;
+    }
+
+    lua_api::IClient* pClient = getClient(clientName.toStdString().c_str());
+    if (nullptr == pClient) {
+        QMessageBox::warning(nullptr, "", fmt::format("Cannot find client name: {}", clientName.toStdString()).c_str());
+        return;
+    }
+
+    if (!pClient->isConnected()) {
+        QMessageBox::warning(nullptr, "", "Please connect to server");
         return;
     }
 
@@ -704,7 +783,7 @@ void CMainWindow::handleSendBtnClicked() {
 
     google::protobuf::Message* pMessage = getOrCreateMessageByName(msgFullName.c_str());
     if (nullptr != pMessage) {
-        m_client.sendMsg(*pMessage);
+        static_cast<CClient*>(pClient)->sendMsg(*pMessage);
         std::string msgStr;
         google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
         addDetailLogInfo(msgFullName.c_str()
@@ -724,8 +803,11 @@ void CMainWindow::handleSendBtnClicked() {
 }
 
 void CMainWindow::handleConnectBtnClicked() {
-    if (m_client.isConnected()) {
-        m_client.disconnect();
+    // 如果点击的时断开连接
+    if (m_btnConnectState == kConnected) {
+        for (auto& [key, client] : m_mapClients) {
+            client->disconnect();
+        }
         connectStateChange(kDisconnect);
         return;
     }
@@ -754,7 +836,6 @@ void CMainWindow::handleConnectBtnClicked() {
     Port port = ipAndPort[1].toUShort();
 
     LuaScriptSystem::instance().Invoke("__APP_on_connect_btn_click"
-                                        , static_cast<lua_api::IClient*>(&m_client)
                                         , ip
                                         , port
                                         , ui.cbAccount->currentText().toStdString().c_str()
@@ -997,7 +1078,9 @@ void CMainWindow::handleLogInfoAdded(const QModelIndex& parent, int start, int e
 }
 
 void CMainWindow::doReload() {
-    m_client.disconnect();
+    for (auto& [key, client] : m_mapClients) {
+        client->disconnect();
+    }
 
     // 关闭lua
     LuaScriptSystem::instance().Shutdown();
@@ -1171,6 +1254,7 @@ void CMainWindow::luaRegisterCppClass() {
         .addFunction("connect", &IClient::connect)
         .addFunction("disconnect", &IClient::disconnect)
         .addFunction("isConnected", &IClient::isConnected)
+        .addFunction("getName", &IClient::getName)
         .addFunction("sendJsonMsg", &IClient::sendJsonMsg)
         .endClass();
 
@@ -1178,6 +1262,7 @@ void CMainWindow::luaRegisterCppClass() {
         .beginClass<IMainApp>("IApp")
         .addFunction("addTimer", &IMainApp::addTimer)
         .addFunction("deleteTimer", &IMainApp::deleteTimer)
+        .addFunction("createClient", &IMainApp::createClient)
         .addFunction("getClient", &IMainApp::getClient)
         .endClass();
 

@@ -18,7 +18,7 @@ public:
     bool init(ec_net::INetEvent* pEvent);
     void run(int count = -1);
     void stop();
-    void connect(const char* ip, Port port, BuffSize recv, BuffSize send);
+    SocketId connect(const char* ip, Port port, BuffSize recv, BuffSize send);
     void disconnect(SocketId socketId);
 
     bool isConnected(SocketId socketId);
@@ -32,8 +32,9 @@ public:
     void handleDisconnect(SocketId socketId);
     void handleError(SocketId socketId, ec_net::ENetError error);
 
-    void handleParseMessage(const char* fullName, const char* pData, size_t size);
+    void handleParseMessage(SocketId socketId, const char* fullName, const char* pData, size_t size);
 
+    void addSession(SocketId socketId, SessionPtr session);
 private:
     SocketId genSocketId();
 

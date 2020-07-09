@@ -121,6 +121,7 @@ void CSession::connect(const char* ip, Port port) {
         // 设置 nodelay
         self->m_socket.set_option(asio::ip::tcp::no_delay(true));
 
+        NetManager::instance().addSession(self->m_id, self);
         // 处理连接成功
         self->handleConnectSucceed();
         // 开始读数据
@@ -182,9 +183,10 @@ void CSession::read() {
                     break;
                 }
 
-                NetManager::instance().handleParseMessage(self->m_readData.messageFullName
-                                                           , self->m_readData.pMessageData
-                                                           , self->m_readData.messageSize);
+                NetManager::instance().handleParseMessage(self->m_id
+                                                          , self->m_readData.messageFullName
+                                                          , self->m_readData.pMessageData
+                                                          , self->m_readData.messageSize);
 
                 memmove(self->m_readData.pReadData
                         , self->m_readData.pReadData + packetSize

@@ -40,7 +40,7 @@ public:
 
 public:
     // ec_net::INetEvent begin
-    void onParseMessage(const char* msgFullName, const char* pData, size_t size) override;
+    void onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) override;
     void onConnectSucceed(const char* strRemoteIp
                           , Port port
                           , SocketId socketId) override;
@@ -111,15 +111,20 @@ private:
     google::protobuf::Message* getMessageByName(const char* name);
     google::protobuf::Message* getOrCreateMessageByName(const char* name);
 
+    CClient* getClientBySocketId(SocketId id);
+
     // lua_api::IMainApp begin
     int addTimer(int interval) override;
     void deleteTimer(int timerId) override;
-    lua_api::IClient* getClient() override;
+    lua_api::IClient* createClient(const char* name) override;
+    lua_api::IClient* getClient(const char* name) override;
     // lua_api::IMainApp end
 private:
     Ui::ClientEmulatorClass ui;
     MapMessages m_mapMessages;
     std::unordered_set<std::string> m_setIgnoredReceiveMsgType;
+
+    EConnectState m_btnConnectState = kDisconnect;
 
     DeleteHighlightedItemFilter* m_cbKeyPressFilter = nullptr;
     ShowItemDetailKeyFilter* m_listMessageKeyFilter = nullptr;
@@ -131,7 +136,8 @@ private:
 
     CECPrinter* m_pPrinter = nullptr;
 
-    CClient m_client;
+    std::unordered_map<std::string, CClient*> m_mapClients;
+    std::list<CClient*> m_listClientsToDel;
 };
 
 class CECPrinter : public CLogPrinter

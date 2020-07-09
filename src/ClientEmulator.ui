@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>602</width>
+    <width>592</width>
     <height>693</height>
    </rect>
   </property>
@@ -40,34 +40,8 @@
            <string>Message</string>
           </property>
           <layout class="QGridLayout" name="gridLayout_5">
-           <item row="0" column="0">
+           <item row="1" column="0">
             <layout class="QVBoxLayout" name="verticalLayout_2">
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_3">
-               <item>
-                <widget class="CLineEdit" name="editSearch">
-                 <property name="font">
-                  <font>
-                   <family>Segoe UI Symbol</family>
-                  </font>
-                 </property>
-                 <property name="placeholderText">
-                  <string>🔍Filter...</string>
-                 </property>
-                 <property name="clearButtonEnabled">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="btnSend">
-                 <property name="text">
-                  <string>Send</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
              <item>
               <widget class="QTabWidget" name="tabWidget">
                <property name="toolTip">
@@ -131,7 +105,31 @@
              </item>
             </layout>
            </item>
-           <item row="1" column="0">
+           <item row="3" column="0">
+            <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="5,1">
+             <item>
+              <widget class="QComboBox" name="cbClientName">
+               <property name="editable">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnSend">
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Send</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="2" column="0">
             <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="1,4,1,4">
              <item>
               <widget class="QLabel" name="label_5">
@@ -168,6 +166,21 @@
               </widget>
              </item>
             </layout>
+           </item>
+           <item row="0" column="0">
+            <widget class="CLineEdit" name="editSearch">
+             <property name="font">
+              <font>
+               <family>Segoe UI Symbol</family>
+              </font>
+             </property>
+             <property name="placeholderText">
+              <string>🔍Filter...</string>
+             </property>
+             <property name="clearButtonEnabled">
+              <bool>true</bool>
+             </property>
+            </widget>
            </item>
           </layout>
          </widget>
@@ -580,7 +593,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>602</width>
+     <width>592</width>
      <height>21</height>
     </rect>
    </property>

@@ -13,7 +13,7 @@ namespace ec_net
     class INetEvent
     {
     public:
-        virtual void onParseMessage(const char* msgFullName, const char* pData, size_t size) = 0;
+        virtual void onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) = 0;
         virtual void onConnectSucceed(const char* strRemoteIp
                                       , Port unPort
                                       , SocketId socketId) = 0;

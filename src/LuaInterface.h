@@ -124,12 +124,13 @@ namespace lua_api
          * @param recv socket receive buffer size
          * @param send socket send buffer size
          */
-        virtual void connect(const char* ip, Port port, BuffSize recv, BuffSize send, const char* tag) = 0;
+        virtual void connect(const char* ip, Port port, BuffSize recv, BuffSize send) = 0;
         /**
          * This function is used to disconnect to specify remote endpoint.
          */
         virtual void disconnect() = 0;
         virtual bool isConnected() = 0;
+        virtual const char* getName() = 0;
         /**
          * This function is used to send protobuf message data to remote endpoint.
          * @param msgFullName protobuf message full name.
@@ -157,6 +158,8 @@ namespace lua_api
          */
         virtual void deleteTimer(int timerId) = 0;
 
-        virtual IClient* getClient() = 0;
+        virtual IClient* createClient(const char* name) = 0;
+
+        virtual IClient* getClient(const char* name) = 0;
     };
 }

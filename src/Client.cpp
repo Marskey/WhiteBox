@@ -11,16 +11,6 @@ CClient::CClient() {
 
 CClient::~CClient() {
     m_sendMsgDataBuf.clear();
-    for (auto& pair : m_msgs) {
-        delete pair.second;
-    }
-    m_msgs.clear();
-}
-
-void CClient::connectTo(std::string ip, Port port, std::function<void(bool)> callback) {
-    m_connectCallback = callback;
-
-    NetManager::instance().connect(ip.c_str(), port, 131073,131073);
 }
 
 bool CClient::sendMsg(const google::protobuf::Message& message) {
@@ -33,59 +23,57 @@ bool CClient::sendMsg(const google::protobuf::Message& message) {
         return false;
     }
 
-    return NetManager::instance().sendProtoMsg(m_socketID
+    return NetManager::instance().sendProtoMsg(m_socketId
                                                 , message.GetTypeName().c_str()
                                                 , m_sendMsgDataBuf.data()
                                                 , message.ByteSizeLong());
 }
 
 unsigned int CClient::getSocketID() {
-    return m_socketID;
+    return m_socketId;
+}
+
+void CClient::setName(const char* name) {
+    m_name = name;
 }
 
 void CClient::disconnect() {
-    LOG_INFO("You close connection, socket id: {}", m_socketID);
-    if (m_socketID != 0) {
-        NetManager::instance().disconnect(m_socketID);
-        m_socketID = 0;
+    LOG_INFO("You close connection, socket id: {}", m_socketId);
+    if (m_socketId != 0) {
+        NetManager::instance().disconnect(m_socketId);
+        m_socketId = 0;
     }
 }
 
 bool CClient::isConnected() {
-    if (m_socketID != 0) {
-        return NetManager::instance().isConnected(m_socketID);
+    if (m_socketId != 0) {
+        return NetManager::instance().isConnected(m_socketId);
     }
     return false;
 }
 
+const char* CClient::getName() {
+    return m_name.c_str();
+}
+
 void CClient::onConnectSucceed(const char* strRemoteIp, Port port, SocketId socketId) {
-    m_socketID = socketId;
-    m_connectCallback(true);
+    LuaScriptSystem::instance().Invoke("__APP_on_client_connected"
+                                       , static_cast<lua_api::IClient*>(this));
 }
 
 void CClient::onDisconnect(SocketId socketId) {
-    m_socketID = 0;
-    LuaScriptSystem::instance().Invoke("__APP_on_client_disconnected", static_cast<lua_api::IClient*>(this));
+    m_socketId = 0;
+    LuaScriptSystem::instance().Invoke("__APP_on_client_disconnected", getName());
 }
 
 void CClient::onError(SocketId socketId, ec_net::ENetError error) {
-    m_connectCallback(false);
 }
 
-void CClient::onParseMessage(const char* msgFullName, const char* pData, size_t size) {
+void CClient::onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) {
 }
 
-void CClient::connect(const char* ip, Port port, BuffSize recv, BuffSize send, const char* tag) {
-    NetManager::instance().connect(ip, port, recv, send);
-    m_connectCallback = [this, t = std::string(tag)] (bool bResult) {
-        if (!bResult) {
-            return;
-        }
-
-        LuaScriptSystem::instance().Invoke("__APP_on_client_connected"
-                                            , static_cast<lua_api::IClient*>(this)
-                                            , t);
-    };
+void CClient::connect(const char* ip, Port port, BuffSize recv, BuffSize send) {
+    m_socketId = NetManager::instance().connect(ip, port, recv, send);
 }
 
 void CClient::sendJsonMsg(const char* msgFullName, const char* jsonData) {
