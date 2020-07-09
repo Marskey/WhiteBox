@@ -7,7 +7,6 @@ namespace ec_net
     enum ENetError
     {
         eNET_CONNECT_FAIL = 0,
-        eNET_DISCONNECT_BY_REMOTE = 1,
         eNET_SEND_OVERFLOW = 3,
     };
 

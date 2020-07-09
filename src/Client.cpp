@@ -44,10 +44,18 @@ unsigned int CClient::getSocketID() {
 }
 
 void CClient::disconnect() {
+    LOG_INFO("You close connection, socket id: {}", m_socketID);
     if (m_socketID != 0) {
         NetManager::instance().disconnect(m_socketID);
         m_socketID = 0;
     }
+}
+
+bool CClient::isConnected() {
+    if (m_socketID != 0) {
+        return NetManager::instance().isConnected(m_socketID);
+    }
+    return false;
 }
 
 void CClient::onConnectSucceed(const char* strRemoteIp, Port port, SocketId socketId) {
@@ -57,6 +65,7 @@ void CClient::onConnectSucceed(const char* strRemoteIp, Port port, SocketId sock
 
 void CClient::onDisconnect(SocketId socketId) {
     m_socketID = 0;
+    LuaScriptSystem::instance().Invoke("__APP_on_client_disconnected", static_cast<lua_api::IClient*>(this));
 }
 
 void CClient::onError(SocketId socketId, ec_net::ENetError error) {
@@ -80,6 +89,10 @@ void CClient::connect(const char* ip, Port port, BuffSize recv, BuffSize send, c
 }
 
 void CClient::sendJsonMsg(const char* msgFullName, const char* jsonData) {
+    if (!isConnected()) {
+        return;
+    }
+
     google::protobuf::Message* pMessage = ProtoManager::instance().createMessage(msgFullName);
     if (pMessage == nullptr) {
         LOG_WARN("Cannot find the message name:{}", msgFullName);

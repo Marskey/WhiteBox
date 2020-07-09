@@ -13,9 +13,9 @@ local json = require "json"
 -- __APP_on_proto_reload
 -- 每当客户端加载完proto文件后被调用
 -- @param ProtoMananger Cpp类的实例指针，注册函数看文本最后
-function __APP_on_proto_reload(ProtoManager)
+function __APP_on_proto_reload(IProtoManager)
     -- 以下是范例
-    local pool = ProtoManager:getDescriptorPool()
+    local pool = IProtoManager:getDescriptorPool()
     if pool == nil then
         return
     end
@@ -30,18 +30,20 @@ function __APP_on_proto_reload(ProtoManager)
             local field_name = protobuf.enumvaluedescriptor_name(enumvalue_descriptor)
             local field_number = protobuf.enumvaluedescriptor_number(enumvalue_descriptor)
 
-    -- EMsgTypes中是 _MSG_XXX_XXX_REQ = 2000 这样的，所以要去掉前面的'_'来获取消息名
+            -- EMsgTypes中是 _MSG_XXX_XXX_REQ = 2000 这样的，所以要去掉前面的'_'来获取消息名
             local msg_name = string.sub(field_name, 2)
 
-    -- ProtoMsg是package的名字
+            -- ProtoMsg是package的名字
             local full_name = "ProtoMsg." .. msg_name
+            if string.find(full_name, "2CL") ~= nil or string.find(full_name, "CL2") ~= nil then
 
-            get_full_name_by_type[field_number] = full_name
-            get_type_by_full_name[full_name] = field_number
+                get_full_name_by_type[field_number] = full_name
+                get_type_by_full_name[full_name] = field_number
 
-    -- message type 定义在了EMsgTypes所以这个field_number就是相当于消息协议中的message id
-    -- 如果没有 message type 可以填0（不会吧，不会真的有人没有定义message type吧，不会吧）
-            ProtoManager:addProtoMessage(field_number, full_name, msg_name)
+                -- message type 定义在了EMsgTypes所以这个field_number就是相当于消息协议中的message id
+                -- 如果没有 message type 可以填0（不会吧，不会真的有人没有定义message type吧，不会吧）
+                IProtoManager:addProtoMessage(field_number, full_name, msg_name)
+            end
         end
     end
     return
@@ -135,18 +137,18 @@ function __APP_on_message_recv(IClient, msg_full_name, protobuf_msg)
         end
         return
 
-    -- 如果收到的是game服务器的回包
+        -- 如果收到的是game服务器的回包
     elseif msg_full_name == "ProtoMsg.MSG_GS2CL_LOGIN_RSP" then
         local json_data = protobuf.message_jsonencode(protobuf_msg)
         local msg_rsp = json.decode(json_data)
 
-    -- 如果回包不是成功则断开连接
+        -- 如果回包不是成功则断开连接
         if msg_rsp.ret_code ~= "eMEC_SUCCESS" then
             IClient:disconnect()
         end
         return
 
-    -- 发送心跳包
+        -- 发送心跳包
     elseif msg_full_name == "ProtoMsg.MSG_CLIENT_KEEP_LIVE_REQ" then
         IClient:sendJsonMsg("ProtoMsg.MSG_CLIENT_KEEP_LIVE_RSP", "{}")
         return
@@ -159,7 +161,7 @@ end
 -- @param ip 界面上填写的ip地址
 -- @param port 界面上填写的端口号
 -- @param account 界面上填写的账户ID
-function __APP_on_connect_btn_click(IClient, ip, port, account)
+function __APP_on_connect_btn_click(IClient, ip, port, account, optional)
     -- 以下是范例
     g_reserve_data.account = account
     -- 连接login服务器
@@ -184,7 +186,7 @@ function __APP_on_client_connected(IClient, tag)
         login_req.account = g_reserve_data.account
         IClient:sendJsonMsg("ProtoMsg.MSG_CL2LS_LOGIN_REQ", json.encode(login_req))
 
-    -- 如果连接的是tag==“GS”的game服务器
+        -- 如果连接的是tag==“GS”的game服务器
     elseif tag == "GS" then
         local register_req = {}
         register_req.info = {}
@@ -199,6 +201,18 @@ function __APP_on_client_connected(IClient, tag)
     else
         --错误显示
     end
+end
+
+-- __APP_on_client_disconnected
+-- 当socket链路断开后后被调用
+-- @param IClient Cpp IClient类指针 用来连接，断开，发送数据等，注册函数看文本最后
+function __APP_on_client_disconnected(IClient)
+end
+
+-- __APP_on_timer
+-- 当定时器到点后被调用
+-- @param timer_id
+function __APP_on_timer(timer_id)
 end
 
 ------------------------------ 以下为应用程序开放给lua脚本的接口
@@ -334,6 +348,7 @@ end
 --      * 看函数名就知道是啥意思了把
 --      */
 --     virtual void disconnect() = 0;
+--     virtual bool isConnected() = 0;
 --     /**
 --      * 这个函数用来发送protobuf message数据包
 --      * @param msgFullName protobuf message 全名.
@@ -341,7 +356,25 @@ end
 --      */
 --     virtual void sendJsonMsg(const char* msgFullName, const char* jsonData) = 0;
 -- };
-
+--
+-- class IMainApp
+-- {
+-- public:
+--     virtual ~IMainApp() = default;
+--     /**
+--      * This function is used to add timer
+--      * @param interval milliseconds 
+--      * @returns return timer id 
+--      */
+--     virtual int addTimer(int interval) = 0;
+--     /**
+--      * This function is used to delete timer
+--      * @param timerId 
+--      */
+--     virtual void deleteTimer(int timerId) = 0;
+--
+--     virtual IClient* getClient() = 0;
+-- };
 
 ------------------------------ 以下为应用程序开放给lua的protobuf的接口，使用方法可参考官方protobuf库
 -- // importer

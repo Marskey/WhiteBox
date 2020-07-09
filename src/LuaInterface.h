@@ -113,6 +113,31 @@ namespace lua_api
         virtual void* getDescriptorPool() = 0;
     };
 
+    class IClient
+    {
+    public:
+        virtual ~IClient() = default;
+        /**
+         * This function is used to connect to specify remote endpoint.
+         * @param ip remote ip4 address.
+         * @param port remote port.
+         * @param recv socket receive buffer size
+         * @param send socket send buffer size
+         */
+        virtual void connect(const char* ip, Port port, BuffSize recv, BuffSize send, const char* tag) = 0;
+        /**
+         * This function is used to disconnect to specify remote endpoint.
+         */
+        virtual void disconnect() = 0;
+        virtual bool isConnected() = 0;
+        /**
+         * This function is used to send protobuf message data to remote endpoint.
+         * @param msgFullName protobuf message full name.
+         * @param jsonData JSON format of protobuf message data.
+         */
+        virtual void sendJsonMsg(const char* msgFullName, const char* jsonData) = 0;
+    };
+
     /**
      * This is main application instance. will always alive through all to the end.
      */
@@ -131,44 +156,7 @@ namespace lua_api
          * @param timerId 
          */
         virtual void deleteTimer(int timerId) = 0;
-        /**
-         * This function is used to print into log list
-         * @param message 
-         */
-        virtual void logInfo(const char* message) = 0;
-        /**
-         * This function is used to print warning log list
-         * @param message 
-         */
-        virtual void logWarn(const char* message) = 0;
-        /**
-         * This function is used to print error log list
-         * @param message 
-         */
-        virtual void logErr(const char* message) = 0;
-    };
 
-    class IClient
-    {
-    public:
-        virtual ~IClient() = default;
-        /**
-         * This function is used to connect to specify remote endpoint.
-         * @param ip remote ip4 address.
-         * @param port remote port.
-         * @param recv socket receive buffer size
-         * @param send socket send buffer size
-         */
-        virtual void connect(const char* ip, Port port, BuffSize recv, BuffSize send, const char* tag) = 0;
-        /**
-         * This function is used to disconnect to specify remote endpoint.
-         */
-        virtual void disconnect() = 0;
-        /**
-         * This function is used to send protobuf message data to remote endpoint.
-         * @param msgFullName protobuf message full name.
-         * @param jsonData JSON format of protobuf message data.
-         */
-        virtual void sendJsonMsg(const char* msgFullName, const char* jsonData) = 0;
+        virtual IClient* getClient() = 0;
     };
 }

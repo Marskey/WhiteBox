@@ -94,7 +94,7 @@ CSession::CSession(SocketId id, asio::ip::tcp::socket& s, size_t recevBuffSize, 
 }
 
 CSession::~CSession() {
-    close(false);
+    close(true);
 
     freeSendBuf();
 
@@ -168,8 +168,7 @@ void CSession::read() {
         m_socket.async_read_some(asioBuffer, [self = shared_from_this()](asio::error_code ec, std::size_t size) {
             if (ec) {
                 // 释放内存
-                self->close(false);
-                self->handleError(ec_net::eNET_DISCONNECT_BY_REMOTE);
+                self->close(true);
                 return;
             }
 
@@ -220,8 +219,7 @@ void CSession::write() {
                       , [self = shared_from_this()](std::error_code ec, std::size_t size) {
         if (ec) {
             // 释放内存
-            self->close(false);
-            self->handleError(ec_net::eNET_DISCONNECT_BY_REMOTE);
+            self->close(true);
             return;
         }
 

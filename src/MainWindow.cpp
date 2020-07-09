@@ -178,29 +178,29 @@ void CMainWindow::connectStateChange(EConnectState state) {
     case kConnected:
         ui.btnConnect->setText("Disconnect");
         ui.btnConnect->setDisabled(false);
-
         ui.btnSend->setDisabled(false);
 
         ui.cbIp->setDisabled(true);
         ui.cbAccount->setDisabled(true);
+        ui.cbOptionalParam->setDisabled(true);
         break;
     case kDisconnect:
         ui.btnConnect->setText("Connect");
         ui.btnConnect->setDisabled(false);
-
         ui.btnSend->setDisabled(true);
 
         ui.cbIp->setDisabled(false);
         ui.cbAccount->setDisabled(false);
+        ui.cbOptionalParam->setDisabled(false);
         break;
     case kConnecting:
         ui.btnConnect->setText("Connecting");
         ui.btnConnect->setDisabled(true);
-
         ui.btnSend->setDisabled(true);
 
         ui.cbIp->setDisabled(true);
         ui.cbAccount->setDisabled(true);
+        ui.cbOptionalParam->setDisabled(true);
         break;
     default:
         break;
@@ -250,16 +250,8 @@ void CMainWindow::deleteTimer(int timerId) {
     }
 }
 
-void CMainWindow::logInfo(const char* message) {
-    LOG_INFO(message);
-}
-
-void CMainWindow::logWarn(const char* message) {
-    LOG_WARN(message);
-}
-
-void CMainWindow::logErr(const char* message) {
-    LOG_ERR(message);
+lua_api::IClient* CMainWindow::getClient() {
+    return &m_client;
 }
 
 void CMainWindow::saveCache() {
@@ -490,10 +482,9 @@ void CMainWindow::onConnectSucceed(const char* strRemoteIp, Port port, SocketId 
 }
 
 void CMainWindow::onDisconnect(SocketId socketId) {
-    LOG_INFO("You close connection, socket id: {}", socketId);
+    LOG_INFO("Connection closed, socket id: {}", socketId);
     connectStateChange(kDisconnect);
     m_client.onDisconnect(socketId);
-    LuaScriptSystem::instance().Invoke("__APP_on_client_disconnected", socketId);
 }
 
 void CMainWindow::onError(SocketId socketId, ec_net::ENetError error) {
@@ -509,10 +500,6 @@ void CMainWindow::onError(SocketId socketId, ec_net::ENetError error) {
         break;
     case ec_net::eNET_SEND_OVERFLOW:
         LOG_ERR("Send buffer overflow!");
-        break;
-    case ec_net::eNET_DISCONNECT_BY_REMOTE:
-        LOG_ERR("Connection closed by remote, socket id: {}", socketId);
-        connectStateChange(kDisconnect);
         break;
     default:;
     }
@@ -694,8 +681,7 @@ void CMainWindow::handleFilterTextChanged(const QString& text) {
 }
 
 void CMainWindow::handleSendBtnClicked() {
-    unsigned int socketID = m_client.getSocketID();
-    if (0 == socketID) {
+    if (!m_client.isConnected()) {
         QMessageBox::warning(nullptr, "", "Please connect to server first");
         return;
     }
@@ -738,10 +724,8 @@ void CMainWindow::handleSendBtnClicked() {
 }
 
 void CMainWindow::handleConnectBtnClicked() {
-    unsigned int socketID = m_client.getSocketID();
-    if (0 != socketID) {
-        LOG_INFO("Disconnecting...");
-        NetManager::instance().disconnect(socketID);
+    if (m_client.isConnected()) {
+        m_client.disconnect();
         connectStateChange(kDisconnect);
         return;
     }
@@ -1186,6 +1170,7 @@ void CMainWindow::luaRegisterCppClass() {
         .beginClass<IClient>("IClient")
         .addFunction("connect", &IClient::connect)
         .addFunction("disconnect", &IClient::disconnect)
+        .addFunction("isConnected", &IClient::isConnected)
         .addFunction("sendJsonMsg", &IClient::sendJsonMsg)
         .endClass();
 
@@ -1193,9 +1178,7 @@ void CMainWindow::luaRegisterCppClass() {
         .beginClass<IMainApp>("IApp")
         .addFunction("addTimer", &IMainApp::addTimer)
         .addFunction("deleteTimer", &IMainApp::deleteTimer)
-        .addFunction("logInfo", &IMainApp::logInfo)
-        .addFunction("logWarn", &IMainApp::logWarn)
-        .addFunction("logErr", &IMainApp::logErr)
+        .addFunction("getClient", &IMainApp::getClient)
         .endClass();
 
     luabridge::setGlobal(pLuaState, static_cast<IMainApp*>(this), "App");

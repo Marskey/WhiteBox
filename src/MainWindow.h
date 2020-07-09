@@ -114,9 +114,7 @@ private:
     // lua_api::IMainApp begin
     int addTimer(int interval) override;
     void deleteTimer(int timerId) override;
-    void logInfo(const char* message) override;
-    void logWarn(const char* message) override;
-    void logErr(const char* message) override;
+    lua_api::IClient* getClient() override;
     // lua_api::IMainApp end
 private:
     Ui::ClientEmulatorClass ui;

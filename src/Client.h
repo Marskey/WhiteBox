@@ -29,6 +29,7 @@ public:
     // lua_api::IClient begin
     void connect(const char* ip, Port port, BuffSize recv, BuffSize send, const char* tag) override;
     void disconnect() override;
+    bool isConnected() override;
     void sendJsonMsg(const char* msgFullName, const char* jsonData) override;
     // lua_api::IClient end
 private:
