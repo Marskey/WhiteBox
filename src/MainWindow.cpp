@@ -23,6 +23,7 @@ extern "C" {
 #include <QJsonDocument>
 #include <QFile>
 #include <QDirIterator>
+#include <QStyledItemDelegate>
 
 const char WINDOWS_TITLE[25] = "EmuCl";
 
@@ -53,6 +54,7 @@ CMainWindow::CMainWindow(QWidget* parent)
         pLineEdit->setPlaceholderText("Account");
         ui.cbAccount->setLineEdit(pLineEdit);
     }
+    ui.cbAccount->setItemDelegate(new QStyledItemDelegate());
     ui.cbAccount->view()->installEventFilter(m_cbKeyPressFilter);
     ConfigHelper::instance().restoreWidgetComboxState("Account", *ui.cbAccount);
 
@@ -64,6 +66,7 @@ CMainWindow::CMainWindow(QWidget* parent)
         pLineEdit->setPlaceholderText("IP:Port");
         ui.cbIp->setLineEdit(pLineEdit);
     }
+    ui.cbIp->setItemDelegate(new QStyledItemDelegate());
     ui.cbIp->view()->installEventFilter(m_cbKeyPressFilter);
     ConfigHelper::instance().restoreWidgetComboxState("Ip_Port", *ui.cbIp);
 
@@ -73,6 +76,7 @@ CMainWindow::CMainWindow(QWidget* parent)
         pLineEdit->setPlaceholderText("Optional");
         ui.cbOptionalParam->setLineEdit(pLineEdit);
     }
+    ui.cbOptionalParam->setItemDelegate(new QStyledItemDelegate());
     ui.cbOptionalParam->view()->installEventFilter(m_cbKeyPressFilter);
     ConfigHelper::instance().restoreWidgetComboxState("OptionalParam", *ui.cbOptionalParam);
 
