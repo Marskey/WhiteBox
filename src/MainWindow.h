@@ -41,7 +41,7 @@ public:
 public:
     // ec_net::INetEvent begin
     void onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) override;
-    void onConnectSucceed(const char* strRemoteIp
+    void onConnectSucceed(const char* remoteIp
                           , Port port
                           , SocketId socketId) override;
     void onDisconnect(SocketId socketId) override;
@@ -118,6 +118,10 @@ private:
     void deleteTimer(int timerId) override;
     lua_api::IClient* createClient(const char* name) override;
     lua_api::IClient* getClient(const char* name) override;
+    /**
+     * 给LUA脚本调用
+     */
+    void log(const char* message) override;
     // lua_api::IMainApp end
 private:
     Ui::ClientEmulatorClass ui;

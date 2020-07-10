@@ -33,8 +33,6 @@ public:
     void handleError(SocketId socketId, ec_net::ENetError error);
 
     void handleParseMessage(SocketId socketId, const char* fullName, const char* pData, size_t size);
-
-    void addSession(SocketId socketId, SessionPtr session);
 private:
     SocketId genSocketId();
 

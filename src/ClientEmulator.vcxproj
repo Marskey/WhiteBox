@@ -101,6 +101,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\thirdparty\include\cjson\fpconv.c" />
+    <ClCompile Include="..\thirdparty\include\cjson\lua_cjson.c" />
+    <ClCompile Include="..\thirdparty\include\cjson\strbuf.c" />
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ConfigHelper.cpp" />
     <ClCompile Include="ip4validator.cpp" />
@@ -134,6 +137,9 @@
     <ResourceCompile Include="ClientEmulator.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\thirdparty\include\cjson\fpconv.h" />
+    <ClInclude Include="..\thirdparty\include\cjson\lua_cjson.h" />
+    <ClInclude Include="..\thirdparty\include\cjson\strbuf.h" />
     <ClInclude Include="Client.h" />
     <QtMoc Include="ConfigHelper.h" />
     <ClInclude Include="define.h" />

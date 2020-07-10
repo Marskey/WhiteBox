@@ -130,6 +130,10 @@ namespace lua_api
          */
         virtual void disconnect() = 0;
         virtual bool isConnected() = 0;
+        /**
+         * This function is used to get name
+         * @returns return the client session name
+         */
         virtual const char* getName() = 0;
         /**
          * This function is used to send protobuf message data to remote endpoint.
@@ -157,9 +161,17 @@ namespace lua_api
          * @param timerId 
          */
         virtual void deleteTimer(int timerId) = 0;
-
+        /*
+         * This function is used to create a client session
+         * @param name the client session name
+         */
         virtual IClient* createClient(const char* name) = 0;
-
+        /**
+         * This function is used to create a client session
+         * @param name the client session name
+         */
         virtual IClient* getClient(const char* name) = 0;
+        
+        virtual void log(const char* message) = 0;
     };
 }

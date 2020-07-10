@@ -1,6 +1,8 @@
 #pragma once
 
 #include <fstream>
+#include <sstream>
+
 
 #include "lua.hpp"
 #include "LuaBridge/LuaBridge.h"
@@ -53,21 +55,30 @@ public:
     }
 
     bool RunScript(const char* script_file_path) {
-        std::ifstream f(script_file_path, std::ios::binary);
-        f.seekg(0, std::ios::end);
-        std::streamsize size = f.tellg();
-        f.seekg(0, std::ios::beg);
+        bool bResult = false;
+        do {
+            if (luaL_loadfile(m_L, script_file_path) != 0) {
+                LogHelper::instance().logError("Error: {}", lua_tostring(m_L, -1));
+                break;
+            }
 
-        if (size <= 0) {
-            return false;
+            if (lua_pcall(m_L, 0, 0, -2) != 0) {
+                LogHelper::instance().logError("Error: {}", lua_tostring(m_L, -1));
+                break;
+            }
+            bResult = true;
+        } while (false);
+
+        if (!bResult) {
+            std::stringstream ss;
+            ss << "======= stack =======" << "\n";
+            for (int i = 1; i <= lua_gettop(m_L); ++i) {
+                ss << "@" << i << " = " << luabridge::LuaRef::fromStack(m_L, i) << "\n";
+            }
+            LogHelper::instance().logError(ss.str().c_str());
         }
 
-        std::vector<unsigned char> buffer;
-        buffer.resize(size);
-        f.read(reinterpret_cast<char*>(buffer.data()), size);
-
-        RunScript(reinterpret_cast<const char*>(buffer.data()), size, script_file_path);
-        return true;
+        return bResult;
     }
 
 private:

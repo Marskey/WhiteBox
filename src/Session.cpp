@@ -121,7 +121,6 @@ void CSession::connect(const char* ip, Port port) {
         // 设置 nodelay
         self->m_socket.set_option(asio::ip::tcp::no_delay(true));
 
-        NetManager::instance().addSession(self->m_id, self);
         // 处理连接成功
         self->handleConnectSucceed();
         // 开始读数据

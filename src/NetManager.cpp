@@ -36,8 +36,9 @@ void CNetManager::stop() {
 SocketId CNetManager::connect(const char* ip, Port port, BuffSize recv, BuffSize send) {
 	asio::ip::tcp::socket socket(m_ioContext);
 
-    SessionPtr session = SessionPtr(new CSession(genSocketId(), socket, recv, send));
+    SessionPtr session = std::make_shared<CSession>(genSocketId(), socket, recv, send);
     session->connect(ip, port);
+    m_mapSessions[session->getSocketId()] = session;
 
     return session->getSocketId();
 }
@@ -107,16 +108,16 @@ void CNetManager::handleError(SocketId socketId, ec_net::ENetError error) {
     if (m_pNetEvent) {
         m_pNetEvent->onError(socketId, error);
     }
+
+    if (error == ec_net::eNET_CONNECT_FAIL) {
+        m_mapSessions.erase(socketId);
+    }
 }
 
 void CNetManager::handleParseMessage(SocketId socketId, const char* fullName, const char* pData, size_t size) {
     if (m_pNetEvent) {
         m_pNetEvent->onParseMessage(socketId, fullName, pData, size);
     }
-}
-
-void CNetManager::addSession(SocketId socketId, SessionPtr session) {
-    m_mapSessions[socketId] = session;
 }
 
 SocketId CNetManager::genSocketId() {

@@ -56,7 +56,7 @@ const char* CClient::getName() {
     return m_name.c_str();
 }
 
-void CClient::onConnectSucceed(const char* strRemoteIp, Port port, SocketId socketId) {
+void CClient::onConnectSucceed(const char* remoteIp, Port port, SocketId socketId) {
     LuaScriptSystem::instance().Invoke("__APP_on_client_connected"
                                        , static_cast<lua_api::IClient*>(this));
 }

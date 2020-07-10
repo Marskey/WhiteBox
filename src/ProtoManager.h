@@ -20,10 +20,10 @@ class CProtoManager : public lua_api::IProtoManager
 
     struct ImporterInfo
     {
-        google::protobuf::compiler::Importer* pImporter;
-        google::protobuf::compiler::DiskSourceTree* pSourceTree;
-        google::protobuf::DynamicMessageFactory* pFactory;
-        MultiFileErrorCollector* pCollector;
+        google::protobuf::compiler::Importer* pImporter = nullptr;
+        google::protobuf::compiler::DiskSourceTree* pSourceTree = nullptr;
+        google::protobuf::DynamicMessageFactory* pFactory = nullptr;
+        MultiFileErrorCollector* pCollector = nullptr;
     };
 
 public:

@@ -1,4 +1,4 @@
-package.path = "./script/?.lua"
+package.path = package.path..";./script/?.lua"
 
 local get_full_name_by_type = {}
 local get_type_by_full_name = {}

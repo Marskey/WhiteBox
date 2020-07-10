@@ -14,7 +14,7 @@ namespace ec_net
     {
     public:
         virtual void onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) = 0;
-        virtual void onConnectSucceed(const char* strRemoteIp
+        virtual void onConnectSucceed(const char* remoteIp
                                       , Port unPort
                                       , SocketId socketId) = 0;
         virtual void onDisconnect(SocketId socketId) = 0;

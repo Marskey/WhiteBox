@@ -18,7 +18,7 @@ public:
     void setName(const char* name);
 
     // ec_net::INetEvent begin
-    void onConnectSucceed(const char* strRemoteIp , Port port , SocketId socketId) override;
+    void onConnectSucceed(const char* remoteIp , Port port , SocketId socketId) override;
     void onDisconnect(SocketId socketId) override;
     void onError(SocketId socketId, ec_net::ENetError error) override;
     void onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) override;

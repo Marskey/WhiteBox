@@ -86,8 +86,8 @@ uint16_t CProtoManager::getMsgTypeByFullName(const std::string& strName) {
 }
 
 const CProtoManager::MsgInfo* CProtoManager::getMsgInfoByMsgType(uint16_t msgType) {
-    for (auto& [key, value] : m_mapMsgFullName2MsgInfo) {
-        if (msgType = value.msgType) {
+    for (const auto& [key, value] : m_mapMsgFullName2MsgInfo) {
+        if (value.msgType == msgType) {
             return &value;
         }
     }

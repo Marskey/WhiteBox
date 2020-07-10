@@ -42,6 +42,15 @@
     <ClCompile Include="protobuf\protobuflib.c">
       <Filter>Lua\protobuf</Filter>
     </ClCompile>
+    <ClCompile Include="..\thirdparty\include\cjson\fpconv.c">
+      <Filter>Lua\cjson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\include\cjson\lua_cjson.c">
+      <Filter>Lua\cjson</Filter>
+    </ClCompile>
+    <ClCompile Include="..\thirdparty\include\cjson\strbuf.c">
+      <Filter>Lua\cjson</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ClientEmulator.rc" />
@@ -114,6 +123,9 @@
     <Filter Include="Lua\protobuf">
       <UniqueIdentifier>{2e787ad2-881a-4366-93a0-8ee33dabf23b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lua\cjson">
+      <UniqueIdentifier>{270e79ec-663a-4665-b2e6-74a7f554cadc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ProtoManager.h">
@@ -150,6 +162,15 @@
     </ClInclude>
     <ClInclude Include="protobuf\protobuflib.h">
       <Filter>Lua\protobuf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\include\cjson\lua_cjson.h">
+      <Filter>Lua\cjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\include\cjson\fpconv.h">
+      <Filter>Lua\cjson</Filter>
+    </ClInclude>
+    <ClInclude Include="..\thirdparty\include\cjson\strbuf.h">
+      <Filter>Lua\cjson</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
