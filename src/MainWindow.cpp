@@ -847,7 +847,7 @@ void CMainWindow::handleConnectBtnClicked() {
 
     QStringList ipAndPort = ui.cbIp->currentText().split(":");
     if (ipAndPort.size() != 2) {
-        QMessageBox::warning(this, "", "IP and Port not correct。it should like: 192.168.1.1:28888");
+        QMessageBox::warning(this, "", "IP and Port not correct. it should like: 192.168.1.1:28888");
         return;
     }
 
