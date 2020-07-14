@@ -5,5 +5,4 @@ using SocketId = uint64_t;
 using Port = uint16_t;
 using BuffSize = size_t;
 
-//#define MAX_BUFF_SIZE 64*1024
-#define MAX_BUFF_SIZE 12
+#define MAX_BUFF_SIZE 64*1024

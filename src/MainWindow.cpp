@@ -80,6 +80,8 @@ CMainWindow::CMainWindow(QWidget* parent)
     ui.cbOptionalParam->view()->installEventFilter(m_cbKeyPressFilter);
     ConfigHelper::instance().restoreWidgetComboxState("OptionalParam", *ui.cbOptionalParam);
 
+    ui.cbClientName->setItemDelegate(new QStyledItemDelegate());
+
     // 读取是否自动显示最新
     ConfigHelper::instance().restoreWidgetCheckboxState("AutoShowDetail", *ui.checkIsAutoDetail);
 
@@ -272,6 +274,11 @@ void CMainWindow::deleteTimer(int timerId) {
 }
 
 lua_api::IClient* CMainWindow::createClient(const char* name) {
+    if (strlen(name) == 0) {
+        LOG_ERR("Client named cannot be empty");
+        return nullptr;
+    }
+
     auto* pClient = static_cast<CClient*>(getClient(name));
     if (pClient == nullptr) {
         pClient = new CClient();
@@ -286,6 +293,11 @@ lua_api::IClient* CMainWindow::createClient(const char* name) {
 }
 
 lua_api::IClient* CMainWindow::getClient(const char* name) {
+    if (strlen(name) == 0) {
+        LOG_ERR("Client named cannot be empty");
+        return nullptr;
+    }
+
     auto it = m_mapClients.find(name);
     if (it != m_mapClients.end()) {
         return it->second;

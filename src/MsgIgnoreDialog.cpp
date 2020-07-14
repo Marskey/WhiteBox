@@ -27,19 +27,12 @@ void CMsgIgnoreDialog::init(std::unordered_set<std::string>& setIgnoredMsg) {
         listMsgRight->clear();
         auto it = setIgnoredMsg.begin();
         for (; it != setIgnoredMsg.end(); ++it) {
-            CProtoManager::MsgInfo msgInfo;
-            for (auto& info : listNames) {
-                if (info.msgFullName == *it) {
-                    msgInfo = info;
-                    break;
-                }
-            }
-
             auto* pListItem = new QListWidgetItem(listMsgRight);
-            pListItem->setText(msgInfo.msgName.c_str());
-            pListItem->setData(Qt::UserRole, msgInfo.msgFullName.c_str());
+            pListItem->setText((*it).c_str());
             listMsgRight->addItem(pListItem);
-            listNames.remove(msgInfo);
+            listNames.remove_if([ ignoreFullName = *it](auto msgInfo) {
+                return msgInfo.msgFullName == ignoreFullName;
+            });
         }
     }
 
@@ -48,8 +41,7 @@ void CMsgIgnoreDialog::init(std::unordered_set<std::string>& setIgnoredMsg) {
         auto it = listNames.begin();
         for (; it != listNames.end(); ++it) {
             auto* pListItem = new QListWidgetItem(listMsgLeft);
-            pListItem->setText(it->msgName.c_str());
-            pListItem->setData(Qt::UserRole, it->msgFullName.c_str());
+            pListItem->setText(it->msgFullName.c_str());
             listMsgLeft->addItem(pListItem);
         }
     }
@@ -60,7 +52,7 @@ std::list<std::string> CMsgIgnoreDialog::getIgnoredMsg() {
     QListWidgetItem* pItem = nullptr;
     for (int i = 0; i < listMsgRight->count(); ++i) {
         pItem = listMsgRight->item(i);
-        listIgnoredMsgName.emplace_back(pItem->data(Qt::UserRole).toString().toStdString());
+        listIgnoredMsgName.emplace_back(pItem->text().toStdString());
     }
     return std::move(listIgnoredMsgName);
 }
@@ -79,7 +71,7 @@ void CMsgIgnoreDialog::filterMessage(const QString& filterText, QListWidget& lis
             return;
         }
 
-        std::string strMsgName = pMsgInfo->msgName;
+        std::string strMsgName = pMsgInfo->msgFullName;
         QList<QListWidgetItem*> listFound = listWidget.findItems(strMsgName.c_str(), Qt::MatchCaseSensitive);
         for (int i = 0; i < listFound.count(); ++i) {
             listFound[i]->setHidden(false);
