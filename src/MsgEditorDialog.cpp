@@ -271,7 +271,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
                 auto* pBtn2 = new QPushButton("Clear", this);
                 registerBtn(pBtn2, pDescriptor->number());
                 pHBoxLayout->addWidget(pBtn2);
-                connect(pBtn2, SIGNAL(clicked()), this, SLOT(handleClearBtn()()));
+                connect(pBtn2, SIGNAL(clicked()), this, SLOT(handleClearBtn()));
 
                 auto* pTextEdit = new QTextEdit(this);
                 std::string textEditName = "textedit_" + std::to_string(pDescriptor->number());
@@ -281,9 +281,11 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
                 pVBoxLayout->addLayout(pHBoxLayout);
                 pVBoxLayout->addWidget(pTextEdit);
                 auto& message = m_pMessage->GetReflection()->GetMessage(*m_pMessage, pDescriptor);
-                std::string msgStr;
-                google::protobuf::util::MessageToJsonString(message, &msgStr, m_option);
-                pTextEdit->setText(msgStr.c_str());
+                if (0 != message.ByteSize()) {
+                    std::string msgStr;
+                    google::protobuf::util::MessageToJsonString(message, &msgStr, m_option);
+                    pTextEdit->setText(msgStr.c_str());
+                }
 
                 layout.addRow(pFieldLabel, pVBoxLayout);
                 break;
@@ -371,7 +373,7 @@ void CMsgEditorDialog::handleMessageEdit() {
     }
 
     google::protobuf::Message* pEditMessage = m_pMessage->GetReflection()->MutableMessage(m_pMessage, pFd);
-    auto* pDlg = new CMsgEditorDialog;
+    auto* pDlg = new CMsgEditorDialog(this);
     pDlg->initDialogByMessage(pEditMessage);
     int ret = pDlg->exec();
     if (ret == QDialog::Accepted) {
@@ -381,9 +383,11 @@ void CMsgEditorDialog::handleMessageEdit() {
                 std::string textEditName = "textedit_" + std::to_string(pFd->number());
                 auto pTextEdit  = pBtn->parentWidget()->findChild<QTextEdit*>(textEditName.c_str());
 
-                std::string msgStr;
-                google::protobuf::util::MessageToJsonString(*pEditMessage, &msgStr, m_option);
-                pTextEdit->setText(msgStr.c_str());
+                if (0 != pEditMessage->ByteSize()) {
+                    std::string msgStr;
+                    google::protobuf::util::MessageToJsonString(*pEditMessage, &msgStr, m_option);
+                    pTextEdit->setText(msgStr.c_str());
+                }
             }
         }
     }
@@ -411,9 +415,11 @@ void CMsgEditorDialog::handleMessageAddBtn() {
                 std::string listName = "list_" + std::to_string(messageIdx);
                 QListWidget* pListWidget  = pBtn->parentWidget()->findChild<QListWidget*>(listName.c_str());
 
-                std::string msgStr;
-                google::protobuf::util::MessageToJsonString(*pNewMessage, &msgStr, m_option);
-                pListWidget->addItem(msgStr.c_str());
+                if (0 != pNewMessage->ByteSize()) {
+                    std::string msgStr;
+                    google::protobuf::util::MessageToJsonString(*pNewMessage, &msgStr, m_option);
+                    pListWidget->addItem(msgStr.c_str());
+                }
             }
         }
     }
@@ -451,9 +457,11 @@ void CMsgEditorDialog::handleMessageInsertBtn() {
                     m_pMessage->GetReflection()->SwapElements(m_pMessage, pFd, i, i - 1);
                 }
 
-                std::string msgStr;
-                google::protobuf::util::MessageToJsonString(*pNewMessage, &msgStr, m_option);
-                pListWidget->insertItem(curRow, msgStr.c_str());
+                if (0 != pNewMessage->ByteSize()) {
+                    std::string msgStr;
+                    google::protobuf::util::MessageToJsonString(*pNewMessage, &msgStr, m_option);
+                    pListWidget->insertItem(curRow, msgStr.c_str());
+                }
             }
         }
     }
@@ -709,26 +717,39 @@ void CMsgEditorDialog::handleClearBtn() {
 
     const google::protobuf::FieldDescriptor* pFd = m_pMessage->GetDescriptor()->FindFieldByNumber(messageIdx);
 
-    if (!pFd->is_repeated()) {
-        return;        
+    QMessageBox msgBox;
+    msgBox.setInformativeText("Do you want to clear?");
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Discard);
+    msgBox.setDefaultButton(QMessageBox::Yes);
+    int ret = msgBox.exec();
+    if (ret != QMessageBox::Yes) {
+        return;
     }
 
-    if (pBtn->parentWidget() != nullptr) {
-        if (pBtn->parentWidget()->layout() != nullptr) {
-            std::string listName = "list_" + std::to_string(messageIdx);
-            auto* pListWidget = pBtn->parentWidget()->findChild<QListWidget*>(listName.c_str());
-            if (nullptr == pListWidget) {
-                return;
-            }
+    if (pFd->is_repeated()) {
+        if (pBtn->parentWidget() != nullptr) {
+            if (pBtn->parentWidget()->layout() != nullptr) {
+                std::string listName = "list_" + std::to_string(messageIdx);
+                auto* pListWidget = pBtn->parentWidget()->findChild<QListWidget*>(listName.c_str());
+                if (nullptr == pListWidget) {
+                    return;
+                }
 
-            QMessageBox msgBox;
-            msgBox.setInformativeText("Do you want to clear?");
-            msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Discard);
-            msgBox.setDefaultButton(QMessageBox::Yes);
-            int ret = msgBox.exec();
-            if (ret == QMessageBox::Yes) {
                 m_pMessage->GetReflection()->ClearField(m_pMessage, pFd);
                 pListWidget->clear();
+            }
+        }
+    } else {
+        if (pBtn->parentWidget() != nullptr) {
+            if (pBtn->parentWidget()->layout() != nullptr) {
+                std::string textEditName = "textedit_" + std::to_string(messageIdx);
+                auto* pTextEditWidget = pBtn->parentWidget()->findChild<QTextEdit*>(textEditName.c_str());
+                if (nullptr == pTextEditWidget) {
+                    return;
+                }
+
+                m_pMessage->GetReflection()->ClearField(m_pMessage, pFd);
+                pTextEditWidget->clear();
             }
         }
     }

@@ -21,11 +21,9 @@ public:
 
     void saveMainWindowGeometry(const QByteArray &geometry);
     void saveMainWindowState(const QByteArray &state);
-    void saveSubWindowGeometry(const QByteArray &geometry);
 
     QByteArray getMainWindowGeometry() const;
     QByteArray getMainWindowState() const;
-    QByteArray getSubWindowGeometry();
 
     void saveSplitterH(const QByteArray& state);
     void saveSplitterV(const QByteArray& state);

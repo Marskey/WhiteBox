@@ -634,7 +634,6 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
     }
 
     auto* pDlg = new CMsgEditorDialog(this);
-    pDlg->restoreGeometry(ConfigHelper::instance().getSubWindowGeometry());
     pDlg->initDialogByMessage(pMessage);
 
     int ret = pDlg->exec();
@@ -653,7 +652,6 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
         }
     }
 
-    ConfigHelper::instance().saveSubWindowGeometry(pDlg->saveGeometry());
     delete pDlg;
 
     if (pMessage->ByteSize() == 0) {

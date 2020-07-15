@@ -49,24 +49,12 @@ void CConfigHelper::saveMainWindowState(const QByteArray& state) {
     m_pSettings->setValue("/Window/MainWindowState", QVariant(state));
 }
 
-void CConfigHelper::saveSubWindowGeometry(const QByteArray& geometry) {
-    m_subWindowGeometry = geometry;
-    m_pSettings->setValue("/Window/subWindowGeometry", QVariant(geometry));
-}
-
 QByteArray CConfigHelper::getMainWindowGeometry() const {
     return m_pSettings->value("/Window/MainWindowGeometry").toByteArray();
 }
 
 QByteArray CConfigHelper::getMainWindowState() const {
     return m_pSettings->value("/Window/MainWindowState").toByteArray();
-}
-
-QByteArray CConfigHelper::getSubWindowGeometry() {
-    if (m_subWindowGeometry.isEmpty()) {
-        m_subWindowGeometry = m_pSettings->value("/Window/subWindowGeometry").toByteArray();
-    }
-    return m_subWindowGeometry;
 }
 
 void CConfigHelper::saveSplitterH(const QByteArray& state) {
