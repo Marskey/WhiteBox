@@ -27,7 +27,7 @@ void CMsgIgnoreDialog::init(std::unordered_set<std::string>& setIgnoredMsg) {
         listMsgRight->clear();
         auto it = setIgnoredMsg.begin();
         for (; it != setIgnoredMsg.end(); ++it) {
-            auto* pListItem = new QListWidgetItem(listMsgRight);
+            auto* pListItem = new QListWidgetItem();
             pListItem->setText((*it).c_str());
             listMsgRight->addItem(pListItem);
             listNames.remove_if([ ignoreFullName = *it](auto msgInfo) {
@@ -40,7 +40,7 @@ void CMsgIgnoreDialog::init(std::unordered_set<std::string>& setIgnoredMsg) {
         listMsgLeft->clear();
         auto it = listNames.begin();
         for (; it != listNames.end(); ++it) {
-            auto* pListItem = new QListWidgetItem(listMsgLeft);
+            auto* pListItem = new QListWidgetItem();
             pListItem->setText(it->msgFullName.c_str());
             listMsgLeft->addItem(pListItem);
         }

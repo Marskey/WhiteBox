@@ -1,15 +1,9 @@
 package.path = package.path..";./script/?.lua"
-
 local get_full_name_by_type = {}
 local get_type_by_full_name = {}
-
 local g_reserve_data = {}
-
 -- 定义包头大小
 local msg_head_size = 6
-
-local json = require "json"
-
 -- __APP_on_proto_reload
 -- 每当客户端加载完proto文件后被调用
 -- @param ProtoMananger Cpp类的实例指针，注册函数看文本最后
@@ -49,7 +43,6 @@ function __APP_on_proto_reload(ProtoManager)
     end
     return
 end
-
 -- __APP_on_read_socket_buffer
 -- 每当客户端接收到网络数据包后被调用, 需要在该函数中对数据块进行拆包操作（解决粘包问题）
 -- @param SocketReader Cpp ISocketReader类指针 网络数据包块，注册函数看文本最后
@@ -94,7 +87,6 @@ function __APP_on_read_socket_buffer(SocketReader, buff_size)
     SocketReader:bindMessage(msg_full_name, 0 + msg_head_size, msg_size)
     return packet_size
 end
-
 -- __APP_on_write_socket_buffer
 -- 每当客户端发送数据包前被调用，需要在此实现对数据包头的添加
 -- @param ISocketWriter Cpp ISocketWriter类指针 待发送的网络数据包块，注册函数看文本最后
@@ -114,7 +106,6 @@ function __APP_on_write_socket_buffer(SocketWriter, msg_full_name, protobuf_data
     SocketWriter:writeUint8(1)
     SocketWriter:writeBinary(protobuf_data, protobuf_size)
 end
-
 -- __APP_on_message_recv
 -- protobuf message 数据解析完成后调用
 -- @param Client Cpp IClient类指针 用来连接，断开，发送数据等，注册函数看文本最后
@@ -185,7 +176,6 @@ function __APP_on_message_recv(Client, msg_full_name, protobuf_msg)
         return
     end
 end
-
 -- __APP_on_connect_btn_click
 -- 当程序界面上的连接按钮被点击后调用，在此开始登入流程等操作
 -- @param ip 界面上填写的ip地址
@@ -202,7 +192,6 @@ function __APP_on_connect_btn_click(ip, port, account, optional)
         Client:connect(ip, port, 131073, 131073)
     end
 end
-
 -- __APP_on_client_connected
 -- 当socket链路连接成功后被调用
 -- @param Client Cpp IClient类指针 用来连接，断开，发送数据等，注册函数看文本最后
@@ -249,13 +238,11 @@ function __APP_on_client_connected(Client)
         --错误显示
     end
 end
-
 -- __APP_on_client_disconnected
 -- 当socket链路断开后后被调用
 -- @param name 断开连接的客户端名字
 function __APP_on_client_disconnected(name)
 end
-
 -- __APP_on_timer
 -- 当定时器到点后被调用
 -- @param timer_id

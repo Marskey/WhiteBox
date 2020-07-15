@@ -175,7 +175,6 @@ public:
         }
 
         m_logWidget->addItem(pListWidgetItem);
-        m_logWidget->update();
     }
 
     QListWidget* m_logWidget = nullptr;

@@ -563,7 +563,7 @@ void CMainWindow::onConnectSucceed(const char* remoteIp, Port port, SocketId soc
 }
 
 void CMainWindow::onDisconnect(SocketId socketId) {
-    LOG_INFO("Connection closed, socket id: {}", socketId);
+    LOG_ERR("Connection closed, socket id: {}", socketId);
     bool bHasConnect = false;
     for (auto& [key, client] : m_mapClients) {
         if (client->getSocketID() == socketId) {
@@ -835,7 +835,7 @@ void CMainWindow::handleSendBtnClicked() {
                          , highlightJsonData(msgStr.c_str()).c_str(), Qt::black);
 
         if (0 == ui.listRecentMessage->findItems(selectMsgName, Qt::MatchExactly).count()) {
-            auto* pItem = new QListWidgetItem(selectMsgName, ui.listRecentMessage);
+            auto* pItem = new QListWidgetItem(selectMsgName);
             pItem->setToolTip(msgStr.c_str());
             ui.listRecentMessage->insertItem(0, pItem);
         }
@@ -1231,7 +1231,7 @@ bool CMainWindow::loadProto() {
     std::list<CProtoManager::MsgInfo> listNames = ProtoManager::instance().getMsgInfos();
     auto it = listNames.begin();
     for (; it != listNames.end(); ++it) {
-        auto* pListItem = new QListWidgetItem(ui.listMessage);
+        auto* pListItem = new QListWidgetItem();
         pListItem->setText(it->msgName.c_str());
         pListItem->setData(Qt::UserRole, it->msgFullName.c_str());
         ui.listMessage->addItem(pListItem);
@@ -1328,8 +1328,8 @@ void CMainWindow::addDetailLogInfo(const char* msgFullName, const char* msg, con
 
     std::string data = tmp;
     data.append(msg);
-    auto* pListWidgetItem = new QListWidgetItem(data.c_str(), ui.listLogs);
-    pListWidgetItem->setData(Qt::UserRole, detail);
+    auto* pListWidgetItem = new QListWidgetItem(data.c_str());
+    pListWidgetItem->setData(Qt::UserRole, QString(detail));
     pListWidgetItem->setData(Qt::UserRole + 1, msgFullName);
 
     if (QColor(Qt::GlobalColor(0)) != color) {
@@ -1337,4 +1337,5 @@ void CMainWindow::addDetailLogInfo(const char* msgFullName, const char* msg, con
     }
 
     ui.listLogs->addItem(pListWidgetItem);
+    ui.listLogs->update();
 }
