@@ -14,7 +14,7 @@ class CProtoManager : public lua_api::IProtoManager
         void AddError(const std::string& filename, int line, int column,
                       const std::string& message) override {
 
-            LogHelper::instance().logError("Error: import {} failed, line: {}, col: {}. {}", filename, line, column, message);
+            LogHelper::instance().logError("Protobuf error: import {} failed, line: {}, col: {}. {}", filename, line, column, message);
         }
     };
 

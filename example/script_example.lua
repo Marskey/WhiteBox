@@ -425,143 +425,144 @@ end
 
 ------------------------------ 以下为应用程序开放给lua的protobuf的接口，使用方法可参考官方protobuf库
 -- // importer
--- void* protobuf_createimporter(const char* path);
--- void protobuf_freeimporter(void* c);
--- void* protobuf_importer_import(void* c, const char* path);
--- void* protobuf_importer_getpool(void* c);
+-- void* createimporter(const char* path);
+-- void freeimporter(void* c);
+-- void* importer_import(void* c, const char* path);
+-- void* importer_getpool(void* c);
 -- 
 -- // descripor pool
--- void* protobuf_descriptorpool_findmessagetypebyname(void* pool, const char* name);
--- void* protobuf_descriptorpool_findfieldbyname(void* pool, const char* name);
--- void* protobuf_descriptorpool_findoneofbyname(void* pool, const char* name);
--- void* protobuf_descriptorpool_findenumtypebyname(void* pool, const char* name);
--- void* protobuf_descriptorpool_findenumvaluebyname(void* pool, const char* name);
+-- void* descriptorpool_findfilebyname(void* pool, const char* name);
+-- void* descriptorpool_findmessagetypebyname(void* pool, const char* name);
+-- void* descriptorpool_findfieldbyname(void* pool, const char* name);
+-- void* descriptorpool_findoneofbyname(void* pool, const char* name);
+-- void* descriptorpool_findenumtypebyname(void* pool, const char* name);
+-- void* descriptorpool_findenumvaluebyname(void* pool, const char* name);
 -- 
 -- // file descriptor
--- int protobuf_filedescriptor_messagetypecount(void* descriptor);
--- void* protobuf_filedescriptor_messagetype(void* descriptor, int index);
--- int protobuf_filedescriptor_enumtypecount(void* descriptor);
--- void* protobuf_filedescriptor_enumtype(void* descriptor, int index);
+-- int filedescriptor_messagetypecount(void* descriptor);
+-- void* filedescriptor_messagetype(void* descriptor, int index);
+-- int filedescriptor_enumtypecount(void* descriptor);
+-- void* filedescriptor_enumtype(void* descriptor, int index);
 -- 
 -- // message descriptor
--- const char* protobuf_messagedescriptor_name(void* descriptor);
--- const char* protobuf_messagedescriptor_fullname(void* descriptor);
--- int protobuf_messagedescriptor_fieldcount(void* descriptor);
--- void* protobuf_messagedescriptor_field(void* descriptor, int index);
--- void* protobuf_messagedescriptor_findfieldbyname(void* descriptor, const char* name);
--- void* protobuf_messagedescriptor_findfieldbynumber(void* descriptor, int number);
+-- const char* messagedescriptor_name(void* descriptor);
+-- const char* messagedescriptor_fullname(void* descriptor);
+-- int messagedescriptor_fieldcount(void* descriptor);
+-- void* messagedescriptor_field(void* descriptor, int index);
+-- void* messagedescriptor_findfieldbyname(void* descriptor, const char* name);
+-- void* messagedescriptor_findfieldbynumber(void* descriptor, int number);
 -- 
 -- // enum descriptor
--- const char* protobuf_enumdescriptor_name(void* descriptor);
--- const char* protobuf_enumdescriptor_fullname(void* descriptor);
--- int protobuf_enumdescriptor_valuecount(void* descriptor);
--- void* protobuf_enumdescriptor_value(void* descriptor, int index);
--- void* protobuf_enumdescriptor_findvaluebyname(void* descriptor, const char* name);
--- void* protobuf_enumdescriptor_findvaluebynumber(void* descriptor, int number);
+-- const char* enumdescriptor_name(void* descriptor);
+-- const char* enumdescriptor_fullname(void* descriptor);
+-- int enumdescriptor_valuecount(void* descriptor);
+-- void* enumdescriptor_value(void* descriptor, int index);
+-- void* enumdescriptor_findvaluebyname(void* descriptor, const char* name);
+-- void* enumdescriptor_findvaluebynumber(void* descriptor, int number);
 -- 
 -- // enum value descriptor
--- const char* protobuf_enumvaluedescriptor_name(void* descriptor);
--- int protobuf_enumvaluedescriptor_number(void* descriptor);
+-- const char* enumvaluedescriptor_name(void* descriptor);
+-- int enumvaluedescriptor_number(void* descriptor);
 -- 
 -- // field descriptor
--- int protobuf_fielddescriptor_cpptype(void* descriptor);
--- const char* protobuf_fielddescriptor_name(void* descriptor);
--- const char* protobuf_fielddescriptor_cpptypename(void* descriptor);
--- int protobuf_fielddescriptor_ismap(void* descriptor);
--- int protobuf_fielddescriptor_isrepeated(void* descriptor);
--- void* protobuf_fielddescriptor_messagetype(void* descriptor);
--- void* protobuf_fielddescriptor_enumtype(void* descriptor);
+-- int fielddescriptor_cpptype(void* descriptor);
+-- const char* fielddescriptor_name(void* descriptor);
+-- const char* fielddescriptor_cpptypename(void* descriptor);
+-- int fielddescriptor_ismap(void* descriptor);
+-- int fielddescriptor_isrepeated(void* descriptor);
+-- void* fielddescriptor_messagetype(void* descriptor);
+-- void* fielddescriptor_enumtype(void* descriptor);
 -- 
 -- // factory
--- void* protobuf_createfactory();
--- void protobuf_freefactory(void* c);
--- void* protobuf_factory_createmessage(void* c, void* message_descriptor);
+-- void* createfactory();
+-- void freefactory(void* c);
+-- void* factory_createmessage(void* c, void* message_descriptor);
 -- 
 -- // message
 -- // @param *m 为message的指针的指针
--- void protobuf_freemessage(void* m);
--- void* protobuf_clonemessage(void* m);
--- void* protobuf_message_getdescriptor(void* m);
--- void* protobuf_message_getreflection(void* m);
--- int protobuf_message_getbytesize(void* m);
--- int protobuf_message_serializetoarray(void* m, void* buffer, int size);
--- int protobuf_message_parsefromarray(void* m, void* buffer, int size);
--- const char* protobuf_message_jsonencode(void* m);
--- const char* protobuf_message_jsondecode(void* m, const char* json);
+-- void freemessage(void* m);
+-- void* clonemessage(void* m);
+-- void* message_getdescriptor(void* m);
+-- void* message_getreflection(void* m);
+-- int message_getbytesize(void* m);
+-- int message_serializetoarray(void* m, void* buffer, int size);
+-- int message_parsefromarray(void* m, void* buffer, int size);
+-- const char* message_jsonencode(void* m);
+-- const char* message_jsondecode(void* m, const char* json);
 -- 
 -- // reflection
 -- // @param *r 为reflection的指针
 -- // @param *m 为message的指针
 -- // @param *field 为field descriptor 的指针
--- void* protobuf_reflection_getmessage(void* r, void* m, void* field);
--- int protobuf_reflection_getbool(void* r, void* m, void* field);
--- int protobuf_reflection_getint32(void* r, void* m, void* field);
--- unsigned int protobuf_reflection_getuint32(void* r, void* m, void* field);
--- long long protobuf_reflection_getint64(void* r, void* m, void* field);
--- unsigned long long protobuf_reflection_getuint64(void* r, void* m, void* field);
--- double protobuf_reflection_getdouble(void* r, void* m, void* field);
--- float protobuf_reflection_getfloat(void* r, void* m, void* field);
--- int protobuf_reflection_getenumvalue(void* r, void* m, void* field);
--- const char* protobuf_reflection_getstring(void* r, void* m, void* field);
+-- void* reflection_getmessage(void* r, void* m, void* field);
+-- int reflection_getbool(void* r, void* m, void* field);
+-- int reflection_getint32(void* r, void* m, void* field);
+-- unsigned int reflection_getuint32(void* r, void* m, void* field);
+-- long long reflection_getint64(void* r, void* m, void* field);
+-- unsigned long long reflection_getuint64(void* r, void* m, void* field);
+-- double reflection_getdouble(void* r, void* m, void* field);
+-- float reflection_getfloat(void* r, void* m, void* field);
+-- int reflection_getenumvalue(void* r, void* m, void* field);
+-- const char* reflection_getstring(void* r, void* m, void* field);
 -- 
--- void protobuf_reflection_setbool(void* r, void* m, void* field, int value);
--- void protobuf_reflection_setint32(void* r, void* m, void* field, int value);
--- void protobuf_reflection_setuint32(void* r, void* m, void* field, unsigned int value);
--- void protobuf_reflection_setint64(void* r, void* m, void* field, long long value);
--- void protobuf_reflection_setuint64(void* r, void* m, void* field, unsigned long long value);
--- void protobuf_reflection_setdouble(void* r, void* m, void* field, double value);
--- void protobuf_reflection_setfloat(void* r, void* m, void* field, float value);
--- void protobuf_reflection_setenumvalue(void* r, void* m, void* field, int value);
--- void protobuf_reflection_setstring(void* r, void* m, void* field, const char* value);
+-- void reflection_setbool(void* r, void* m, void* field, int value);
+-- void reflection_setint32(void* r, void* m, void* field, int value);
+-- void reflection_setuint32(void* r, void* m, void* field, unsigned int value);
+-- void reflection_setint64(void* r, void* m, void* field, long long value);
+-- void reflection_setuint64(void* r, void* m, void* field, unsigned long long value);
+-- void reflection_setdouble(void* r, void* m, void* field, double value);
+-- void reflection_setfloat(void* r, void* m, void* field, float value);
+-- void reflection_setenumvalue(void* r, void* m, void* field, int value);
+-- void reflection_setstring(void* r, void* m, void* field, const char* value);
 -- 
--- void protobuf_reflection_clearfield(void* r, void* m, void* field);
+-- void reflection_clearfield(void* r, void* m, void* field);
 -- 
--- int protobuf_reflection_getrepeatedmessagecount(void* r, void* m, void* field);
--- int protobuf_reflection_getrepeatedboolcount(void* r, void* m, void* field);
--- int protobuf_reflection_getrepeatedint32count(void* r, void* m, void* field);
--- int protobuf_reflection_getrepeateduint32count(void* r, void* m, void* field);
--- int protobuf_reflection_getrepeatedint64count(void* r, void* m, void* field);
--- int protobuf_reflection_getrepeateduint64count(void* r, void* m, void* field);
--- int protobuf_reflection_getrepeateddoublecount(void* r, void* m, void* field);
--- int protobuf_reflection_getrepeatedfloatcount(void* r, void* m, void* field);
--- int protobuf_reflection_getrepeatedstringcount(void* r, void* m, void* field);
+-- int reflection_getrepeatedmessagecount(void* r, void* m, void* field);
+-- int reflection_getrepeatedboolcount(void* r, void* m, void* field);
+-- int reflection_getrepeatedint32count(void* r, void* m, void* field);
+-- int reflection_getrepeateduint32count(void* r, void* m, void* field);
+-- int reflection_getrepeatedint64count(void* r, void* m, void* field);
+-- int reflection_getrepeateduint64count(void* r, void* m, void* field);
+-- int reflection_getrepeateddoublecount(void* r, void* m, void* field);
+-- int reflection_getrepeatedfloatcount(void* r, void* m, void* field);
+-- int reflection_getrepeatedstringcount(void* r, void* m, void* field);
 -- 
--- void* protobuf_reflection_getrepeatedmessage(void* r, void* m, void* field, int index);
--- int protobuf_reflection_getrepeatedbool(void* r, void* m, void* field, int index);
--- int protobuf_reflection_getrepeatedint32(void* r, void* m, void* field, int index);
--- unsigned int protobuf_reflection_getrepeateduint32(void* r, void* m, void* field, int index);
--- long long protobuf_reflection_getrepeatedint64(void* r, void* m, void* field, int index);
--- unsigned long long protobuf_reflection_getrepeateduint64(void* r, void* m, void* field, int index);
--- double protobuf_reflection_getrepeateddouble(void* r, void* m, void* field, int index);
--- float protobuf_reflection_getrepeatedfloat(void* r, void* m, void* field, int index);
--- const char* protobuf_reflection_getrepeatedstring(void* r, void* m, void* field, int index);
+-- void* reflection_getrepeatedmessage(void* r, void* m, void* field, int index);
+-- int reflection_getrepeatedbool(void* r, void* m, void* field, int index);
+-- int reflection_getrepeatedint32(void* r, void* m, void* field, int index);
+-- unsigned int reflection_getrepeateduint32(void* r, void* m, void* field, int index);
+-- long long reflection_getrepeatedint64(void* r, void* m, void* field, int index);
+-- unsigned long long reflection_getrepeateduint64(void* r, void* m, void* field, int index);
+-- double reflection_getrepeateddouble(void* r, void* m, void* field, int index);
+-- float reflection_getrepeatedfloat(void* r, void* m, void* field, int index);
+-- const char* reflection_getrepeatedstring(void* r, void* m, void* field, int index);
 -- 
--- void protobuf_reflection_setrepeatedbool(void* r, void* m, void* field, int index, int value);
--- void protobuf_reflection_setrepeatedint32(void* r, void* m, void* field, int index, int value);
--- void protobuf_reflection_setrepeateduint32(void* r, void* m, void* field, int index, unsigned int value);
--- void protobuf_reflection_setrepeatedint64(void* r, void* m, void* field, int index, long long value);
--- void protobuf_reflection_setrepeateduint64(void* r, void* m, void* field, int index, unsigned long long value);
--- void protobuf_reflection_setrepeateddouble(void* r, void* m, void* field, int index, double value);
--- void protobuf_reflection_setrepeatedfloat(void* r, void* m, void* field, int index, float value);
--- void protobuf_reflection_setrepeatedstring(void* r, void* m, void* field, int index, const char* value);
+-- void reflection_setrepeatedbool(void* r, void* m, void* field, int index, int value);
+-- void reflection_setrepeatedint32(void* r, void* m, void* field, int index, int value);
+-- void reflection_setrepeateduint32(void* r, void* m, void* field, int index, unsigned int value);
+-- void reflection_setrepeatedint64(void* r, void* m, void* field, int index, long long value);
+-- void reflection_setrepeateduint64(void* r, void* m, void* field, int index, unsigned long long value);
+-- void reflection_setrepeateddouble(void* r, void* m, void* field, int index, double value);
+-- void reflection_setrepeatedfloat(void* r, void* m, void* field, int index, float value);
+-- void reflection_setrepeatedstring(void* r, void* m, void* field, int index, const char* value);
 -- 
--- void* protobuf_reflection_insertrepeatedmessage(void* r, void* m, void* field, int index);
--- void protobuf_reflection_insertrepeatedbool(void* r, void* m, void* field, int index, int value);
--- void protobuf_reflection_insertrepeatedint32(void* r, void* m, void* field, int index, int value);
--- void protobuf_reflection_insertrepeateduint32(void* r, void* m, void* field, int index, unsigned int value);
--- void protobuf_reflection_insertrepeatedint64(void* r, void* m, void* field, int index, long long value);
--- void protobuf_reflection_insertrepeateduint64(void* r, void* m, void* field, int index, unsigned long long value);
--- void protobuf_reflection_insertrepeateddouble(void* r, void* m, void* field, int index, double value);
--- void protobuf_reflection_insertrepeatedfloat(void* r, void* m, void* field, int index, float value);
--- void protobuf_reflection_insertrepeatedstring(void* r, void* m, void* field, int index, const char* value);
+-- void* reflection_insertrepeatedmessage(void* r, void* m, void* field, int index);
+-- void reflection_insertrepeatedbool(void* r, void* m, void* field, int index, int value);
+-- void reflection_insertrepeatedint32(void* r, void* m, void* field, int index, int value);
+-- void reflection_insertrepeateduint32(void* r, void* m, void* field, int index, unsigned int value);
+-- void reflection_insertrepeatedint64(void* r, void* m, void* field, int index, long long value);
+-- void reflection_insertrepeateduint64(void* r, void* m, void* field, int index, unsigned long long value);
+-- void reflection_insertrepeateddouble(void* r, void* m, void* field, int index, double value);
+-- void reflection_insertrepeatedfloat(void* r, void* m, void* field, int index, float value);
+-- void reflection_insertrepeatedstring(void* r, void* m, void* field, int index, const char* value);
 -- 
--- void protobuf_reflection_removerepeatedmessage(void* r, void* m, void* field, int index);
--- void protobuf_reflection_removerepeatedbool(void* r, void* m, void* field, int index);
--- void protobuf_reflection_removerepeatedint32(void* r, void* m, void* field, int index);
--- void protobuf_reflection_removerepeateduint32(void* r, void* m, void* field, int index);
--- void protobuf_reflection_removerepeatedint64(void* r, void* m, void* field, int index);
--- void protobuf_reflection_removerepeateduint64(void* r, void* m, void* field, int index);
--- void protobuf_reflection_removerepeateddouble(void* r, void* m, void* field, int index);
--- void protobuf_reflection_removerepeatedfloat(void* r, void* m, void* field, int index);
--- void protobuf_reflection_removerepeatedstring(void* r, void* m, void* field, int index);
+-- void reflection_removerepeatedmessage(void* r, void* m, void* field, int index);
+-- void reflection_removerepeatedbool(void* r, void* m, void* field, int index);
+-- void reflection_removerepeatedint32(void* r, void* m, void* field, int index);
+-- void reflection_removerepeateduint32(void* r, void* m, void* field, int index);
+-- void reflection_removerepeatedint64(void* r, void* m, void* field, int index);
+-- void reflection_removerepeateduint64(void* r, void* m, void* field, int index);
+-- void reflection_removerepeateddouble(void* r, void* m, void* field, int index);
+-- void reflection_removerepeatedfloat(void* r, void* m, void* field, int index);
+-- void reflection_removerepeatedstring(void* r, void* m, void* field, int index);
 

@@ -49,6 +49,10 @@ void* protobuf_importer_getpool(void* c) {
     return (void*)((google::protobuf::compiler::Importer*)m->importer)->pool();
 }
 
+void* protobuf_descriptorpool_findfilebyname(void* pool, const char* name) {
+    return (void*)((google::protobuf::DescriptorPool*)(pool))->FindFileByName(name);
+}
+
 void* protobuf_descriptorpool_findmessagetypebyname(void* pool, const char* name) {
     return (void*)((google::protobuf::DescriptorPool*)(pool))->FindMessageTypeByName(name);
 }

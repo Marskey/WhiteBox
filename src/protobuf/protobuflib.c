@@ -62,6 +62,19 @@ static int protobuflib_importer_getpool(lua_State* L) {
 }
 
 // descriptor pool
+static int protobuflib_descriptorpool_findfilebyname(lua_State* L) {
+    void* c = lua_touserdata(L, 1);
+    luaL_argcheck(L, c != 0, 1, "descriptor pool object is null");
+    const char* name = luaL_checkstring(L, 2);
+    void* p = protobuf_descriptorpool_findfilebyname(c, name);
+    if (NULL == p) {
+        lua_pushnil(L);
+    } else {
+        lua_pushlightuserdata(L, p);
+    }
+    return 1;
+}
+
 static int protobuflib_descriptorpool_findmessagetypebyname(lua_State* L) {
     void* c = lua_touserdata(L, 1);
     luaL_argcheck(L, c != 0, 1, "descriptor pool object is null");
@@ -1343,6 +1356,7 @@ static struct luaL_Reg protobuflib[] = {
     {"importer_import", protobuflib_importer_import},
     {"importer_getpool", protobuflib_importer_getpool},
 
+    {"descriptorpool_findfilebyname", protobuflib_descriptorpool_findfilebyname},
     {"descriptorpool_findmessagetypebyname", protobuflib_descriptorpool_findmessagetypebyname},
     {"descriptorpool_findfieldbyname", protobuflib_descriptorpool_findfieldbyname},
     {"descriptorpool_findoneofbyname", protobuflib_descriptorpool_findoneofbyname},

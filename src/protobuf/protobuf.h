@@ -18,6 +18,7 @@ void* protobuf_importer_import(void* c, const char* path);
 void* protobuf_importer_getpool(void* c);
 
 // descripor pool
+void* protobuf_descriptorpool_findfilebyname(void* pool, const char* name);
 void* protobuf_descriptorpool_findmessagetypebyname(void* pool, const char* name);
 void* protobuf_descriptorpool_findfieldbyname(void* pool, const char* name);
 void* protobuf_descriptorpool_findoneofbyname(void* pool, const char* name);
