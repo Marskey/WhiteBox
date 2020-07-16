@@ -989,7 +989,7 @@ void CMainWindow::handleSearchDetailBtnNextResult() {
         return;
     }
 
-    if (m_vecSearchPos.size() > 1 + m_searchResultIdx) {
+    if (m_searchResultIdx >= m_vecSearchPos.size() - 1) {
         m_searchResultIdx = 0;
     } else {
         m_searchResultIdx++;
