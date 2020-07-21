@@ -375,9 +375,8 @@ end
 --      * @param port 远端的端口号.
 --      * @param recv socket 接收缓冲区的最大大小
 --      * @param send socket 发送缓冲区的最大大小
---      * @param tag 这个会原封不动的传递给 __APP_on_message_recv 函数
 --      */
---     virtual void connect(const char* ip, Port port, BuffSize recv, BuffSize send, const char* tag) = 0;
+--     virtual void connect(const char* ip, Port port, BuffSize recv, BuffSize send) = 0;
 --     /**
 --      * 看函数名就知道是啥意思了把
 --      */
