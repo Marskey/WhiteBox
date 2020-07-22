@@ -766,30 +766,35 @@ void CMainWindow::handleFilterTextChanged(const QString& text) {
     }
 
     bool found = false;
-    bool bIsNumberic = false;
-    int msgTypeNum = text.toInt(&bIsNumberic);
-    if (bIsNumberic) {
-        const CProtoManager::MsgInfo* pMsgInfo = ProtoManager::instance().getMsgInfoByMsgType(msgTypeNum);
-        if (nullptr == pMsgInfo) {
-            return;
-        }
 
-        std::string strMsgName = pMsgInfo->msgName;
-        QList<QListWidgetItem*> listFound = ui.listMessage->findItems(strMsgName.c_str(), Qt::MatchCaseSensitive);
-        for (int i = 0; i < listFound.count(); ++i) {
-            listFound[i]->setHidden(false);
-        }
-        found = !listFound.isEmpty();
+    if (text.isEmpty()) {
+        found = true;
     } else {
-        QString rexPattern = text;
-        rexPattern = rexPattern.replace(" ", ".*");
-        rexPattern.prepend(".*");
-        rexPattern.append(".*");
-        QList<QListWidgetItem*> listFound = ui.listMessage->findItems(rexPattern, Qt::MatchRegExp);
-        for (int i = 0; i < listFound.count(); ++i) {
-            listFound[i]->setHidden(false);
+        bool bIsNumberic = false;
+        int msgTypeNum = text.toInt(&bIsNumberic);
+        if (bIsNumberic) {
+            const CProtoManager::MsgInfo* pMsgInfo = ProtoManager::instance().getMsgInfoByMsgType(msgTypeNum);
+            if (nullptr == pMsgInfo) {
+                return;
+            }
+
+            std::string strMsgName = pMsgInfo->msgName;
+            QList<QListWidgetItem*> listFound = ui.listMessage->findItems(strMsgName.c_str(), Qt::MatchCaseSensitive);
+            for (int i = 0; i < listFound.count(); ++i) {
+                listFound[i]->setHidden(false);
+            }
+            found = !listFound.isEmpty();
+        } else {
+            QString rexPattern = text;
+            rexPattern = rexPattern.replace(" ", ".*");
+            rexPattern.prepend(".*");
+            rexPattern.append(".*");
+            QList<QListWidgetItem*> listFound = ui.listMessage->findItems(rexPattern, Qt::MatchRegExp);
+            for (int i = 0; i < listFound.count(); ++i) {
+                listFound[i]->setHidden(false);
+            }
+            found = !listFound.isEmpty();
         }
-        found = !listFound.isEmpty();
     }
 
     if (found) {
