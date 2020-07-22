@@ -82,9 +82,9 @@ function __APP_on_read_socket_buffer(SocketReader, buff_size)
     local msg_size = packet_size - msg_head_size
 
     -- 用bindMessage来告诉应用程序需要解析的消息结构，因为消息数据在包头之后
-    -- ，所以第二个参数传入的是偏移一个包头大小的字节数
-
-    SocketReader:bindMessage(msg_full_name, 0 + msg_head_size, msg_size)
+    -- ，所以用getDataPtr获取消息体数据起始指针
+    local msg_data_ptr = SocketReader:getDataPtr(msg_head_size)
+    SocketReader:bindMessage(msg_full_name, msg_data_ptr, msg_size)
     return packet_size
 end
 -- __APP_on_write_socket_buffer
@@ -293,12 +293,18 @@ end
 --      */
 --     virtual int32_t readInt32(size_t offset) = 0;
 --     /**
+--      * 这个函数使用来socket传冲区中消息体数据指针
+--      * @param offset 指定偏移的字节数. 范围必须满足 0 <= offset <= buf.size - 1.
+--      * @returns 返回void*
+--      */
+--     virtual void* getDataPtr(size_t offset) = 0;
+--     /**
 --      * 这个函数用来绑定protobuf message消息协议的数据给应用程序来解析
 --      * @param msgFullName protobuf message 的全名（e.g: package_name.message_name)
---      * @param offset 相对于缓冲区起始点偏移的字节数
+--      * @param void* protobuf message消息包数据的起始地址
 --      * @param size protobuf message消息包的大小（非网络数据包大小）
 --      */
---     virtual void bindMessage(const char* msgFullName, size_t offset, size_t size) = 0;
+--     virtual void bindMessage(const char* msgFullName, void* pData, size_t size) = 0;
 -- };
 --
 -- 用来写入socket缓冲区的类

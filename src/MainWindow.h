@@ -54,6 +54,8 @@ public slots:
     void clearCache();
 
     void update();
+    void updateLog();
+
     void openSettingDlg();
 
     void handleListMessageItemDoubleClicked(QListWidgetItem* pItem);
@@ -142,6 +144,8 @@ private:
 
     std::unordered_map<std::string, CClient*> m_mapClients;
     std::list<CClient*> m_listClientsToDel;
+
+    QTimer* m_logUpdateTimer = nullptr;
 };
 
 class CECPrinter : public CLogPrinter

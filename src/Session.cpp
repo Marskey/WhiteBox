@@ -77,9 +77,13 @@ int32_t CSession::CReadData::readInt32(size_t offset) {
     return *reinterpret_cast<int32_t*>(pReadData + offset);
 }
 
-void CSession::CReadData::bindMessage(const char* msgFullName, size_t offset, size_t size) {
+void* CSession::CReadData::getDataPtr(size_t offset) {
+    return reinterpret_cast<void*>(pReadData + offset);
+}
+
+void CSession::CReadData::bindMessage(const char* msgFullName, void* pData, size_t size) {
     messageFullName = msgFullName;
-    pMessageData = pReadData + offset;
+    pMessageData = static_cast<const char*>(pData);
     messageSize = size;
 }
 
@@ -95,6 +99,7 @@ CSession::CSession(SocketId id, asio::ip::tcp::socket& s, size_t recevBuffSize, 
 
 CSession::~CSession() {
     close(true);
+    m_socket.release();
 
     freeSendBuf();
 

@@ -39,7 +39,8 @@ public:
     int16_t readInt16(size_t offset) override;
     uint32_t readUint32(size_t offset) override;
     int32_t readInt32(size_t offset) override;
-    void bindMessage(const char* msgFullName, size_t offset, size_t size) override;
+    void* getDataPtr(size_t offset) override;
+    void bindMessage(const char* msgFullName, void* pData, size_t size) override;
 };
 
 public:

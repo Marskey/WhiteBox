@@ -124,7 +124,8 @@ void CMsgIgnoreDialog::handleAll2LeftBtnClicked() {
 void CMsgIgnoreDialog::handleOne2RightBtnClicked() {
     QList<QListWidgetItem*> listSelected = listMsgLeft->selectedItems();
     for (int i = 0; i < listSelected.count(); ++i) {
-        auto* pItem = listMsgLeft->takeItem(i);
+        int nRow = listMsgLeft->row(listSelected[i]); 
+        auto* pItem = listMsgLeft->takeItem(nRow);
         listMsgRight->addItem(pItem);
     }
     filterMessage(editFilterRight->text(), *listMsgRight);
@@ -133,7 +134,8 @@ void CMsgIgnoreDialog::handleOne2RightBtnClicked() {
 void CMsgIgnoreDialog::handleOne2LeftBtnClicked() {
     QList<QListWidgetItem*> listSelected = listMsgRight->selectedItems();
     for (int i = 0; i < listSelected.count(); ++i) {
-        auto* pItem = listMsgRight->takeItem(i);
+        int nRow = listMsgRight->row(listSelected[i]); 
+        auto* pItem = listMsgRight->takeItem(nRow);
         listMsgLeft->addItem(pItem);
     }
     filterMessage(editFilterLeft->text(), *listMsgLeft);

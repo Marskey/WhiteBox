@@ -182,6 +182,9 @@ bool CMainWindow::init() {
     connect(pMainTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::update));
     pMainTimer->start(40);
 
+    m_logUpdateTimer = new QTimer(this);
+    connect(m_logUpdateTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::updateLog));
+
     LOG_INFO("Ready.             - Version {}.{}.{} By marskey.", g_version.main, g_version.sub, g_version.build);
     return true;
 }
@@ -454,6 +457,14 @@ void CMainWindow::update() {
     m_listClientsToDel.clear();
 }
 
+void CMainWindow::updateLog() {
+    if (ui.checkIsAutoDetail->isChecked()) {
+        ui.listLogs->setCurrentRow(ui.listLogs->count() - 1);
+    } else {
+        m_logUpdateTimer->stop();
+    }
+}
+
 void CMainWindow::openSettingDlg() {
     auto* pDlg = new CSettingDialog(this);
     pDlg->init(false);
@@ -552,19 +563,16 @@ void CMainWindow::onConnectSucceed(const char* remoteIp, Port port, SocketId soc
     LOG_INFO("Connect succeed socket id: {0}, ip: {1}:{2} ", socketId, remoteIp, port);
     connectStateChange(kConnected);
 
-    for (auto& [key, client] : m_mapClients) {
-        if (client->getSocketID() == socketId) {
-            ui.cbClientName->addItem(fmt::format("[socket:{}] {}", socketId, client->getName()).c_str()
-                                     , client->getName());
-            client->onConnectSucceed(remoteIp, port, socketId);
-            break;
-        }
+    CClient* pClient = getClientBySocketId(socketId);
+    if (nullptr != pClient) {
+        ui.cbClientName->addItem(fmt::format("[socket:{}] {}", socketId, pClient->getName()).c_str()
+                                 , pClient->getName());
+        pClient->onConnectSucceed(remoteIp, port, socketId);
     }
 }
 
 void CMainWindow::onDisconnect(SocketId socketId) {
     LOG_ERR("Connection closed, socket id: {}", socketId);
-    bool bHasConnect = false;
     for (auto& [key, client] : m_mapClients) {
         if (client->getSocketID() == socketId) {
             client->onDisconnect(socketId);
@@ -573,11 +581,11 @@ void CMainWindow::onDisconnect(SocketId socketId) {
             if (-1 != cbIdx) {
                 ui.cbClientName->removeItem(cbIdx);
             }
+            break;
         }
-        bHasConnect |= client->isConnected();
     }
 
-    if (!bHasConnect) {
+    if (ui.cbClientName->count() == 0) {
         connectStateChange(kDisconnect);
     }
 }
@@ -598,16 +606,14 @@ void CMainWindow::onError(SocketId socketId, ec_net::ENetError error) {
     default:;
     }
 
-    bool bHasConnect = false;
     for (auto& [key, client] : m_mapClients) {
         if (client->getSocketID() == socketId) {
             client->onError(socketId, error);
             break;
         }
-        bHasConnect |= client->isConnected();
     }
 
-    if (!bHasConnect) {
+    if (ui.cbClientName->count() == 0) {
         connectStateChange(kDisconnect);
     }
 }
@@ -1117,9 +1123,11 @@ void CMainWindow::handleBtnClearLogClicked() {
 
 void CMainWindow::handleLogInfoAdded(const QModelIndex& parent, int start, int end) {
     handleSearchLogTextChanged();
-
-    if (ui.checkIsAutoDetail->isChecked()) {
-        ui.listLogs->setCurrentRow(end);
+    if (m_logUpdateTimer != nullptr) {
+        if (ui.checkIsAutoDetail->isChecked()) {
+            m_logUpdateTimer->start(40);
+            m_logUpdateTimer->setSingleShot(true);
+        }
     }
 }
 
@@ -1280,6 +1288,7 @@ void CMainWindow::luaRegisterCppClass() {
         .addFunction("readInt16", &ISocketReader::readInt16)
         .addFunction("readUint32", &ISocketReader::readUint32)
         .addFunction("readInt32", &ISocketReader::readInt32)
+        .addFunction("getDataPtr", &ISocketReader::getDataPtr)
         .addFunction("bindMessage", &ISocketReader::bindMessage)
         .endClass();
 

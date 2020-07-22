@@ -45,12 +45,18 @@ namespace lua_api
          */
         virtual int32_t readInt32(size_t offset) = 0;
         /**
+         * This function is used to get pointer data from socket read buffer.
+         * @param offset Number of bytes to skip before starting to read. Must satisfy 0 <= offset <= buf.size - 1.
+         * @returns void*
+         */
+        virtual void* getDataPtr(size_t offset) = 0;
+        /**
          * This function is used to bind the message data of socket packet.
          * @param msgFullName Full name of the protobuf message.
-         * @param offset Number of bytes to skip of the socket buffer.
+         * @param pData message data pointer
          * @param size Length of the protobuf message data.
          */
-        virtual void bindMessage(const char* msgFullName, size_t offset, size_t size) = 0;
+        virtual void bindMessage(const char* msgFullName, void* pData, size_t size) = 0;
     };
 
     class ISocketWriter
