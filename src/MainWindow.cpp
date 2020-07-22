@@ -25,7 +25,7 @@ extern "C" {
 #include <QDirIterator>
 #include <QStyledItemDelegate>
 
-const char WINDOWS_TITLE[25] = "EmuCl";
+const char WINDOWS_TITLE[25] = "WhiteBox";
 
 struct ECVersion
 {
@@ -1155,6 +1155,8 @@ void CMainWindow::doReload() {
     // 加载缓存 
     LOG_INFO("Reloading cache...");
     loadCache();
+
+    handleFilterTextChanged(ui.editSearch->text());
 }
 
 void CMainWindow::closeEvent(QCloseEvent* event) {
