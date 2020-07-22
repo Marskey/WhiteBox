@@ -7,7 +7,7 @@
 #include "ProtoManager.h"
 #include "Client.h"
 
-#include "ui_ClientEmulator.h"
+#include "ui_MainWindow.h"
 #include <QtWidgets/QMainWindow>
 #include <QKeyEvent>
 

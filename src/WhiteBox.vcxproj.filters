@@ -53,7 +53,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="ClientEmulator.rc" />
+    <ResourceCompile Include="WhiteBox.rc" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="LineEdit.h">
@@ -77,13 +77,13 @@
     <QtMoc Include="ConfigHelper.h" />
   </ItemGroup>
   <ItemGroup>
-    <QtRcc Include="ClientEmulator.qrc" />
+    <QtRcc Include="WhiteBox.qrc" />
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="MessageEditor.ui">
       <Filter>Form Files</Filter>
     </QtUic>
-    <QtUic Include="ClientEmulator.ui">
+    <QtUic Include="MainWindow.ui">
       <Filter>Form Files</Filter>
     </QtUic>
     <QtUic Include="MessageIgnore.ui">

@@ -124,17 +124,17 @@
     <QtMoc Include="MainWindow.h" />
   </ItemGroup>
   <ItemGroup>
-    <QtUic Include="ClientEmulator.ui" />
+    <QtUic Include="MainWindow.ui" />
     <QtUic Include="MessageDetail.ui" />
     <QtUic Include="MessageEditor.ui" />
     <QtUic Include="MessageIgnore.ui" />
     <QtUic Include="Setting.ui" />
   </ItemGroup>
   <ItemGroup>
-    <QtRcc Include="ClientEmulator.qrc" />
+    <QtRcc Include="WhiteBox.qrc" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="ClientEmulator.rc" />
+    <ResourceCompile Include="WhiteBox.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\thirdparty\include\cjson\fpconv.h" />
