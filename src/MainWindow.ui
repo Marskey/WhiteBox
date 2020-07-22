@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ClientEmulatorClass</class>
- <widget class="QMainWindow" name="ClientEmulatorClass">
+ <class>MainWindowClass</class>
+ <widget class="QMainWindow" name="MainWindowClass">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>ClientEmulator</string>
+   <string>WhiteBox</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="sizePolicy">
@@ -604,6 +604,7 @@
     <addaction name="actionSave"/>
     <addaction name="actionLoad"/>
     <addaction name="actionClear"/>
+    <addaction name="actionReload_script"/>
    </widget>
    <widget class="QMenu" name="menuSetting">
     <property name="title">
@@ -637,6 +638,14 @@
     <string>Options</string>
    </property>
   </action>
+  <action name="actionReload_script">
+   <property name="text">
+    <string>Reload Proto And Script</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -647,7 +656,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="ClientEmulator.qrc"/>
+  <include location="WhiteBox.qrc"/>
  </resources>
  <connections/>
 </ui>

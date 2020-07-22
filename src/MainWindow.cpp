@@ -127,6 +127,7 @@ CMainWindow::CMainWindow(QWidget* parent)
     QObject::connect(ui.actionLoad, &QAction::triggered, this, &CMainWindow::loadCache);
     QObject::connect(ui.actionClear, &QAction::triggered, this, &CMainWindow::clearCache);
     QObject::connect(ui.actionOptions, &QAction::triggered, this, &CMainWindow::openSettingDlg);
+    QObject::connect(ui.actionReload_script, &QAction::triggered, this, &CMainWindow::doReload);
 }
 
 CMainWindow::~CMainWindow() {

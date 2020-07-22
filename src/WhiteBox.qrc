@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/EmulatorClient">
+    <qresource prefix="/WhiteBox">
         <file alias="icon1.ico">Resources/icon1.ico</file>
     </qresource>
 </RCC>

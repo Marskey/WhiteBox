@@ -126,7 +126,7 @@ private:
     void log(const char* message) override;
     // lua_api::IMainApp end
 private:
-    Ui::ClientEmulatorClass ui;
+    Ui::MainWindowClass ui;
     MapMessages m_mapMessages;
     std::unordered_set<std::string> m_setIgnoredReceiveMsgType;
 
