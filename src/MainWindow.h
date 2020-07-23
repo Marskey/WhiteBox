@@ -15,10 +15,7 @@
 #include "google/protobuf/message.h"
 #include <google/protobuf/util/json_util.h>
 
-class ShowItemDetailKeyFilter;
-class DeleteHighlightedItemFilter;
 class CECPrinter;
-
 class CMainWindow : public QMainWindow, public ec_net::INetEvent, public lua_api::IMainApp
 {
     enum EConnectState
