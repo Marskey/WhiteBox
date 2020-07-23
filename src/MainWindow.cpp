@@ -32,7 +32,7 @@ struct ECVersion
     int main;
     int sub;
     int build;
-} const g_version = { 3 , 0 , 1 };
+} const g_version = { 3 , 1 , 5 };
 
 CMainWindow::CMainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -96,6 +96,13 @@ CMainWindow::CMainWindow(QWidget* parent)
     ui.listLogs->setContextMenuPolicy(Qt::CustomContextMenu);
 
     ui.btnSend->setDisabled(true);
+
+    m_pMaskWidget = new QWidget(this, Qt::FramelessWindowHint);
+    m_pMaskWidget->setStyleSheet("QWidget{background-color:rgba(0,0,0,0.5);}");
+    m_pMaskWidget->hide();
+    QLabel* pLoadingLabel = new QLabel("<font color=\"white\">Loading...</font>", m_pMaskWidget);
+    QFont font( "Arial", 28, QFont::Bold);
+    pLoadingLabel->setFont(font);
 
     QObject::connect(ui.listMessage, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(handleListMessageItemDoubleClicked(QListWidgetItem*)));
 
@@ -183,8 +190,8 @@ bool CMainWindow::init() {
     connect(pMainTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::update));
     pMainTimer->start(40);
 
-    m_logUpdateTimer = new QTimer(this);
-    connect(m_logUpdateTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::updateLog));
+    m_pLogUpdateTimer = new QTimer(this);
+    connect(m_pLogUpdateTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::updateLog));
 
     LOG_INFO("Ready.             - Version {}.{}.{} By marskey.", g_version.main, g_version.sub, g_version.build);
     return true;
@@ -462,7 +469,7 @@ void CMainWindow::updateLog() {
     if (ui.checkIsAutoDetail->isChecked()) {
         ui.listLogs->setCurrentRow(ui.listLogs->count() - 1);
     } else {
-        m_logUpdateTimer->stop();
+        m_pLogUpdateTimer->stop();
     }
 }
 
@@ -1129,16 +1136,20 @@ void CMainWindow::handleBtnClearLogClicked() {
 
 void CMainWindow::handleLogInfoAdded(const QModelIndex& parent, int start, int end) {
     handleSearchLogTextChanged();
-    if (m_logUpdateTimer != nullptr) {
+    if (m_pLogUpdateTimer != nullptr) {
         if (ui.checkIsAutoDetail->isChecked()) {
-            m_logUpdateTimer->start(40);
-            m_logUpdateTimer->setSingleShot(true);
+            m_pLogUpdateTimer->start(40);
+            m_pLogUpdateTimer->setSingleShot(true);
         }
     }
 }
 
 void CMainWindow::doReload() {
+    m_pMaskWidget->setGeometry(0, 0, width(), height());
+    m_pMaskWidget->show();
+
     for (auto& [key, client] : m_mapClients) {
+        qApp->processEvents();
         client->disconnect();
     }
 
@@ -1150,19 +1161,24 @@ void CMainWindow::doReload() {
 
     LOG_INFO("Reloading lua script path: \"{}\"..."
              , ConfigHelper::instance().getLuaScriptPath().toStdString());
+    qApp->processEvents();
     if (!loadLua()) {
         return;
     }
     LOG_INFO("Reloading proto files from path:\"{}\"..."
              , ConfigHelper::instance().getProtoPath().toStdString());
+    qApp->processEvents();
     if (!loadProto()) {
         return;
     }
     // 加载缓存 
     LOG_INFO("Reloading cache...");
+    qApp->processEvents();
     loadCache();
 
     handleFilterTextChanged(ui.editSearch->text());
+    qApp->processEvents();
+    m_pMaskWidget->hide();
 }
 
 void CMainWindow::closeEvent(QCloseEvent* event) {

@@ -145,7 +145,8 @@ private:
     std::unordered_map<std::string, CClient*> m_mapClients;
     std::list<CClient*> m_listClientsToDel;
 
-    QTimer* m_logUpdateTimer = nullptr;
+    QTimer* m_pLogUpdateTimer = nullptr;
+    QWidget* m_pMaskWidget = nullptr;
 };
 
 class CECPrinter : public CLogPrinter
