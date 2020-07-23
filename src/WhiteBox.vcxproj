@@ -142,6 +142,7 @@
     <ClInclude Include="..\thirdparty\include\cjson\strbuf.h" />
     <ClInclude Include="Client.h" />
     <QtMoc Include="ConfigHelper.h" />
+    <QtMoc Include="ComboxItemFilter.h" />
     <ClInclude Include="define.h" />
     <ClInclude Include="LogHelper.h" />
     <ClInclude Include="LuaInterface.h" />

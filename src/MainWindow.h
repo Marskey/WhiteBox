@@ -6,6 +6,7 @@
 #include "MsgDetailDialog.h"
 #include "ProtoManager.h"
 #include "Client.h"
+#include "ComboxItemFilter.h"
 
 #include "ui_MainWindow.h"
 #include <QtWidgets/QMainWindow>
@@ -132,8 +133,6 @@ private:
 
     EConnectState m_btnConnectState = kDisconnect;
 
-    DeleteHighlightedItemFilter* m_cbKeyPressFilter = nullptr;
-    ShowItemDetailKeyFilter* m_listMessageKeyFilter = nullptr;
     std::vector<int> m_vecSearchPos;
     int m_searchResultIdx = -1; // 当前高亮的第几个搜索结果(详情界面)
 
@@ -185,30 +184,11 @@ public:
     QListWidget* m_logWidget = nullptr;
 };
 
-class DeleteHighlightedItemFilter : public QObject
-{
-    Q_OBJECT
-protected:
-    bool eventFilter(QObject* obj, QEvent* event) override {
-        if (event->type() == QEvent::KeyPress) {
-            auto keyEvent = static_cast<QKeyEvent*>(event);
-            if (keyEvent->modifiers() == Qt::ShiftModifier && keyEvent->key() == Qt::Key::Key_Delete) {
-                auto itemView = qobject_cast<QAbstractItemView*>(obj);
-                if (itemView->model() != nullptr) {
-                    // Delete the current item from the popup list
-                    itemView->model()->removeRow(itemView->currentIndex().row());
-                    return true;
-                }
-            }
-        }
-        // Perform the usual event processing
-        return QObject::eventFilter(obj, event);
-    }
-};
-
 class ShowItemDetailKeyFilter : public QObject
 {
     Q_OBJECT
+public:
+    ShowItemDetailKeyFilter(QObject* parent = nullptr) : QObject(parent) {}
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override {
         if (event->type() == QEvent::KeyRelease) {
@@ -243,4 +223,3 @@ protected:
         return QObject::eventFilter(obj, event);
     }
 };
-

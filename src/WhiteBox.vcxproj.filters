@@ -75,6 +75,7 @@
       <Filter>Dialog</Filter>
     </QtMoc>
     <QtMoc Include="ConfigHelper.h" />
+    <QtMoc Include="ComboxItemFilter.h" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="WhiteBox.qrc" />

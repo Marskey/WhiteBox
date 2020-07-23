@@ -1,15 +1,20 @@
 #include "SettingDialog.h"
 #include <QFileDialog>
+#include <QComboBox>
+#include <QStyledItemDelegate>
+
 
 #include "ConfigHelper.h"
+#include "LineEdit.h"
 
 CSettingDialog::CSettingDialog(QWidget *parent)
     : QDialog(parent), Ui_SettingDlg() {
     setupUi(this);
     QObject::connect(btnProtoPath, &QPushButton::clicked, this, &CSettingDialog::handleSelectProtoBtnClicked);
     QObject::connect(btnScript, &QPushButton::clicked, this, &CSettingDialog::handleSelectScriptBtnClicked);
-    QObject::connect(editProtoPath, SIGNAL(textChanged(const QString&)), this, SLOT(handlePathChanged(const QString&)));
-    QObject::connect(editScriptPath, SIGNAL(textChanged(const QString&)), this, SLOT(handlePathChanged(const QString&)));
+    QObject::connect(okButton, &QPushButton::clicked, this, &CSettingDialog::handleOkBtnClicked);
+    QObject::connect(cbProtoPath, SIGNAL(currentTextChanged(const QString&)), this, SLOT(handlePathChanged(const QString&)));
+    QObject::connect(cbScriptPath, SIGNAL(currentTextChanged(const QString&)), this, SLOT(handlePathChanged(const QString&)));
 }
 
 CSettingDialog::~CSettingDialog()
@@ -17,8 +22,21 @@ CSettingDialog::~CSettingDialog()
 }
 
 void CSettingDialog::init(bool bFirstOpen) {
-    editProtoPath->setText(ConfigHelper::instance().getProtoPath());
-    editScriptPath->setText(ConfigHelper::instance().getLuaScriptPath());
+    {
+        auto* pLineEdit = new CLineEdit(cbProtoPath);
+        cbProtoPath->setLineEdit(pLineEdit);
+    }
+    cbProtoPath->setItemDelegate(new QStyledItemDelegate(cbProtoPath));
+    cbProtoPath->view()->installEventFilter(new DeleteHighlightedItemFilter(cbProtoPath));
+    ConfigHelper::instance().restoreWidgetComboxState("ProtoPath", *cbProtoPath);
+
+    {
+        auto* pLineEdit = new CLineEdit(cbScriptPath);
+        cbScriptPath->setLineEdit(pLineEdit);
+    }
+    cbScriptPath->setItemDelegate(new QStyledItemDelegate(cbScriptPath));
+    cbScriptPath->view()->installEventFilter(new DeleteHighlightedItemFilter(cbScriptPath));
+    ConfigHelper::instance().restoreWidgetComboxState("LuaScriptPath", *cbScriptPath);
 
     checkAvailable();
     if (bFirstOpen) {
@@ -36,7 +54,7 @@ void CSettingDialog::handleSelectProtoBtnClicked() {
     fileDialog->setFileMode(QFileDialog::DirectoryOnly);
     fileDialog->setViewMode(QFileDialog::Detail);
     if (fileDialog->exec()) {
-        editProtoPath->setText(fileDialog->selectedFiles()[0]);
+        cbProtoPath->lineEdit()->setText(fileDialog->selectedFiles()[0]);
         ConfigHelper::instance().saveProtoPath(fileDialog->selectedFiles()[0]);
     }
 
@@ -51,26 +69,47 @@ void CSettingDialog::handleSelectScriptBtnClicked() {
     fileDialog->setFileMode(QFileDialog::AnyFile);
     fileDialog->setViewMode(QFileDialog::Detail);
     if (fileDialog->exec()) {
-        editScriptPath->setText(fileDialog->selectedFiles()[0]);
+        cbScriptPath->lineEdit()->setText(fileDialog->selectedFiles()[0]);
         ConfigHelper::instance().saveLuaScriptPath(fileDialog->selectedFiles()[0]);
     }
 }
 
 void CSettingDialog::handlePathChanged(const QString& newText) {
-    if (!editProtoPath->text().isEmpty()
-        && !editScriptPath->text().isEmpty()) {
-        ConfigHelper::instance().saveProtoPath(editProtoPath->text());
-        ConfigHelper::instance().saveLuaScriptPath(editScriptPath->text());
-    }
-
     checkAvailable();
 }
 
+void CSettingDialog::handleOkBtnClicked() {
+    if (!cbProtoPath->lineEdit()->text().isEmpty()) {
+        addNewItemIntoCombox(*cbProtoPath);
+        ConfigHelper::instance().saveWidgetComboxState("ProtoPath", *cbProtoPath);
+    }
+
+    if (!cbScriptPath->lineEdit()->text().isEmpty()) {
+        addNewItemIntoCombox(*cbScriptPath);
+        ConfigHelper::instance().saveWidgetComboxState("LuaScriptPath", *cbScriptPath);
+    }
+}
+
 void CSettingDialog::checkAvailable() {
-    if (!editProtoPath->text().isEmpty()
-        && !editScriptPath->text().isEmpty()) {
+    if (!cbProtoPath->lineEdit()->text().isEmpty()
+        && !cbScriptPath->lineEdit()->text().isEmpty()) {
         okButton->setEnabled(true);
     } else {
         okButton->setEnabled(false);
     }
+}
+
+void CSettingDialog::addNewItemIntoCombox(QComboBox& combox) {
+    int cbIdx = combox.findText(combox.currentText());
+    if (-1 == cbIdx) {
+        combox.insertItem(0, combox.currentText());
+        if (combox.count() > ConfigHelper::instance().getHistroyComboxItemMaxCnt()) {
+            combox.removeItem(combox.count() - 1);
+        }
+    } else {
+        QString text = combox.currentText();
+        combox.removeItem(cbIdx);
+        combox.insertItem(0, text);
+    }
+    combox.setCurrentIndex(0);
 }

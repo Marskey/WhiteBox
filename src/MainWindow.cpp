@@ -35,9 +35,7 @@ struct ECVersion
 } const g_version = { 3 , 1 , 5 };
 
 CMainWindow::CMainWindow(QWidget* parent)
-    : QMainWindow(parent)
-    , m_cbKeyPressFilter(new DeleteHighlightedItemFilter)
-    , m_listMessageKeyFilter(new ShowItemDetailKeyFilter) {
+    : QMainWindow(parent) {
     ui.setupUi(this);
 
     setWindowTitle(WINDOWS_TITLE);
@@ -54,8 +52,8 @@ CMainWindow::CMainWindow(QWidget* parent)
         pLineEdit->setPlaceholderText("Account");
         ui.cbAccount->setLineEdit(pLineEdit);
     }
-    ui.cbAccount->setItemDelegate(new QStyledItemDelegate());
-    ui.cbAccount->view()->installEventFilter(m_cbKeyPressFilter);
+    ui.cbAccount->setItemDelegate(new QStyledItemDelegate(ui.cbAccount));
+    ui.cbAccount->view()->installEventFilter(new DeleteHighlightedItemFilter(ui.cbAccount));
     ConfigHelper::instance().restoreWidgetComboxState("Account", *ui.cbAccount);
 
     // ip端口
@@ -66,8 +64,8 @@ CMainWindow::CMainWindow(QWidget* parent)
         pLineEdit->setPlaceholderText("IP:Port");
         ui.cbIp->setLineEdit(pLineEdit);
     }
-    ui.cbIp->setItemDelegate(new QStyledItemDelegate());
-    ui.cbIp->view()->installEventFilter(m_cbKeyPressFilter);
+    ui.cbIp->setItemDelegate(new QStyledItemDelegate(ui.cbIp));
+    ui.cbIp->view()->installEventFilter(new DeleteHighlightedItemFilter(ui.cbIp));
     ConfigHelper::instance().restoreWidgetComboxState("Ip_Port", *ui.cbIp);
 
     // 可选项参数
@@ -76,17 +74,17 @@ CMainWindow::CMainWindow(QWidget* parent)
         pLineEdit->setPlaceholderText("Optional");
         ui.cbOptionalParam->setLineEdit(pLineEdit);
     }
-    ui.cbOptionalParam->setItemDelegate(new QStyledItemDelegate());
-    ui.cbOptionalParam->view()->installEventFilter(m_cbKeyPressFilter);
+    ui.cbOptionalParam->setItemDelegate(new QStyledItemDelegate(ui.cbOptionalParam));
+    ui.cbOptionalParam->view()->installEventFilter(new DeleteHighlightedItemFilter(ui.cbOptionalParam));
     ConfigHelper::instance().restoreWidgetComboxState("OptionalParam", *ui.cbOptionalParam);
 
-    ui.cbClientName->setItemDelegate(new QStyledItemDelegate());
+    ui.cbClientName->setItemDelegate(new QStyledItemDelegate(ui.cbClientName));
 
     // 读取是否自动显示最新
     ConfigHelper::instance().restoreWidgetCheckboxState("AutoShowDetail", *ui.checkIsAutoDetail);
 
-    ui.listMessage->installEventFilter(m_listMessageKeyFilter);
-    ui.listRecentMessage->installEventFilter(m_listMessageKeyFilter);
+    ui.listMessage->installEventFilter(new ShowItemDetailKeyFilter(ui.listMessage));
+    ui.listRecentMessage->installEventFilter(new ShowItemDetailKeyFilter(ui.listRecentMessage));
 
     ui.editSearchDetail->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditNormal());
     ui.editSearch->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditNormal());
@@ -138,8 +136,6 @@ CMainWindow::CMainWindow(QWidget* parent)
 }
 
 CMainWindow::~CMainWindow() {
-    delete m_cbKeyPressFilter;
-    delete m_listMessageKeyFilter;
     delete m_pPrinter;
 
     for (auto& [key, value] : m_mapMessages) {
