@@ -55,7 +55,6 @@ void CSettingDialog::handleSelectProtoBtnClicked() {
     fileDialog->setViewMode(QFileDialog::Detail);
     if (fileDialog->exec()) {
         cbProtoPath->lineEdit()->setText(fileDialog->selectedFiles()[0]);
-        ConfigHelper::instance().saveProtoPath(fileDialog->selectedFiles()[0]);
     }
 
     checkAvailable();
@@ -70,7 +69,6 @@ void CSettingDialog::handleSelectScriptBtnClicked() {
     fileDialog->setViewMode(QFileDialog::Detail);
     if (fileDialog->exec()) {
         cbScriptPath->lineEdit()->setText(fileDialog->selectedFiles()[0]);
-        ConfigHelper::instance().saveLuaScriptPath(fileDialog->selectedFiles()[0]);
     }
 }
 

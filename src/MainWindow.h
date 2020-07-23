@@ -122,6 +122,7 @@ private:
      * 给LUA脚本调用
      */
     void log(const char* message) override;
+    void logErr(const char* message) override;
     // lua_api::IMainApp end
 private:
     Ui::MainWindowClass ui;

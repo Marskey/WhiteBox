@@ -73,14 +73,6 @@ QByteArray CConfigHelper::getSplitterV() const {
     return m_pSettings->value("/Window/SplitterVertical").toByteArray();
 }
 
-void CConfigHelper::saveProtoPath(const QString& path) {
-    m_pSettings->setValue("/Protobuf/ProtoPath", path);
-}
-
-QString CConfigHelper::getProtoPath() const {
-    return m_pSettings->value("/Protobuf/ProtoPath").toString();
-}
-
 void CConfigHelper::saveWidgetComboxState(const QString& name, const QComboBox& combox) {
     QStringList accountList;
     for (int index = 0; index < combox.count(); index++) {
@@ -101,6 +93,15 @@ void CConfigHelper::restoreWidgetComboxState(const QString& name, QComboBox& com
     if (!stringList.empty()) {
         combox.setCurrentIndex(0);
     }
+}
+
+QString CConfigHelper::getWidgetComboxStateText(const QString& name, int index) {
+    QStringList stringList = m_pSettings->value("/Widget/" + name).toString().split(",");
+    if (stringList.count() > index
+        && index >= 0) {
+        return stringList[index];
+    }
+    return "";
 }
 
 void CConfigHelper::saveWidgetCheckboxState(const QString& name, const QCheckBox& checkbox) {
@@ -178,12 +179,4 @@ QString CConfigHelper::getCachePath() {
 
 google::protobuf::util::JsonPrintOptions& CConfigHelper::getJsonPrintOption() {
     return m_protoJsonOption;
-}
-
-void CConfigHelper::saveLuaScriptPath(const QString& path) {
-    m_pSettings->setValue("/LuaScript/path/", path);
-}
-
-QString CConfigHelper::getLuaScriptPath() {
-    return m_pSettings->value("/LuaScript/path/").toString();
 }

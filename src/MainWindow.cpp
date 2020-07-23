@@ -316,6 +316,10 @@ void CMainWindow::log(const char* message) {
     LOG_INFO(message);
 }
 
+void CMainWindow::logErr(const char* message) {
+    LOG_ERR(message);
+}
+
 void CMainWindow::saveCache() {
     const std::string& path = ConfigHelper::instance().getCachePath().toStdString();
     QFile jsonFile(path.c_str());
@@ -1156,13 +1160,13 @@ void CMainWindow::doReload() {
     clearCache();
 
     LOG_INFO("Reloading lua script path: \"{}\"..."
-             , ConfigHelper::instance().getLuaScriptPath().toStdString());
+             , ConfigHelper::instance().getWidgetComboxStateText("LuaScriptPath", 0).toStdString());
     qApp->processEvents();
     if (!loadLua()) {
         return;
     }
     LOG_INFO("Reloading proto files from path:\"{}\"..."
-             , ConfigHelper::instance().getProtoPath().toStdString());
+             , ConfigHelper::instance().getWidgetComboxStateText("ProtoPath", 0).toStdString());
     qApp->processEvents();
     if (!loadProto()) {
         return;
@@ -1236,7 +1240,7 @@ void CMainWindow::addNewItemIntoCombox(QComboBox& combox) {
 
 bool CMainWindow::loadProto() {
     LOG_INFO("Importing proto files...");
-    QString strPath = ConfigHelper::instance().getProtoPath();
+    QString strPath = ConfigHelper::instance().getWidgetComboxStateText("ProtoPath", 0);
     QDir protoDir = strPath;
     ProtoManager::instance().init(protoDir.absolutePath().toStdString());
 
@@ -1277,7 +1281,7 @@ bool CMainWindow::loadLua() {
     luaRegisterCppClass();
     LOG_INFO("Initiated lua script system");
 
-    QString luaScriptPath = ConfigHelper::instance().getLuaScriptPath();
+    QString luaScriptPath = ConfigHelper::instance().getWidgetComboxStateText("LuaScriptPath", 0);
     LOG_INFO("Loading lua script: \"{}\"", luaScriptPath.toStdString());
     if (!LuaScriptSystem::instance().RunScript(luaScriptPath.toStdString().c_str())) {
         LOG_ERR("Error: Load lua script: \"{}\" failed!", luaScriptPath.toStdString());
@@ -1345,6 +1349,7 @@ void CMainWindow::luaRegisterCppClass() {
         .addFunction("createClient", &IMainApp::createClient)
         .addFunction("getClient", &IMainApp::getClient)
         .addFunction("log", &IMainApp::log)
+        .addFunction("logErr", &IMainApp::logErr)
         .endClass();
 
     luabridge::setGlobal(pLuaState, static_cast<IMainApp*>(this), "App");

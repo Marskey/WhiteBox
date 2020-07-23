@@ -31,12 +31,9 @@ public:
     QByteArray getSplitterH() const;
     QByteArray getSplitterV() const;
 
-    void saveProtoPath(const QString& path);
-
-    QString getProtoPath() const;
-
     void saveWidgetComboxState(const QString& name, const QComboBox& combox);
     void restoreWidgetComboxState(const QString& name, QComboBox& combox);
+    QString getWidgetComboxStateText(const QString& name, int index);
 
     void saveWidgetCheckboxState(const QString& name, const QCheckBox& checkbox);
     void restoreWidgetCheckboxState(const QString& name, QCheckBox& checkbox);
@@ -50,9 +47,6 @@ public:
     QString getCachePath();
 
     google::protobuf::util::JsonPrintOptions& getJsonPrintOption();
-
-    void saveLuaScriptPath(const QString& path);
-    QString getLuaScriptPath();
 
 private:
     QSettings *m_pSettings;

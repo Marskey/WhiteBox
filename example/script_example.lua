@@ -426,6 +426,12 @@ end
 --       * @param name 客户端名字（不能为空）
 --       */
 --      virtual IClient* getClient(const char* name) = 0;
+--      /**
+--      * 这个函数用来打印日志
+--      * @param message 消息内容字串类型
+--      */
+--      virtual void log(const char* message) = 0;
+--      virtual void logErr(const char* message) = 0;
 -- };
 
 ------------------------------ 以下为应用程序开放给lua的protobuf的接口，使用方法可参考官方protobuf库
