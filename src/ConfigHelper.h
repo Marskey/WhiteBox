@@ -46,6 +46,9 @@ public:
     void saveCachePath(const QString& path);
     QString getCachePath();
 
+    QString getFont();
+    void saveFont(const QString& family);
+
     google::protobuf::util::JsonPrintOptions& getJsonPrintOption();
 
 private:

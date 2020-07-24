@@ -99,7 +99,7 @@ CMainWindow::CMainWindow(QWidget* parent)
     m_pMaskWidget->setStyleSheet("QWidget{background-color:rgba(0,0,0,0.5);}");
     m_pMaskWidget->hide();
     QLabel* pLoadingLabel = new QLabel("<font color=\"white\">Loading...</font>", m_pMaskWidget);
-    QFont font( "Arial", 28, QFont::Bold);
+    QFont font( "", 28, QFont::Bold);
     pLoadingLabel->setFont(font);
 
     QObject::connect(ui.listMessage, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(handleListMessageItemDoubleClicked(QListWidgetItem*)));
@@ -489,12 +489,13 @@ std::string CMainWindow::highlightJsonData(const QString& jsonData) {
     reAll.setPattern("(\"(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\"])*\"(\\s*:)?|\\b(true|false)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)");
     QRegularExpressionMatchIterator i = reAll.globalMatch(jsonData);
 
+    QString font = ConfigHelper::instance().getFont();
     int offset = 0;
     while (i.hasNext()) {
         QRegularExpressionMatch match = i.next();
         QString word = match.captured();
 
-        QString style = "color: #d4a956;"; // number
+        QString style = "color: #400080; font-family: " + font; // number
 
         QRegularExpression re;
         re.setPattern("^\"");
@@ -507,12 +508,12 @@ std::string CMainWindow::highlightJsonData(const QString& jsonData) {
             re.setPattern(":$");
             subMatch = re.match(word);
             if (subMatch.hasMatch()) {
-                style = "color: #bf3a42;"; // key
+                style = "color: #bf3a42; font-family: " + font; // key
             } else {
-                style = "color: #256d05;"; // string
+                style = "color: #256d05; font-family: " + font; // string
             }
         } else if (subMatch2.hasMatch()) {
-            style = "color: #7ebdff"; // bool
+            style = "color: #7ebdff; font-family: " + font; // bool
         }
 
         QString newWord = "<span style=\"" + style + "\">" + word + "</span>";

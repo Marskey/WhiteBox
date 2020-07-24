@@ -177,6 +177,14 @@ QString CConfigHelper::getCachePath() {
     return m_pSettings->value("/Global/CachePath").toString();
 }
 
+QString CConfigHelper::getFont() {
+    return m_pSettings->value("/Global/font").toString();
+}
+
+void CConfigHelper::saveFont(const QString& family) {
+    m_pSettings->setValue("/Global/font", family);
+}
+
 google::protobuf::util::JsonPrintOptions& CConfigHelper::getJsonPrintOption() {
     return m_protoJsonOption;
 }
