@@ -40,6 +40,14 @@ CMainWindow::CMainWindow(QWidget* parent)
 
     setWindowTitle(WINDOWS_TITLE);
 
+    QIcon lastIcon = QApplication::style()->standardPixmap(QStyle::SP_TitleBarShadeButton);
+    ui.btnLastResult->setIcon(lastIcon);
+    ui.btnLogLastResult->setIcon(lastIcon);
+
+    QIcon nextIcon = QApplication::style()->standardPixmap(QStyle::SP_TitleBarUnshadeButton);
+    ui.btnNextResult->setIcon(nextIcon);
+    ui.btnLogNextResult->setIcon(nextIcon);
+
     // 恢复上次的布局大小
     restoreGeometry(ConfigHelper::instance().getMainWindowGeometry());
     restoreState(ConfigHelper::instance().getMainWindowState());
