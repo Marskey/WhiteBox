@@ -12,7 +12,7 @@
 #include "ProtoManager.h"
 
 CMsgEditorDialog::CMsgEditorDialog(QWidget *parent)
-    : QDialog(parent) {
+    : QDialog(parent, Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint) {
     setupUi(this);
 
     m_option.always_print_primitive_fields = true;

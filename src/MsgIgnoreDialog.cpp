@@ -6,7 +6,7 @@
 #include "ProtoManager.h"
 
 CMsgIgnoreDialog::CMsgIgnoreDialog(QWidget *parent)
-    : QDialog(parent) {
+    : QDialog(parent, Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint) {
     setupUi(this);
 
     QObject::connect(editFilterLeft, SIGNAL(textChanged(const QString&)), this, SLOT(handleLeftFilterTextChanged(const QString&)));
