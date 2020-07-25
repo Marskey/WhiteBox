@@ -94,10 +94,6 @@ CMainWindow::CMainWindow(QWidget* parent)
     ui.listMessage->installEventFilter(new ShowItemDetailKeyFilter(ui.listMessage));
     ui.listRecentMessage->installEventFilter(new ShowItemDetailKeyFilter(ui.listRecentMessage));
 
-    ui.editSearchDetail->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditNormal());
-    ui.editSearch->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditNormal());
-    ui.editLogSearch->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditNormal());
-
     // 给log窗口添加右键菜单
     ui.listLogs->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -777,45 +773,32 @@ void CMainWindow::handleListLogActionAddToIgnoreList() {
 
 void CMainWindow::handleFilterTextChanged(const QString& text) {
     // 搜索栏搜索逻辑
-    ui.editSearch->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditError());
     for (int i = 0; i < ui.listMessage->count(); ++i) {
         ui.listMessage->item(i)->setHidden(!text.isEmpty());
     }
 
-    bool found = false;
-
-    if (text.isEmpty()) {
-        found = true;
-    } else {
-        bool bIsNumberic = false;
-        int msgTypeNum = text.toInt(&bIsNumberic);
-        if (bIsNumberic) {
-            const CProtoManager::MsgInfo* pMsgInfo = ProtoManager::instance().getMsgInfoByMsgType(msgTypeNum);
-            if (nullptr == pMsgInfo) {
-                return;
-            }
-
-            std::string strMsgName = pMsgInfo->msgName;
-            QList<QListWidgetItem*> listFound = ui.listMessage->findItems(strMsgName.c_str(), Qt::MatchCaseSensitive);
-            for (int i = 0; i < listFound.count(); ++i) {
-                listFound[i]->setHidden(false);
-            }
-            found = !listFound.isEmpty();
-        } else {
-            QString rexPattern = text;
-            rexPattern = rexPattern.replace(" ", ".*");
-            rexPattern.prepend(".*");
-            rexPattern.append(".*");
-            QList<QListWidgetItem*> listFound = ui.listMessage->findItems(rexPattern, Qt::MatchRegExp);
-            for (int i = 0; i < listFound.count(); ++i) {
-                listFound[i]->setHidden(false);
-            }
-            found = !listFound.isEmpty();
+    bool bIsNumberic = false;
+    int msgTypeNum = text.toInt(&bIsNumberic);
+    if (bIsNumberic) {
+        const CProtoManager::MsgInfo* pMsgInfo = ProtoManager::instance().getMsgInfoByMsgType(msgTypeNum);
+        if (nullptr == pMsgInfo) {
+            return;
         }
-    }
 
-    if (found) {
-        ui.editSearch->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditNormal());
+        std::string strMsgName = pMsgInfo->msgName;
+        QList<QListWidgetItem*> listFound = ui.listMessage->findItems(strMsgName.c_str(), Qt::MatchCaseSensitive);
+        for (int i = 0; i < listFound.count(); ++i) {
+            listFound[i]->setHidden(false);
+        }
+    } else {
+        QString rexPattern = text;
+        rexPattern = rexPattern.replace(" ", ".*");
+        rexPattern.prepend(".*");
+        rexPattern.append(".*");
+        QList<QListWidgetItem*> listFound = ui.listMessage->findItems(rexPattern, Qt::MatchRegExp);
+        for (int i = 0; i < listFound.count(); ++i) {
+            listFound[i]->setHidden(false);
+        }
     }
 }
 
@@ -930,7 +913,6 @@ void CMainWindow::handleSearchDetailTextChanged() {
 
     m_vecSearchPos.clear();
     m_searchResultIdx = -1;
-    ui.editSearchDetail->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditNormal());
 
     if (document->isEmpty()) {
         return;
@@ -975,8 +957,6 @@ void CMainWindow::handleSearchDetailTextChanged() {
 
         if (!m_vecSearchPos.empty()) {
             m_searchResultIdx = 0;
-        } else {
-            ui.editSearchDetail->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditError());
         }
     }
 
@@ -1045,7 +1025,6 @@ void CMainWindow::handleSearchLogTextChanged() {
     m_listFoundItems.clear();
     m_searchLogResultIdx = -1;
     QString searchString = ui.editLogSearch->text();
-    ui.editLogSearch->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditNormal());
     if (searchString.isEmpty()) {
         for (int i = 0; i < ui.listLogs->count(); ++i) {
             QListWidgetItem* pItem = ui.listLogs->item(i);
@@ -1078,7 +1057,6 @@ void CMainWindow::handleSearchLogTextChanged() {
             m_listFoundItems[m_searchLogResultIdx]->setBackground(QColor(255, 150, 50));
         } else {
             m_searchLogResultIdx = -1;
-            ui.editLogSearch->setStyleSheet(ConfigHelper::instance().getStyleSheetLineEditError());
         }
     }
 

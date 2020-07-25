@@ -40,9 +40,6 @@ public:
 
     int getHistroyComboxItemMaxCnt();
 
-    QString getStyleSheetLineEditNormal();
-    QString getStyleSheetLineEditError();
-
     void saveCachePath(const QString& path);
     QString getCachePath();
 
