@@ -146,6 +146,7 @@
     <QtMoc Include="ConfigHelper.h" />
     <QtMoc Include="ComboxItemFilter.h" />
     <ClInclude Include="define.h" />
+    <QtMoc Include="JsonHighlighter.h" />
     <ClInclude Include="LogHelper.h" />
     <ClInclude Include="LuaInterface.h" />
     <ClInclude Include="protobuf\protobuf.h" />

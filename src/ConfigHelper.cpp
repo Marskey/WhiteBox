@@ -132,6 +132,10 @@ void CConfigHelper::saveFont(const QString& family) {
     m_pSettings->setValue("/Global/font", family);
 }
 
+QString CConfigHelper::getJsonHighlightColor(const QString& name) {
+    return m_pSettings->value("/JsonColor/" + name).toString();
+}
+
 google::protobuf::util::JsonPrintOptions& CConfigHelper::getJsonPrintOption() {
     return m_protoJsonOption;
 }

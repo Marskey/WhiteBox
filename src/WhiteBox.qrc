@@ -1,5 +1,7 @@
 <RCC>
-    <qresource prefix="/WhiteBox">
-        <file alias="icon1.ico">Resources/icon1.ico</file>
-    </qresource>
+  <qresource prefix="/WhiteBox">
+    <file alias="icon1.ico">Resources/icon1.ico</file>
+    <file>Resources/chevron-medium-right.png</file>
+    <file>Resources/chevron-medium-left.png</file>
+  </qresource>
 </RCC>

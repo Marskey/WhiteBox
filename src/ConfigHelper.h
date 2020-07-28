@@ -46,6 +46,8 @@ public:
     QString getFont();
     void saveFont(const QString& family);
 
+    QString getJsonHighlightColor(const QString& name);
+
     google::protobuf::util::JsonPrintOptions& getJsonPrintOption();
 
 private:

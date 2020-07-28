@@ -125,6 +125,12 @@
                <property name="text">
                 <string>Send</string>
                </property>
+               <property name="autoDefault">
+                <bool>true</bool>
+               </property>
+               <property name="default">
+                <bool>false</bool>
+               </property>
               </widget>
              </item>
             </layout>
@@ -247,6 +253,12 @@
              <property name="text">
               <string>Connect</string>
              </property>
+             <property name="autoDefault">
+              <bool>false</bool>
+             </property>
+             <property name="default">
+              <bool>true</bool>
+             </property>
             </widget>
            </item>
           </layout>
@@ -363,6 +375,16 @@
                <property name="text">
                 <string/>
                </property>
+               <property name="icon">
+                <iconset resource="WhiteBox.qrc">
+                 <normaloff>:/WhiteBox/Resources/chevron-medium-left.png</normaloff>:/WhiteBox/Resources/chevron-medium-left.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>9</width>
+                 <height>9</height>
+                </size>
+               </property>
               </widget>
              </item>
              <item>
@@ -381,6 +403,16 @@
                </property>
                <property name="text">
                 <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="WhiteBox.qrc">
+                 <normaloff>:/WhiteBox/Resources/chevron-medium-right.png</normaloff>:/WhiteBox/Resources/chevron-medium-right.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>9</width>
+                 <height>9</height>
+                </size>
                </property>
               </widget>
              </item>
@@ -455,7 +487,7 @@
               <string>Setting what kind of message to ignore</string>
              </property>
              <property name="text">
-              <string>Ignore setting</string>
+              <string>Setting</string>
              </property>
             </widget>
            </item>
@@ -551,6 +583,16 @@
                <property name="text">
                 <string/>
                </property>
+               <property name="icon">
+                <iconset resource="WhiteBox.qrc">
+                 <normaloff>:/WhiteBox/Resources/chevron-medium-left.png</normaloff>:/WhiteBox/Resources/chevron-medium-left.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>9</width>
+                 <height>9</height>
+                </size>
+               </property>
               </widget>
              </item>
              <item>
@@ -581,6 +623,16 @@
                </property>
                <property name="text">
                 <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="WhiteBox.qrc">
+                 <normaloff>:/WhiteBox/Resources/chevron-medium-right.png</normaloff>:/WhiteBox/Resources/chevron-medium-right.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>9</width>
+                 <height>9</height>
+                </size>
                </property>
               </widget>
              </item>
@@ -678,6 +730,29 @@
    <header>LineEdit.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>btnConnect</tabstop>
+  <tabstop>editSearch</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>listMessage</tabstop>
+  <tabstop>cbClientName</tabstop>
+  <tabstop>btnSend</tabstop>
+  <tabstop>cbIp</tabstop>
+  <tabstop>cbAccount</tabstop>
+  <tabstop>cbOptionalParam</tabstop>
+  <tabstop>btnClearLog</tabstop>
+  <tabstop>editLogSearch</tabstop>
+  <tabstop>btnLogLastResult</tabstop>
+  <tabstop>btnLogNextResult</tabstop>
+  <tabstop>listLogs</tabstop>
+  <tabstop>checkIsAutoDetail</tabstop>
+  <tabstop>btnIgnoreMsg</tabstop>
+  <tabstop>editSearchDetail</tabstop>
+  <tabstop>btnLastResult</tabstop>
+  <tabstop>btnNextResult</tabstop>
+  <tabstop>textEdit</tabstop>
+  <tabstop>listRecentMessage</tabstop>
+ </tabstops>
  <resources>
   <include location="WhiteBox.qrc"/>
  </resources>

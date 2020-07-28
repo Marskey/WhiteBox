@@ -5,6 +5,8 @@
 #include "google/protobuf/message.h"
 #include <google/protobuf/util/json_util.h>
 
+
+class CJsonHighlighter;
 class CLineEdit;
 class QFormLayout;
 class CMsgEditorDialog : public QDialog, public Ui_MessageEditor
@@ -23,7 +25,7 @@ private:
 
     void registerBtn(QPushButton* pBtn, int index);
     int getBtnRegisterIndex(QPushButton* pBtn);
-    void setPlaceHodler(CLineEdit* pEdit, google::protobuf::FieldDescriptor::Type type);
+    void updateGUIData();
 
 private slots:
     void handleComboxIndexChanged(int index);
@@ -40,9 +42,13 @@ private slots:
     void handleRemoveBtn();
     void handleClearBtn();
 
+    void handleJsonBrowseBtnClicked();
+    void handleJsonParseBtnClicked();
+    void handleTabBarClicked(int index);
+
+    void handleTextEditTextChange();
 private:
     ::google::protobuf::Message* m_pMessage = nullptr;
     std::map<QPushButton*, int> m_mapBtn2MsgIdx;
-
-    google::protobuf::util::JsonPrintOptions m_option;
+    CJsonHighlighter* m_highlighter;
 };

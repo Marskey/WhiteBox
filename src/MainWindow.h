@@ -15,6 +15,7 @@
 #include "google/protobuf/message.h"
 #include <google/protobuf/util/json_util.h>
 
+class CJsonHighlighter;
 class CECPrinter;
 class CMainWindow : public QMainWindow, public ec_net::INetEvent, public lua_api::IMainApp
 {
@@ -34,7 +35,7 @@ public:
 
     bool init();
 
-    static std::string highlightJsonData(const QString& jsonData);
+    //static std::string highlightJsonData(const QString& jsonData);
 
 public:
     // ec_net::INetEvent begin
@@ -144,6 +145,7 @@ private:
 
     QTimer* m_pLogUpdateTimer = nullptr;
     QWidget* m_pMaskWidget = nullptr;
+    CJsonHighlighter* m_highlighter = nullptr;
 };
 
 class CECPrinter : public CLogPrinter
@@ -196,7 +198,7 @@ protected:
                     auto itemView = qobject_cast<QAbstractItemView*>(obj);
                     if (itemView->model() != nullptr) {
                         QModelIndex modelIdx = itemView->currentIndex();
-                        QString msgFullName = modelIdx.data(Qt::WhatsThisRole).toString();
+                        QString msgFullName = modelIdx.data(Qt::UserRole).toString();
                         std::string detail = modelIdx.data(Qt::ToolTipRole).toString().toStdString();
 
                         if (detail.empty()) {
@@ -204,8 +206,11 @@ protected:
                             if (pMessage == nullptr) {
                                 return false;
                             }
-                            google::protobuf::util::MessageToJsonString(*pMessage, &detail, ConfigHelper::instance().getJsonPrintOption());
-                            delete pMessage;
+                            if (0 != pMessage->ByteSizeLong()) {
+                                google::protobuf::util::MessageToJsonString(*pMessage, &detail, ConfigHelper::instance().getJsonPrintOption());
+                            } else {
+                                delete pMessage;
+                            }
                         }
 
                         QString msgName = modelIdx.data(Qt::DisplayRole).toString();

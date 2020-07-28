@@ -9,6 +9,7 @@
 #include "ConfigHelper.h"
 #include "LuaInterface.h"
 #include "LuaScriptSystem.h"
+#include "JsonHighlighter.h"
 
 extern "C" {
 #include "protobuf/protobuflib.h"
@@ -39,14 +40,6 @@ CMainWindow::CMainWindow(QWidget* parent)
     ui.setupUi(this);
 
     setWindowTitle(WINDOWS_TITLE);
-
-    QIcon lastIcon = QApplication::style()->standardPixmap(QStyle::SP_TitleBarShadeButton);
-    ui.btnLastResult->setIcon(lastIcon);
-    ui.btnLogLastResult->setIcon(lastIcon);
-
-    QIcon nextIcon = QApplication::style()->standardPixmap(QStyle::SP_TitleBarUnshadeButton);
-    ui.btnNextResult->setIcon(nextIcon);
-    ui.btnLogNextResult->setIcon(nextIcon);
 
     // 恢复上次的布局大小
     restoreGeometry(ConfigHelper::instance().getMainWindowGeometry());
@@ -105,6 +98,9 @@ CMainWindow::CMainWindow(QWidget* parent)
     QLabel* pLoadingLabel = new QLabel("<font color=\"white\">Loading...</font>", m_pMaskWidget);
     QFont font( "", 28, QFont::Bold);
     pLoadingLabel->setFont(font);
+
+    // 设置json数据高亮
+    m_highlighter = new CJsonHighlighter(ui.textEdit->document());
 
     QObject::connect(ui.listMessage, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(handleListMessageItemDoubleClicked(QListWidgetItem*)));
 
@@ -456,7 +452,6 @@ void CMainWindow::clearCache() {
             pListWidgetItem->setToolTip("");
         }
     }
-    //QMessageBox::information(this, "", fmt::format("Cleared {0} messages.", count).c_str());
 }
 
 void CMainWindow::update() {
@@ -487,46 +482,46 @@ void CMainWindow::openSettingDlg() {
     delete pDlg;
 }
 
-std::string CMainWindow::highlightJsonData(const QString& jsonData) {
-    QString result = jsonData;
-    QRegularExpression reAll;
-    reAll.setPattern("(\"(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\"])*\"(\\s*:)?|\\b(true|false)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)");
-    QRegularExpressionMatchIterator i = reAll.globalMatch(jsonData);
-
-    QString font = ConfigHelper::instance().getFont();
-    int offset = 0;
-    while (i.hasNext()) {
-        QRegularExpressionMatch match = i.next();
-        QString word = match.captured();
-
-        QString style = "color: #400080; font-family: " + font; // number
-
-        QRegularExpression re;
-        re.setPattern("^\"");
-        QRegularExpressionMatch subMatch = re.match(word);
-
-        re.setPattern("true|false");
-        QRegularExpressionMatch subMatch2 = re.match(word);
-
-        if (subMatch.hasMatch()) {
-            re.setPattern(":$");
-            subMatch = re.match(word);
-            if (subMatch.hasMatch()) {
-                style = "color: #bf3a42; font-family: " + font; // key
-            } else {
-                style = "color: #256d05; font-family: " + font; // string
-            }
-        } else if (subMatch2.hasMatch()) {
-            style = "color: #7ebdff; font-family: " + font; // bool
-        }
-
-        QString newWord = "<span style=\"" + style + "\">" + word + "</span>";
-        result.replace(match.capturedStart() + offset, match.capturedLength(), newWord);
-        offset += newWord.length() - match.capturedLength();
-    }
-
-    return result.toStdString();
-}
+//std::string CMainWindow::highlightJsonData(const QString& jsonData) {
+//    QString result = jsonData;
+//    QRegularExpression reAll;
+//    reAll.setPattern("(\"(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\"])*\"(\\s*:)?|\\b(true|false)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)");
+//    QRegularExpressionMatchIterator i = reAll.globalMatch(jsonData);
+//
+//    QString font = ConfigHelper::instance().getFont();
+//    int offset = 0;
+//    while (i.hasNext()) {
+//        QRegularExpressionMatch match = i.next();
+//        QString word = match.captured();
+//
+//        QString style = "color: #400080; font-family: " + font; // number
+//
+//        QRegularExpression re;
+//        re.setPattern("^\"");
+//        QRegularExpressionMatch subMatch = re.match(word);
+//
+//        re.setPattern("true|false");
+//        QRegularExpressionMatch subMatch2 = re.match(word);
+//
+//        if (subMatch.hasMatch()) {
+//            re.setPattern(":$");
+//            subMatch = re.match(word);
+//            if (subMatch.hasMatch()) {
+//                style = "color: #bf3a42; font-family: " + font; // key
+//            } else {
+//                style = "color: #256d05; font-family: " + font; // string
+//            }
+//        } else if (subMatch2.hasMatch()) {
+//            style = "color: #7ebdff; font-family: " + font; // bool
+//        }
+//
+//        QString newWord = "<span style=\"" + style + "\">" + word + "</span>";
+//        result.replace(match.capturedStart() + offset, match.capturedLength(), newWord);
+//        offset += newWord.length() - match.capturedLength();
+//    }
+//
+//    return result.toStdString();
+//}
 
 void CMainWindow::onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) {
     if (msgFullName == nullptr) {
@@ -551,7 +546,7 @@ void CMainWindow::onParseMessage(SocketId socketId, const char* msgFullName, con
                                            , msgFullName
                                            , nMessageId
                                            , pRecvMesage->ByteSize()).c_str()
-                             , highlightJsonData(msgStr.c_str()).c_str()
+                             , msgStr.c_str()
                              , QColor(57, 115, 157)
             );
         }
@@ -708,7 +703,7 @@ void CMainWindow::handleListMessageCurrentItemChanged(QListWidgetItem* current, 
         return;
     }
 
-    ui.textEdit->setHtml(fmt::format("<!DOCTYPE html><html><body>{}<hr><pre>{}</pre></body></html>", pItem->text().toStdString(), highlightJsonData(pItem->toolTip())).c_str());
+    ui.textEdit->setHtml(fmt::format("<!DOCTYPE html><html><body>{}<hr><pre>{}</pre></body></html>", pItem->text().toStdString(), pItem->toolTip().toStdString()).c_str());
     handleSearchDetailTextChanged();
 }
 
@@ -843,7 +838,7 @@ void CMainWindow::handleSendBtnClicked() {
         google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
         addDetailLogInfo(msgFullName.c_str()
                          , fmt::format("Sent Message {}", selectMsgName.toStdString()).c_str()
-                         , highlightJsonData(msgStr.c_str()).c_str(), Qt::black);
+                         , msgStr.c_str(), Qt::black);
 
         if (0 == ui.listRecentMessage->findItems(selectMsgName, Qt::MatchExactly).count()) {
             auto* pItem = new QListWidgetItem(selectMsgName);

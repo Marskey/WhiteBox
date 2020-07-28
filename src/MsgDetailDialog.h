@@ -4,6 +4,7 @@
 #include <ui_MessageDetail.h>
 #include <QKeyEvent>
 
+class CJsonHighlighter;
 class CloseDialogFilter : public QObject
 {
     Q_OBJECT
@@ -37,5 +38,6 @@ public:
     ~CMsgDetailDialog();
 private:
     CloseDialogFilter* m_filter = new CloseDialogFilter;
+    CJsonHighlighter* m_highlighter = nullptr;
 };
 

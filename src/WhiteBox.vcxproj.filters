@@ -76,6 +76,9 @@
     </QtMoc>
     <QtMoc Include="ConfigHelper.h" />
     <QtMoc Include="ComboxItemFilter.h" />
+    <QtMoc Include="JsonHighlighter.h">
+      <Filter>Widget</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="WhiteBox.qrc" />

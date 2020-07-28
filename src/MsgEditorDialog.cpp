@@ -1,13 +1,17 @@
 #include "MsgEditorDialog.h"
 #include "LineEdit.h"
+#include "JsonHighlighter.h"
 
 #include <QFormLayout>
 #include <QListWidget>
 #include <QComboBox>
+#include <QFileDialog>
 #include <QMessageBox>
 #include <QStyledItemDelegate>
 #include <QTextEdit>
 
+
+#include "ConfigHelper.h"
 #include "google/protobuf/repeated_field.h"
 #include "ProtoManager.h"
 
@@ -15,8 +19,12 @@ CMsgEditorDialog::CMsgEditorDialog(QWidget *parent)
     : QDialog(parent, Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint) {
     setupUi(this);
 
-    m_option.always_print_primitive_fields = true;
-    m_option.preserve_proto_field_names = true;
+    connect(btnBrowse, SIGNAL(clicked()), this, SLOT(handleJsonBrowseBtnClicked()));
+    connect(btnParse, SIGNAL(clicked()), this, SLOT(handleJsonParseBtnClicked()));
+    connect(tabWidget, SIGNAL(tabBarClicked(int)), this, SLOT(handleTabBarClicked(int)));
+    connect(textEdit, SIGNAL(textChanged()), this, SLOT(handleTextEditTextChange()));
+
+    m_highlighter = new CJsonHighlighter(textEdit->document());
 }
 
 CMsgEditorDialog::~CMsgEditorDialog() {
@@ -84,6 +92,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
             pHBoxLayout->addWidget(pBtn4);
 
             auto* pListWidget = new QListWidget(this);
+            pListWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
             std::string listName = "list_" + std::to_string(pDescriptor->number());
             pListWidget->setObjectName(listName.c_str());
             int size = m_pMessage->GetReflection()->FieldSize(*m_pMessage, pDescriptor);
@@ -112,7 +121,6 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
                     std::string enumName = value->name();
 
                     pComboBox->addItem(enumName.c_str());
-                    pComboBox->setCurrentIndex(0);
                 }
                 pHBoxLayout->addWidget(pComboBox);
                 
@@ -151,6 +159,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
             connect(pBtn4, SIGNAL(clicked()), this, SLOT(handleClearBtn()));
 
             auto* pListWidget = new QListWidget(this);
+            pListWidget->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
             std::string listName = "list_" + std::to_string(pDescriptor->number());
             pListWidget->setObjectName(listName.c_str());
 
@@ -167,13 +176,13 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
         }
     } else {
         google::protobuf::FieldDescriptor::Type filedType = pDescriptor->type();
+        std::string msgValue = ProtoManager::instance().getMsgValue(*m_pMessage, pDescriptor);
 
         switch (filedType) {
             case google::protobuf::FieldDescriptor::TYPE_ENUM:
             {
                 const google::protobuf::EnumDescriptor* pEd = pDescriptor->enum_type();
 
-                int enumValue = m_pMessage->GetReflection()->GetEnumValue(*m_pMessage, pDescriptor);
                 // enum select
                 auto* pComboBox = new QComboBox(this);
                 pComboBox->setItemDelegate(new QStyledItemDelegate());
@@ -185,10 +194,10 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
                     std::string enumName = value->name();
 
                     pComboBox->addItem(enumName.c_str());
-                    if (enumValue == value->number()) {
-                        pComboBox->setCurrentIndex(i);
-                    }
                 }
+
+                pComboBox->setCurrentText(msgValue.c_str());
+
                 layout.addRow(pFieldLabel, pComboBox);
                 break;
             }
@@ -199,28 +208,11 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
             case google::protobuf::FieldDescriptor::TYPE_DOUBLE:
             case google::protobuf::FieldDescriptor::TYPE_FLOAT:
             {
-                std::string value;
-                if (filedType == google::protobuf::FieldDescriptor::TYPE_INT32) {
-                    value = std::to_string(m_pMessage->GetReflection()->GetInt32(*m_pMessage, pDescriptor));
-                } else if (filedType == google::protobuf::FieldDescriptor::TYPE_UINT32) {
-                    value = std::to_string(m_pMessage->GetReflection()->GetUInt32(*m_pMessage, pDescriptor));
-                } else if (filedType == google::protobuf::FieldDescriptor::TYPE_INT64) {
-                    value = std::to_string(m_pMessage->GetReflection()->GetInt64(*m_pMessage, pDescriptor));
-                } else if (filedType == google::protobuf::FieldDescriptor::TYPE_UINT64) {
-                    value = std::to_string(m_pMessage->GetReflection()->GetUInt64(*m_pMessage, pDescriptor));
-                } else if (filedType == google::protobuf::FieldDescriptor::TYPE_DOUBLE) {
-                    value = std::to_string(m_pMessage->GetReflection()->GetDouble(*m_pMessage, pDescriptor));
-                } else if (filedType == google::protobuf::FieldDescriptor::TYPE_FLOAT) {
-                    value = std::to_string(m_pMessage->GetReflection()->GetFloat(*m_pMessage, pDescriptor));
-                }
-
                 // normal input
                 auto* pLineEdit = new CLineEdit(this);
                 pLineEdit->setObjectName(std::to_string(pDescriptor->number()).c_str());
-                if (value.empty()) {
-                    pLineEdit->setPlaceholderText("Enter value...");
-                } else {
-                    pLineEdit->setText(value.c_str());
+                if (!msgValue.empty()) {
+                    pLineEdit->setText(msgValue.c_str());
                 }
                 QObject::connect(pLineEdit, SIGNAL(textChanged(const QString&)), this, SLOT(handleLineEdit(const QString&)));
                 layout.addRow(pFieldLabel, pLineEdit);
@@ -229,15 +221,11 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
             case google::protobuf::FieldDescriptor::TYPE_STRING:
             case google::protobuf::FieldDescriptor::TYPE_BYTES:
             {
-                std::string value = m_pMessage->GetReflection()->GetString(*m_pMessage, pDescriptor);
-
                 // normal input
                 auto* pLineEdit = new CLineEdit(this);
                 pLineEdit->setObjectName(std::to_string(pDescriptor->number()).c_str());
-                if (value.empty()) {
-                    pLineEdit->setPlaceholderText("Enter value...");
-                } else {
-                    pLineEdit->setText(value.c_str());
+                if (!msgValue.empty()) {
+                    pLineEdit->setText(msgValue.c_str());
                 }
                 QObject::connect(pLineEdit, SIGNAL(textChanged(const QString&)), this, SLOT(handleLineEdit(const QString&)));
                 layout.addRow(pFieldLabel, pLineEdit);
@@ -245,21 +233,16 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
             }
             case google::protobuf::FieldDescriptor::TYPE_BOOL:
             {
-                bool value = m_pMessage->GetReflection()->GetBool(*m_pMessage, pDescriptor);
                 auto* pComboBox = new QComboBox(this);
                 pComboBox->setItemDelegate(new QStyledItemDelegate());
                 pComboBox->addItem("false", 0);
                 pComboBox->addItem("true", 1);
                 pComboBox->setObjectName(std::to_string(pDescriptor->number()).c_str());
-                if (value) {
-                    pComboBox->setCurrentIndex(true);
-                }
+                pComboBox->setCurrentText(msgValue.c_str());
                 QObject::connect(pComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(handleComboxIndexChanged(int)));
                 layout.addRow(pFieldLabel, pComboBox);
                 break;
             }
-            case google::protobuf::FieldDescriptor::TYPE_GROUP:
-                break;
             case google::protobuf::FieldDescriptor::TYPE_MESSAGE:
             {
                 auto* pHBoxLayout = new QHBoxLayout(this);
@@ -274,22 +257,18 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
                 connect(pBtn2, SIGNAL(clicked()), this, SLOT(handleClearBtn()));
 
                 auto* pTextEdit = new QTextEdit(this);
-                std::string textEditName = "textedit_" + std::to_string(pDescriptor->number());
                 pTextEdit->setReadOnly(true);
-                pTextEdit->setObjectName(textEditName.c_str());
+                pTextEdit->setObjectName(std::to_string(pDescriptor->number()).c_str());
                 auto* pVBoxLayout = new QVBoxLayout(this);
                 pVBoxLayout->addLayout(pHBoxLayout);
                 pVBoxLayout->addWidget(pTextEdit);
-                auto& message = m_pMessage->GetReflection()->GetMessage(*m_pMessage, pDescriptor);
-                if (0 != message.ByteSize()) {
-                    std::string msgStr;
-                    google::protobuf::util::MessageToJsonString(message, &msgStr, m_option);
-                    pTextEdit->setText(msgStr.c_str());
-                }
+                pTextEdit->setText(msgValue.c_str());
 
                 layout.addRow(pFieldLabel, pVBoxLayout);
                 break;
             }
+            case google::protobuf::FieldDescriptor::TYPE_GROUP:
+                break;
             default:
                 break;
         }
@@ -380,13 +359,10 @@ void CMsgEditorDialog::handleMessageEdit() {
         pEditMessage->CopyFrom(pDlg->getMessage());
         if (pBtn->parentWidget() != nullptr) {
             if (pBtn->parentWidget()->layout() != nullptr) {
-                std::string textEditName = "textedit_" + std::to_string(pFd->number());
-                auto pTextEdit  = pBtn->parentWidget()->findChild<QTextEdit*>(textEditName.c_str());
+                auto pTextEdit  = pBtn->parentWidget()->findChild<QTextEdit*>(std::to_string(pFd->number()).c_str());
 
                 if (0 != pEditMessage->ByteSize()) {
-                    std::string msgStr;
-                    google::protobuf::util::MessageToJsonString(*pEditMessage, &msgStr, m_option);
-                    pTextEdit->setText(msgStr.c_str());
+                    pTextEdit->setText(pEditMessage->Utf8DebugString().c_str());
                 }
             }
         }
@@ -416,9 +392,7 @@ void CMsgEditorDialog::handleMessageAddBtn() {
                 QListWidget* pListWidget  = pBtn->parentWidget()->findChild<QListWidget*>(listName.c_str());
 
                 if (0 != pNewMessage->ByteSize()) {
-                    std::string msgStr;
-                    google::protobuf::util::MessageToJsonString(*pNewMessage, &msgStr, m_option);
-                    pListWidget->addItem(msgStr.c_str());
+                    pListWidget->addItem(pNewMessage->ShortDebugString().c_str());
                 }
             }
         }
@@ -458,9 +432,7 @@ void CMsgEditorDialog::handleMessageInsertBtn() {
                 }
 
                 if (0 != pNewMessage->ByteSize()) {
-                    std::string msgStr;
-                    google::protobuf::util::MessageToJsonString(*pNewMessage, &msgStr, m_option);
-                    pListWidget->insertItem(curRow, msgStr.c_str());
+                    pListWidget->insertItem(curRow, pNewMessage->ShortDebugString().c_str());
                 }
             }
         }
@@ -742,8 +714,7 @@ void CMsgEditorDialog::handleClearBtn() {
     } else {
         if (pBtn->parentWidget() != nullptr) {
             if (pBtn->parentWidget()->layout() != nullptr) {
-                std::string textEditName = "textedit_" + std::to_string(messageIdx);
-                auto* pTextEditWidget = pBtn->parentWidget()->findChild<QTextEdit*>(textEditName.c_str());
+                auto* pTextEditWidget = pBtn->parentWidget()->findChild<QTextEdit*>(std::to_string(messageIdx).c_str());
                 if (nullptr == pTextEditWidget) {
                     return;
                 }
@@ -753,6 +724,60 @@ void CMsgEditorDialog::handleClearBtn() {
             }
         }
     }
+}
+
+void CMsgEditorDialog::handleJsonBrowseBtnClicked() {
+    QString jsonFileName = QFileDialog::getOpenFileName(this,
+                                                  tr("Open json file"),
+                                                  QString(),
+                                                  "Json (*.json *txt)");
+
+    if (jsonFileName.isEmpty()) {
+        return;
+    }
+
+    QFile jsonFile(jsonFileName);
+    jsonFile.open(QIODevice::ReadOnly | QIODevice::Text);
+    if (!jsonFile.isOpen()) {
+        QMessageBox::warning(nullptr, "Open error", "cannot open" + jsonFileName);
+        return;
+    }
+
+    if (!jsonFile.isReadable()) {
+        QMessageBox::warning(nullptr, "Open error", "cannot read" + jsonFileName);
+        return;
+    }
+
+    textEdit->setText(jsonFile.readAll());
+}
+
+void CMsgEditorDialog::handleJsonParseBtnClicked() {
+    auto status = google::protobuf::util::JsonStringToMessage(textEdit->toPlainText().toStdString(), m_pMessage);
+    if (status.ok()) {
+        btnParse->setText("Parsed");
+        btnParse->setDisabled(true);
+        // 刷新
+        updateGUIData();
+    } else {
+        QMessageBox::warning(nullptr, "Parse error", status.error_message().data());
+    }
+}
+
+void CMsgEditorDialog::handleTabBarClicked(int index) {
+    // 切换到json编辑分页
+    if (1 == index) {
+        std::string msgStr;
+        google::protobuf::util::MessageToJsonString(*m_pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
+        textEdit->setText(msgStr.c_str());
+        btnParse->setText("Parsed");
+        btnParse->setDisabled(true);
+    }
+}
+
+void CMsgEditorDialog::handleTextEditTextChange() {
+    btnParse->setText("Parse");
+    btnParse->setDisabled(false);
+    btnParse->setDefault(true);
 }
 
 void CMsgEditorDialog::registerBtn(QPushButton* pBtn, int index) {
@@ -770,37 +795,72 @@ int CMsgEditorDialog::getBtnRegisterIndex(QPushButton* pBtn) {
     return -1;
 }
 
-void CMsgEditorDialog::setPlaceHodler(CLineEdit* pEdit, google::protobuf::FieldDescriptor::Type type) {
-    if (nullptr != pEdit) {
-        QString text = "";
-        switch (type) {
-        case google::protobuf::FieldDescriptor::TYPE_INT64:
-            text = "INT64...";
-            break;
-        case google::protobuf::FieldDescriptor::TYPE_INT32:
-            text = "INT32...";
-            break;
-        case google::protobuf::FieldDescriptor::TYPE_UINT32:
-            text = "UINT32...";
-            break;
-        case google::protobuf::FieldDescriptor::TYPE_UINT64:
-            text = "UINT64...";
-            break;
-        case google::protobuf::FieldDescriptor::TYPE_DOUBLE:
-            text = "DOUBLE...";
-            break;
-        case google::protobuf::FieldDescriptor::TYPE_FLOAT:
-            text = "FLOAT...";
-            break;
-        case google::protobuf::FieldDescriptor::TYPE_STRING:
-            text = "STRING...";
-            break;
-        case google::protobuf::FieldDescriptor::TYPE_BYTES:
-            text = "BYTES...";
-            break;
-        default:
-            break;
+void CMsgEditorDialog::updateGUIData() {
+    int cnt = m_pMessage->GetDescriptor()->field_count();
+    for (int i = 0; i < cnt; ++i) {
+        const google::protobuf::FieldDescriptor* pDescriptor = m_pMessage->GetDescriptor()->field(i);
+        if (pDescriptor->is_repeated()) {
+            std::string listName = "list_" + std::to_string(pDescriptor->number());
+            auto* pListWidget = findChild<QListWidget*>(listName.c_str());
+            if (nullptr == pListWidget) {
+                continue;
+            }
+            pListWidget->clear();
+            int size = m_pMessage->GetReflection()->FieldSize(*m_pMessage, pDescriptor);
+            for (int i = 0; i < size; ++i) {
+                pListWidget->addItem(ProtoManager::instance().getMsgValue(*m_pMessage, pDescriptor, i).c_str());
+            }
+        } else {
+            google::protobuf::FieldDescriptor::Type filedType = pDescriptor->type();
+            switch (filedType) {
+            case google::protobuf::FieldDescriptor::TYPE_DOUBLE:
+            case google::protobuf::FieldDescriptor::TYPE_FLOAT:
+            case google::protobuf::FieldDescriptor::TYPE_INT64:
+            case google::protobuf::FieldDescriptor::TYPE_UINT64:
+            case google::protobuf::FieldDescriptor::TYPE_INT32:
+            case google::protobuf::FieldDescriptor::TYPE_FIXED64:
+            case google::protobuf::FieldDescriptor::TYPE_FIXED32:
+            case google::protobuf::FieldDescriptor::TYPE_UINT32:
+            case google::protobuf::FieldDescriptor::TYPE_SFIXED32:
+            case google::protobuf::FieldDescriptor::TYPE_SFIXED64:
+            case google::protobuf::FieldDescriptor::TYPE_SINT32:
+            case google::protobuf::FieldDescriptor::TYPE_SINT64:
+            case google::protobuf::FieldDescriptor::TYPE_STRING:
+            case google::protobuf::FieldDescriptor::TYPE_BYTES:
+                {
+                    auto* pLineEdit = findChild<QLineEdit*>(std::to_string(pDescriptor->number()).c_str());
+                    if (nullptr == pLineEdit) {
+                        continue;
+                    }
+
+                    pLineEdit->setText(ProtoManager::instance().getMsgValue(*m_pMessage, pDescriptor).c_str());
+                }
+                break;
+            case google::protobuf::FieldDescriptor::TYPE_MESSAGE:
+                {
+                    auto* pTextEdit = findChild<QTextEdit*>(std::to_string(pDescriptor->number()).c_str());
+                    if (nullptr == pTextEdit) {
+                        continue;
+                    }
+
+                    pTextEdit->setText(ProtoManager::instance().getMsgValue(*m_pMessage, pDescriptor).c_str());
+                }
+                break;
+            case google::protobuf::FieldDescriptor::TYPE_BOOL:
+            case google::protobuf::FieldDescriptor::TYPE_ENUM:
+                {
+                    auto* pCombox = findChild<QComboBox*>(std::to_string(pDescriptor->number()).c_str());
+                    if (nullptr == pCombox) {
+                        continue;
+                    }
+
+                    pCombox->setCurrentText(ProtoManager::instance().getMsgValue(*m_pMessage, pDescriptor).c_str());
+                }
+                break;
+            case google::protobuf::FieldDescriptor::TYPE_GROUP:
+                break;
+            default: ;
+            }
         }
-        pEdit->setPlaceholderText(text);
     }
 }
