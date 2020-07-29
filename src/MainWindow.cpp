@@ -408,7 +408,7 @@ void CMainWindow::loadCache() {
                 if (nullptr != pItem) {
                     std::string msgFullName = pItem->data(Qt::UserRole).toString().toStdString();
                     if (msgFullName == msgName) {
-                        pItem->setIcon(QIcon(":/EmulatorClient/icon1.ico"));
+                        pItem->setIcon(QIcon(":/WhiteBox/icon1.ico"));
                         google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
                         pItem->setToolTip(msgStr.c_str());
                     }
@@ -618,7 +618,7 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
         std::string msgStr;
         google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
         if (!msgStr.empty()) {
-            pItem->setIcon(QIcon(":/EmulatorClient/icon1.ico"));
+            pItem->setIcon(QIcon(":/WhiteBox/icon1.ico"));
             pItem->setToolTip(msgStr.c_str());
 
             QList<QListWidgetItem*> listItems = pListWidget->findItems(pItem->text(), Qt::MatchExactly);
