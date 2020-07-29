@@ -126,7 +126,7 @@ void CSession::connect(const char* ip, Port port) {
         self->read();
     });
 
-    memcpy(m_ip, ip, strlen(ip));
+    strcpy(m_ip, ip);
     m_port = port;
 }
 
