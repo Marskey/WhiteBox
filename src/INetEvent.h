@@ -8,6 +8,7 @@ namespace ec_net
     {
         eNET_CONNECT_FAIL = 0,
         eNET_SEND_OVERFLOW = 3,
+        eNET_PACKET_PARSE_FAILED = 4,
     };
 
     class INetEvent

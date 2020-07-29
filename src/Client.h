@@ -4,7 +4,6 @@
 #include "LuaInterface.h"
 
 #include "google\protobuf\message.h"
-#include <functional>
 
 class CClient : public ec_net::INetEvent, public lua_api::IClient
 {

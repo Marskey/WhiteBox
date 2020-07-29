@@ -99,14 +99,8 @@ CSession::CSession(SocketId id, asio::ip::tcp::socket& s, size_t recevBuffSize, 
 
 CSession::~CSession() {
     close(true);
-    m_socket.release();
-
     freeSendBuf();
-
-    delete m_readData.pReadData;
-    m_readData.pReadData = nullptr;
-    m_readData.dataSize = 0;
-    m_readData.writeSize = 0;
+    m_socket.release();
 }
 
 void CSession::connect(const char* ip, Port port) {
@@ -132,7 +126,7 @@ void CSession::connect(const char* ip, Port port) {
         self->read();
     });
 
-    memcpy(m_ip, ip, 32);
+    memcpy(m_ip, ip, strlen(ip));
     m_port = port;
 }
 
@@ -183,6 +177,14 @@ void CSession::read() {
                 auto packetSize =  LuaScriptSystem::instance().Invoke<size_t>("__APP_on_read_socket_buffer"
                                                                               , static_cast<lua_api::ISocketReader*>(&self->m_readData)
                                                                               , self->m_readData.writeSize);
+
+                if (packetSize > self->m_readData.writeSize) {
+                    self->handleError(ec_net::eNET_PACKET_PARSE_FAILED);
+                    self->close(true);
+                    break;
+                }
+
+
                 if (0 == packetSize) {
                     break;
                 }
@@ -194,7 +196,7 @@ void CSession::read() {
 
                 memmove(self->m_readData.pReadData
                         , self->m_readData.pReadData + packetSize
-                        , self->m_readData.dataSize - packetSize);
+                        , self->m_readData.writeSize - packetSize);
 
                 self->m_readData.writeSize -= packetSize;
             }
@@ -219,39 +221,52 @@ void CSession::write() {
         return;
     }
 
-    auto& writeData = m_sendQueue.front();
-    asio::async_write(m_socket
-                      , asio::buffer(writeData.data.data(), writeData.data.size())
-                      , [self = shared_from_this()](std::error_code ec, std::size_t size) {
-        if (ec) {
-            // 释放内存
-            self->close(true);
-            return;
-        }
+    auto* pWriteData = m_sendQueue.front();
+    m_sendQueue.pop_front();
+    try {
+        asio::async_write(m_socket
+                          , asio::buffer(pWriteData->data.data(), pWriteData->data.size())
+                          , [self = shared_from_this(), pWriteData](std::error_code ec, std::size_t size) {
+            delete pWriteData;
+            if (ec) {
+                // 释放内存
+                self->close(true);
+                return;
+            }
 
-        if (!self->m_sendQueue.empty()) {
-            self->m_sendQueue.pop_front();
-            self->write();
-        }
-    });
+            if (!self->m_sendQueue.empty()) {
+                self->write();
+            }
+        });
+    }
+    catch (std::exception& e) {
+        printf("%s\n", e.what());
+    }
+    catch (...) {
+        printf("unknown exception\n");
+    }
 }
 
 void CSession::sendProtobufMsg(const char* msgFullName, const void* pData, size_t size) {
-    CWriteData writeData;
+    CWriteData* writeData = new CWriteData;
     LuaScriptSystem::instance().Invoke("__APP_on_write_socket_buffer"
-                                        , static_cast<lua_api::ISocketWriter*>(&writeData)
+                                        , static_cast<lua_api::ISocketWriter*>(writeData)
                                         , msgFullName
                                         , (void*)pData, size);
 
-    if (!writeData.data.empty()) {
-        if (writeData.data.size() > m_sendBuffSize) {
-            handleError(ec_net::eNET_SEND_OVERFLOW);
-            return;
-        }
-
-        m_sendQueue.emplace_back(writeData);
-        write();
+    if (writeData->data.empty()) {
+        delete writeData;
+        return;
     }
+
+    if (writeData->data.size() > m_sendBuffSize) {
+        handleError(ec_net::eNET_SEND_OVERFLOW);
+        delete writeData;
+        return;
+    }
+
+    m_sendQueue.emplace_back(writeData);
+    write();
 }
 
 SocketId CSession::getSocketId() {
@@ -271,5 +286,8 @@ void CSession::handleDisconnect() {
 }
 
 void CSession::freeSendBuf() {
+    for (int i = 0; i < m_sendQueue.size(); ++i) {
+        delete m_sendQueue[i];
+    }
     m_sendQueue.clear();
 }

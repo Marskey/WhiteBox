@@ -25,6 +25,13 @@ public:
 class CReadData final : public lua_api::ISocketReader
 {
 public:
+    virtual ~CReadData() {
+        if (pReadData != nullptr) {
+            delete pReadData;
+            pReadData = nullptr;
+        }
+    }
+
     char* pReadData = nullptr;
     size_t dataSize = 0;
     size_t writeSize = 0;
@@ -67,11 +74,11 @@ private:
 private:
     SocketId m_id = 0;
     asio::ip::tcp::socket m_socket;
-    std::deque<CWriteData> m_sendQueue;
+    std::deque<CWriteData*> m_sendQueue;
     CReadData m_readData;
 
     size_t m_sendBuffSize = 0;
 
-    char m_ip[32] = "0.0.0.0";
+    char m_ip[32] = "111.111.111.111";
     Port m_port;
 };

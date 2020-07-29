@@ -195,7 +195,7 @@ bool CMainWindow::init() {
 
 void CMainWindow::connectStateChange(EConnectState state) {
     switch (state) {
-    case kConnected:
+    case EConnectState::kConnected:
         ui.btnConnect->setText("Disconnect");
         ui.btnConnect->setDisabled(false);
         ui.btnSend->setDisabled(false);
@@ -204,7 +204,7 @@ void CMainWindow::connectStateChange(EConnectState state) {
         ui.cbAccount->setDisabled(true);
         ui.cbOptionalParam->setDisabled(true);
         break;
-    case kDisconnect:
+    case EConnectState::kDisconnect:
         ui.btnConnect->setText("Connect");
         ui.btnConnect->setDisabled(false);
         ui.btnSend->setDisabled(true);
@@ -213,7 +213,7 @@ void CMainWindow::connectStateChange(EConnectState state) {
         ui.cbAccount->setDisabled(false);
         ui.cbOptionalParam->setDisabled(false);
         break;
-    case kConnecting:
+    case EConnectState::kConnecting:
         ui.btnConnect->setText("Connecting");
         ui.btnConnect->setDisabled(true);
         ui.btnSend->setDisabled(true);
@@ -457,7 +457,7 @@ void CMainWindow::clearCache() {
 void CMainWindow::update() {
     NetManager::instance().run();
 
-    for (auto& client : m_listClientsToDel) {
+    for (auto* client : m_listClientsToDel) {
         m_mapClients.erase(client->getName());
         delete client;
     }
@@ -481,47 +481,6 @@ void CMainWindow::openSettingDlg() {
     }
     delete pDlg;
 }
-
-//std::string CMainWindow::highlightJsonData(const QString& jsonData) {
-//    QString result = jsonData;
-//    QRegularExpression reAll;
-//    reAll.setPattern("(\"(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\"])*\"(\\s*:)?|\\b(true|false)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)");
-//    QRegularExpressionMatchIterator i = reAll.globalMatch(jsonData);
-//
-//    QString font = ConfigHelper::instance().getFont();
-//    int offset = 0;
-//    while (i.hasNext()) {
-//        QRegularExpressionMatch match = i.next();
-//        QString word = match.captured();
-//
-//        QString style = "color: #400080; font-family: " + font; // number
-//
-//        QRegularExpression re;
-//        re.setPattern("^\"");
-//        QRegularExpressionMatch subMatch = re.match(word);
-//
-//        re.setPattern("true|false");
-//        QRegularExpressionMatch subMatch2 = re.match(word);
-//
-//        if (subMatch.hasMatch()) {
-//            re.setPattern(":$");
-//            subMatch = re.match(word);
-//            if (subMatch.hasMatch()) {
-//                style = "color: #bf3a42; font-family: " + font; // key
-//            } else {
-//                style = "color: #256d05; font-family: " + font; // string
-//            }
-//        } else if (subMatch2.hasMatch()) {
-//            style = "color: #7ebdff; font-family: " + font; // bool
-//        }
-//
-//        QString newWord = "<span style=\"" + style + "\">" + word + "</span>";
-//        result.replace(match.capturedStart() + offset, match.capturedLength(), newWord);
-//        offset += newWord.length() - match.capturedLength();
-//    }
-//
-//    return result.toStdString();
-//}
 
 void CMainWindow::onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) {
     if (msgFullName == nullptr) {
@@ -569,7 +528,7 @@ void CMainWindow::onParseMessage(SocketId socketId, const char* msgFullName, con
 
 void CMainWindow::onConnectSucceed(const char* remoteIp, Port port, SocketId socketId) {
     LOG_INFO("Connect succeed socket id: {0}, ip: {1}:{2} ", socketId, remoteIp, port);
-    connectStateChange(kConnected);
+    connectStateChange(EConnectState::kConnected);
 
     CClient* pClient = getClientBySocketId(socketId);
     if (nullptr != pClient) {
@@ -584,7 +543,7 @@ void CMainWindow::onDisconnect(SocketId socketId) {
     for (auto& [key, client] : m_mapClients) {
         if (client->getSocketID() == socketId) {
             client->onDisconnect(socketId);
-            m_listClientsToDel.emplace_back(client);
+            m_listClientsToDel.insert(client);
             int cbIdx = ui.cbClientName->findData(client->getName());
             if (-1 != cbIdx) {
                 ui.cbClientName->removeItem(cbIdx);
@@ -594,7 +553,7 @@ void CMainWindow::onDisconnect(SocketId socketId) {
     }
 
     if (ui.cbClientName->count() == 0) {
-        connectStateChange(kDisconnect);
+        connectStateChange(EConnectState::kDisconnect);
     }
 }
 
@@ -609,7 +568,10 @@ void CMainWindow::onError(SocketId socketId, ec_net::ENetError error) {
         }
         break;
     case ec_net::eNET_SEND_OVERFLOW:
-        LOG_ERR("Send buffer overflow!");
+        LOG_ERR("Send buffer overflow! check \"BuffSize send\" size you've passed in \"conncet\" function on Lua script");
+        break;
+    case ec_net::eNET_PACKET_PARSE_FAILED:
+        LOG_ERR("Packet parse failed! Packet size you returned from Lua is bigger then receive. check \"__APP_on_read_socket_buffer\" on Lua script");
         break;
     default:;
     }
@@ -622,7 +584,7 @@ void CMainWindow::onError(SocketId socketId, ec_net::ENetError error) {
     }
 
     if (ui.cbClientName->count() == 0) {
-        connectStateChange(kDisconnect);
+        connectStateChange(EConnectState::kDisconnect);
     }
 }
 
@@ -854,11 +816,11 @@ void CMainWindow::handleSendBtnClicked() {
 
 void CMainWindow::handleConnectBtnClicked() {
     // 如果点击的时断开连接
-    if (m_btnConnectState == kConnected) {
+    if (m_btnConnectState == EConnectState::kConnected) {
         for (auto& [key, client] : m_mapClients) {
             client->disconnect();
         }
-        connectStateChange(kDisconnect);
+        connectStateChange(EConnectState::kDisconnect);
         return;
     }
 
@@ -891,7 +853,7 @@ void CMainWindow::handleConnectBtnClicked() {
                                         , ui.cbAccount->currentText().toStdString().c_str()
                                         , ui.cbOptionalParam->currentText().toStdString().c_str());
 
-    connectStateChange(kConnecting);
+    connectStateChange(EConnectState::kConnecting);
     LOG_INFO("Connecting to {}:{}...", ip, port);
 
     setWindowTitle(fmt::format("{}:{}", WINDOWS_TITLE, ui.cbAccount->currentText().toStdString()).c_str());
@@ -1221,10 +1183,10 @@ void CMainWindow::addNewItemIntoCombox(QComboBox& combox) {
 }
 
 bool CMainWindow::loadProto() {
-    LOG_INFO("Importing proto files...");
     QString strPath = ConfigHelper::instance().getWidgetComboxStateText("ProtoPath", 0);
     QDir protoDir = strPath;
     ProtoManager::instance().init(protoDir.absolutePath().toStdString());
+    LOG_INFO("Importing proto files... from {}", strPath.toStdString());
 
     bool bSuccess = false;
     QDirIterator dirIt(strPath, QStringList() << "*.proto", QDir::Files, QDirIterator::Subdirectories);

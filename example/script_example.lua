@@ -69,6 +69,10 @@ function __APP_on_read_socket_buffer(SocketReader, buff_size)
         return 0
     end
 
+    if packet_size > buff_size then
+        return 0
+    end
+
     local msg_type = SocketReader:readUint16(2)
     if msg_type == 0 then
         return 0

@@ -19,7 +19,7 @@ class CJsonHighlighter;
 class CECPrinter;
 class CMainWindow : public QMainWindow, public ec_net::INetEvent, public lua_api::IMainApp
 {
-    enum EConnectState
+    enum class EConnectState
     {
         kConnected,
         kDisconnect,
@@ -130,7 +130,7 @@ private:
     MapMessages m_mapMessages;
     std::unordered_set<std::string> m_setIgnoredReceiveMsgType;
 
-    EConnectState m_btnConnectState = kDisconnect;
+    EConnectState m_btnConnectState = EConnectState::kDisconnect;
 
     std::vector<int> m_vecSearchPos;
     int m_searchResultIdx = -1; // 当前高亮的第几个搜索结果(详情界面)
@@ -141,7 +141,7 @@ private:
     CECPrinter* m_pPrinter = nullptr;
 
     std::unordered_map<std::string, CClient*> m_mapClients;
-    std::list<CClient*> m_listClientsToDel;
+    std::set<CClient*> m_listClientsToDel;
 
     QTimer* m_pLogUpdateTimer = nullptr;
     QWidget* m_pMaskWidget = nullptr;
