@@ -107,8 +107,11 @@ std::string CProtoManager::getMsgValue(google::protobuf::Message& message, const
         {
             const google::protobuf::EnumDescriptor* pEd = pFd->enum_type();
             int enumValue = message.GetReflection()->GetEnumValue(message, pFd);
-            const google::protobuf::EnumValueDescriptor* value = pEd->value(enumValue);
-            return value->name();
+            const google::protobuf::EnumValueDescriptor* value = pEd->FindValueByNumber(enumValue);
+            if (value) {
+                return value->name();
+            }
+            return "";
         }
     case google::protobuf::FieldDescriptor::TYPE_INT32:
     case google::protobuf::FieldDescriptor::TYPE_INT64:
@@ -174,8 +177,11 @@ std::string CProtoManager::getMsgValue(google::protobuf::Message& message, const
         {
             const google::protobuf::EnumDescriptor* pEd = pFd->enum_type();
             int enumValue = message.GetReflection()->GetRepeatedEnumValue(message, pFd, index);
-            const google::protobuf::EnumValueDescriptor* value = pEd->value(enumValue);
-            return value->name();
+            const google::protobuf::EnumValueDescriptor* value = pEd->FindValueByNumber(enumValue);
+            if (value) {
+                return value->name();
+            }
+            return "";
         }
     case google::protobuf::FieldDescriptor::TYPE_INT32:
     case google::protobuf::FieldDescriptor::TYPE_INT64:
