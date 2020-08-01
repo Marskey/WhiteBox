@@ -114,31 +114,17 @@ std::string CProtoManager::getMsgValue(google::protobuf::Message& message, const
             return "";
         }
     case google::protobuf::FieldDescriptor::TYPE_INT32:
+        return std::to_string(message.GetReflection()->GetInt32(message, pFd));
     case google::protobuf::FieldDescriptor::TYPE_INT64:
+        return std::to_string(message.GetReflection()->GetInt64(message, pFd));
     case google::protobuf::FieldDescriptor::TYPE_UINT32:
+        return std::to_string(message.GetReflection()->GetUInt32(message, pFd));
     case google::protobuf::FieldDescriptor::TYPE_UINT64:
+        return std::to_string(message.GetReflection()->GetUInt64(message, pFd));
     case google::protobuf::FieldDescriptor::TYPE_DOUBLE:
+        return std::to_string(message.GetReflection()->GetDouble(message, pFd));
     case google::protobuf::FieldDescriptor::TYPE_FLOAT:
-        {
-            if (filedType == google::protobuf::FieldDescriptor::TYPE_INT32) {
-                return std::to_string(message.GetReflection()->GetInt32(message, pFd));
-            }
-            if (filedType == google::protobuf::FieldDescriptor::TYPE_UINT32) {
-                return std::to_string(message.GetReflection()->GetUInt32(message, pFd));
-            }
-            if (filedType == google::protobuf::FieldDescriptor::TYPE_INT64) {
-                return std::to_string(message.GetReflection()->GetInt64(message, pFd));
-            }
-            if (filedType == google::protobuf::FieldDescriptor::TYPE_UINT64) {
-                return std::to_string(message.GetReflection()->GetUInt64(message, pFd));
-            }
-            if (filedType == google::protobuf::FieldDescriptor::TYPE_DOUBLE) {
-                return std::to_string(message.GetReflection()->GetDouble(message, pFd));
-            }
-            if (filedType == google::protobuf::FieldDescriptor::TYPE_FLOAT) {
-                return std::to_string(message.GetReflection()->GetFloat(message, pFd));
-            }
-        }
+        return std::to_string(message.GetReflection()->GetFloat(message, pFd));
     case google::protobuf::FieldDescriptor::TYPE_STRING:
     case google::protobuf::FieldDescriptor::TYPE_BYTES:
         {

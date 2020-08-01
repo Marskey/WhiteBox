@@ -13,8 +13,14 @@ class CMsgEditorDialog : public QDialog, public Ui_MessageEditor
 {
     Q_OBJECT
 
+    enum class ETabIdx : int
+    {
+        eGUI = 0,
+        eJSON = 1,
+    };
 public:
-    CMsgEditorDialog(QWidget *parent = 0);
+
+    CMsgEditorDialog(QWidget* parent = 0);
     ~CMsgEditorDialog();
 
     void initDialogByMessage(const ::google::protobuf::Message* pMessage);
@@ -51,4 +57,5 @@ private:
     ::google::protobuf::Message* m_pMessage = nullptr;
     std::map<QPushButton*, int> m_mapBtn2MsgIdx;
     CJsonHighlighter* m_highlighter;
+    bool m_isAnyType = false;
 };

@@ -504,7 +504,7 @@ void CMainWindow::onParseMessage(SocketId socketId, const char* msgFullName, con
                              , fmt::format("Received {}({}) size: {}"
                                            , msgFullName
                                            , nMessageId
-                                           , pRecvMesage->ByteSize()).c_str()
+                                           , pRecvMesage->ByteSizeLong()).c_str()
                              , msgStr.c_str()
                              , QColor(57, 115, 157)
             );
@@ -630,7 +630,7 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
 
     delete pDlg;
 
-    if (pMessage->ByteSize() == 0) {
+    if (pMessage->ByteSizeLong() == 0) {
         delete pMessage;
         m_mapMessages.erase(msgFullName);
 
