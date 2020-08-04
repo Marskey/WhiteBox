@@ -411,13 +411,14 @@ void CMainWindow::loadCache() {
                         pItem->setIcon(QIcon(":/WhiteBox/icon1.ico"));
                         google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
                         pItem->setToolTip(msgStr.c_str());
+                        pItem = ui.listMessage->takeItem(i);
+                        ui.listMessage->insertItem(0, pItem);
                     }
                 }
             }
         }
     }
     ui.labelCacheCnt->setText(std::to_string(m_mapMessages.size()).c_str());
-
 
     int ignoreMsgFailedCnt = 0;
     QJsonArray ignoredMsgArray = jsonObj["ignoredMsg"].toArray();
@@ -625,6 +626,9 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
             for (int i = 0; i < listItems.count(); ++i) {
                 listItems[i]->setToolTip(msgStr.c_str());
             }
+            int rowIdx = ui.listMessage->row(pItem);
+            pItem = ui.listMessage->takeItem(rowIdx);
+            ui.listMessage->insertItem(0, pItem);
         }
     }
 
@@ -665,7 +669,9 @@ void CMainWindow::handleListMessageCurrentItemChanged(QListWidgetItem* current, 
         return;
     }
 
-    ui.textEdit->setHtml(fmt::format("<!DOCTYPE html><html><body>{}<hr><pre>{}</pre></body></html>", pItem->text().toStdString(), pItem->toolTip().toStdString()).c_str());
+    ui.textEdit->setText(fmt::format("{}\r\n\r\n{}"
+                                     , pItem->text().toStdString()
+                                     , pItem->toolTip().toStdString()).c_str());
     handleSearchDetailTextChanged();
 }
 
@@ -686,7 +692,9 @@ void CMainWindow::handleListLogItemCurrentItemChanged(QListWidgetItem* current, 
     ui.textEdit->clear();
 
     std::string detail = pItem->data(Qt::UserRole).toString().toStdString();
-    ui.textEdit->setHtml(fmt::format("<!DOCTYPE html><html><body>{}<hr><pre>{}</pre></body></html>", pItem->text().toStdString(), detail).c_str());
+    ui.textEdit->setText(fmt::format("{}\r\n\r\n{}"
+                                     , pItem->text().toStdString()
+                                     , detail).c_str());
     handleSearchDetailTextChanged();
 }
 
