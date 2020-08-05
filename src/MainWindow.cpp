@@ -629,6 +629,7 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
             int rowIdx = ui.listMessage->row(pItem);
             pItem = ui.listMessage->takeItem(rowIdx);
             ui.listMessage->insertItem(0, pItem);
+            ui.listMessage->setCurrentRow(rowIdx);
         }
     }
 
