@@ -27,7 +27,7 @@ class CReadData final : public lua_api::ISocketReader
 public:
     virtual ~CReadData() {
         if (pReadData != nullptr) {
-            delete pReadData;
+            delete[] pReadData;
             pReadData = nullptr;
         }
     }
