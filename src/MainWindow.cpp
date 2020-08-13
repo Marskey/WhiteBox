@@ -168,6 +168,14 @@ bool CMainWindow::init() {
     NetManager::instance().init(this);
     LOG_INFO("Initiated network");
 
+    // 启动主定时器
+    auto* pMainTimer = new QTimer(this);
+    connect(pMainTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::update));
+    pMainTimer->start(40);
+
+    m_pLogUpdateTimer = new QTimer(this);
+    connect(m_pLogUpdateTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::updateLog));
+
     // 加载lua
     if (!loadLua()) {
         return false;
@@ -180,14 +188,6 @@ bool CMainWindow::init() {
 
     // 加载缓存 
     loadCache();
-
-    // 启动主定时器
-    auto* pMainTimer = new QTimer(this);
-    connect(pMainTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::update));
-    pMainTimer->start(40);
-
-    m_pLogUpdateTimer = new QTimer(this);
-    connect(m_pLogUpdateTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::updateLog));
 
     LOG_INFO("Ready.             - Version {}.{}.{} By marskey.", g_version.main, g_version.sub, g_version.build);
     return true;
@@ -1116,12 +1116,14 @@ void CMainWindow::doReload() {
              , ConfigHelper::instance().getWidgetComboxStateText("LuaScriptPath", 0).toStdString());
     qApp->processEvents();
     if (!loadLua()) {
+        m_pMaskWidget->hide();
         return;
     }
     LOG_INFO("Reloading proto files from path:\"{}\"..."
              , ConfigHelper::instance().getWidgetComboxStateText("ProtoPath", 0).toStdString());
     qApp->processEvents();
     if (!loadProto()) {
+        m_pMaskWidget->hide();
         return;
     }
     // 加载缓存 
