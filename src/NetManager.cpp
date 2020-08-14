@@ -11,6 +11,7 @@ CNetManager::CNetManager() {
 
 CNetManager::~CNetManager() {
     m_pNetEvent = nullptr;
+    m_ioContext.stop();
 }
 
 bool CNetManager::init(ec_net::INetEvent* pEvent) {
@@ -30,6 +31,7 @@ void CNetManager::run(int count /*= -1*/) {
 }
 
 void CNetManager::stop() {
+    m_mapSessions.clear();
     m_ioContext.stop();
 }
 

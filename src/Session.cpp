@@ -137,10 +137,6 @@ bool CSession::isValid() {
 void CSession::close(bool notice) {
     if (m_socket.is_open()) {
         std::error_code ec;
-        m_socket.shutdown(asio::ip::tcp::socket::shutdown_both, ec);
-        if (ec) {
-            // TODO (Marskey): 错误日志
-        }
         m_socket.close(ec);
         if (ec) {
             // TODO (Marskey): 错误日志

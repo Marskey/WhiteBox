@@ -137,6 +137,8 @@ CMainWindow::CMainWindow(QWidget* parent)
 
 CMainWindow::~CMainWindow() {
     delete m_pPrinter;
+    
+    NetManager::instance().stop();
 
     for (auto& [key, value] : m_mapMessages) {
         delete value;
