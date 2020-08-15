@@ -57,7 +57,7 @@ private:
     bool m_bFirstCreateFile = false;
 
     QByteArray m_subWindowGeometry;
-    int m_maxComboxHistroyItemCnt = 0; // ip 和 账号的历史数量
+    int m_maxComboxHistroyItemCnt = 0;
     google::protobuf::util::JsonPrintOptions m_protoJsonOption;
 };
 
