@@ -5,6 +5,7 @@
 
 #include "google/protobuf/compiler/importer.h"
 #include "Singleton.h"
+#include <list>
 
 class CProtoManager : public lua_api::IProtoManager
 {

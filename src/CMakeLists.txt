@@ -1,5 +1,5 @@
 set(whitebox_sources
-    WhiteBox.aps
+    #WhiteBox.aps
     Client.cpp
     ConfigHelper.cpp
     ip4validator.cpp
@@ -53,6 +53,7 @@ if (WIN32)
 endif()
 
 add_executable(${APP_NAME} ${whitebox_sources})
+target_include_directories(${APP_NAME} PUBLIC ${protobuf_source_dir}/src)
 
 target_link_libraries(${APP_NAME}
     libprotobuf

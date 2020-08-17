@@ -3,7 +3,7 @@
 #include "INetEvent.h"
 #include "LuaInterface.h"
 
-#include "google\protobuf\message.h"
+#include <google/protobuf/message.h>
 
 class CClient : public ec_net::INetEvent, public lua_api::IClient
 {
