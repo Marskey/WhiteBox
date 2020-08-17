@@ -13,7 +13,7 @@
 #include <QKeyEvent>
 
 #include "google/protobuf/message.h"
-#include <google/protobuf/util/json_util.h>
+#include "google/protobuf/util/json_util.h"
 
 class CJsonHighlighter;
 class CECPrinter;

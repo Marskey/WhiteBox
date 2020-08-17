@@ -27,8 +27,6 @@ ${lua_source_dir}/lstrlib.c
 ${lua_source_dir}/ltable.c
 ${lua_source_dir}/ltablib.c
 ${lua_source_dir}/ltm.c
-#${lua_source_dir}/lua.c
-#${lua_source_dir}/luac.c
 ${lua_source_dir}/lundump.c
 ${lua_source_dir}/lutf8lib.c
 ${lua_source_dir}/lvm.c
