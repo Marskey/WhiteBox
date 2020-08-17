@@ -391,7 +391,7 @@ void CMainWindow::loadCache() {
     int msgCacheFailedCnt = 0;
     QJsonObject jsonObj = jsonDoc.object();
     QJsonArray msgCacheArray = jsonObj["msgCache"].toArray();
-    for (QJsonValueRef& cache : msgCacheArray) {
+    for (const QJsonValueRef& cache : msgCacheArray) {
         QJsonObject obj = cache.toObject();
         std::string msgName = obj["name"].toString().toStdString();
         google::protobuf::Message* pMessage = getOrCreateMessageByName(msgName.c_str());
@@ -424,7 +424,7 @@ void CMainWindow::loadCache() {
 
     int ignoreMsgFailedCnt = 0;
     QJsonArray ignoredMsgArray = jsonObj["ignoredMsg"].toArray();
-    for (QJsonValueRef& cache : ignoredMsgArray) {
+    for (const QJsonValueRef& cache : ignoredMsgArray) {
         m_setIgnoredReceiveMsgType.insert(cache.toString().toStdString());
     }
     ui.lableIgnoreCnt->setText(std::to_string(m_setIgnoredReceiveMsgType.size()).c_str());
@@ -1074,7 +1074,7 @@ void CMainWindow::handleBtnIgnoreMsgClicked() {
     if (ret == QDialog::Accepted) {
         m_setIgnoredReceiveMsgType.clear();
         const std::list<std::string>& listIgnoredMsg = pDlg->getIgnoredMsg();
-        auto& it = listIgnoredMsg.begin();
+        auto it = listIgnoredMsg.begin();
         for (; it != listIgnoredMsg.end(); ++it) {
             m_setIgnoredReceiveMsgType.insert(*it);
         }

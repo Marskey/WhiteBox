@@ -77,16 +77,16 @@ void CLogHelper::logError(const char* text, Args&&... args) {
     }
 }
 
-#define LOG_INFO(formatStr, args...) do {\
-    LogHelper::instance().logInfo(formatStr, ##args); \
+#define LOG_INFO(formatStr, ...) do {\
+    LogHelper::instance().logInfo(formatStr, ##__VA_ARGS__); \
 } while (0)
 
-#define LOG_WARN(formatStr, args...) do {\
-    LogHelper::instance().logWarning(formatStr, ##args); \
+#define LOG_WARN(formatStr, ...) do {\
+    LogHelper::instance().logWarning(formatStr, ##__VA_ARGS__); \
 } while (0)
 
-#define LOG_ERR(formatStr, args...) do {\
-    LogHelper::instance().logError(formatStr, ##args); \
+#define LOG_ERR(formatStr, ...) do {\
+    LogHelper::instance().logError(formatStr, ##__VA_ARGS__); \
 } while (0)
 
 typedef CSingleton<CLogHelper> LogHelper;
