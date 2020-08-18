@@ -35,7 +35,7 @@
             </font>
            </property>
            <property name="placeholderText">
-            <string>🔍Filter...</string>
+            <string>Filter...</string>
            </property>
            <property name="clearButtonEnabled">
             <bool>true</bool>
@@ -103,7 +103,7 @@
             </font>
            </property>
            <property name="placeholderText">
-            <string>🔍Filter...</string>
+            <string>Filter...</string>
            </property>
            <property name="clearButtonEnabled">
             <bool>true</bool>

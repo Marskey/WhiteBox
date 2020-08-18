@@ -895,7 +895,7 @@ void CMainWindow::handleSearchDetailTextChanged() {
 
         QTextCharFormat plainFormat(highlightCursor.charFormat());
         QTextCharFormat colorFormat = plainFormat;
-        colorFormat.setBackground(Qt::yellow);
+        colorFormat.setBackground(QColor(255, 195, 0));
 
         while (!highlightCursor.isNull() && !highlightCursor.atEnd()) {
             highlightCursor = document->find(searchString, highlightCursor);
@@ -992,20 +992,22 @@ void CMainWindow::handleSearchLogTextChanged() {
     // 日志搜索栏搜索逻辑
     m_listFoundItems.clear();
     m_searchLogResultIdx = -1;
+    QPalette p = qApp->palette();
+    QColor defaultColor = p.color(QPalette::Window);
     QString searchString = ui.editLogSearch->text();
     if (searchString.isEmpty()) {
         for (int i = 0; i < ui.listLogs->count(); ++i) {
             QListWidgetItem* pItem = ui.listLogs->item(i);
-            pItem->setBackground(Qt::white);
+            pItem->setBackground(defaultColor);
         }
     } else {
         m_listFoundItems = ui.listLogs->findItems(searchString, Qt::MatchContains);
         for (int i = 0; i < ui.listLogs->count(); ++i) {
             QListWidgetItem* pItem = ui.listLogs->item(i);
             if (m_listFoundItems.contains(pItem)) {
-                pItem->setBackground(Qt::yellow);
+                pItem->setBackground(QColor(255, 195, 0));
             } else {
-                pItem->setBackground(Qt::white);
+                pItem->setBackground(defaultColor);
             }
         }
 
@@ -1036,7 +1038,7 @@ void CMainWindow::handleSearchLogBtnLastResult() {
         return;
     }
 
-    m_listFoundItems[m_searchLogResultIdx]->setBackground(Qt::yellow);
+    m_listFoundItems[m_searchLogResultIdx]->setBackground(QColor(255, 195, 0));
     if (0 == m_searchLogResultIdx) {
         m_searchLogResultIdx = m_listFoundItems.size();
     }
@@ -1053,7 +1055,7 @@ void CMainWindow::handleSearchLogBtnNextResult() {
         return;
     }
 
-    m_listFoundItems[m_searchLogResultIdx]->setBackground(Qt::yellow);
+    m_listFoundItems[m_searchLogResultIdx]->setBackground(QColor(255, 195, 0));
 
     if (m_searchLogResultIdx + 1 >= m_listFoundItems.size()) {
         m_searchLogResultIdx = 0;
@@ -1328,5 +1330,4 @@ void CMainWindow::addDetailLogInfo(const char* msgFullName, const char* msg, con
     }
 
     ui.listLogs->addItem(pListWidgetItem);
-    ui.listLogs->update();
 }

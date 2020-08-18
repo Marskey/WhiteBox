@@ -176,6 +176,7 @@ public:
 
         if (QColor(Qt::GlobalColor(0)) != color) {
             pListWidgetItem->setForeground(color);
+            pListWidgetItem->setBackground(QColor(53, 53, 53));
         }
 
         m_logWidget->addItem(pListWidgetItem);

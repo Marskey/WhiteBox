@@ -14,13 +14,13 @@ public:
         pattern = QRegularExpression("(\"(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\"])*\"(\\s*:)?|\\b(true|false)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)");
 
         QString keyColor = ConfigHelper::instance().getJsonHighlightColor("key");
-        m_keyFormat.setForeground(QColor((keyColor.isEmpty()) ? "#bf3a42" : keyColor));
+        m_keyFormat.setForeground(QColor((keyColor.isEmpty()) ? "#AF7AC5" : keyColor));
         QString boolColor = ConfigHelper::instance().getJsonHighlightColor("bool");
-        m_boolFormat.setForeground(QColor((boolColor.isEmpty()) ? "#0B0BDF" : boolColor));
+        m_boolFormat.setForeground(QColor((boolColor.isEmpty()) ? "#3498DB" : boolColor));
         QString strColor = ConfigHelper::instance().getJsonHighlightColor("string");
-        m_stringFormat.setForeground(QColor((strColor.isEmpty()) ? "#256d05" : strColor));
+        m_stringFormat.setForeground(QColor((strColor.isEmpty()) ? "#1ABC9C" : strColor));
         QString numberColor = ConfigHelper::instance().getJsonHighlightColor("number");
-        m_numberFormat.setForeground(QColor((numberColor.isEmpty()) ? "#0B0BDF" : numberColor));
+        m_numberFormat.setForeground(QColor((numberColor.isEmpty()) ? "#3498DB" : numberColor));
     }
 
 protected:
