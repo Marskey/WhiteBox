@@ -175,22 +175,6 @@
  <resources/>
  <connections>
   <connection>
-   <sender>okButton</sender>
-   <signal>clicked()</signal>
-   <receiver>MessageEditor</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>341</x>
-     <y>673</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>96</x>
-     <y>254</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>cancelButton</sender>
    <signal>clicked()</signal>
    <receiver>MessageEditor</receiver>

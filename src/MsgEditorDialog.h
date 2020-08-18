@@ -34,6 +34,8 @@ private:
     void updateGUIData();
 
 private slots:
+    void handleApplyButtonClicked();
+
     void handleComboxIndexChanged(int index);
 
     void handleLineEdit(const QString& text);

@@ -23,6 +23,7 @@ CMsgEditorDialog::CMsgEditorDialog(QWidget *parent)
     connect(btnParse, SIGNAL(clicked()), this, SLOT(handleJsonParseBtnClicked()));
     connect(tabWidget, SIGNAL(tabBarClicked(int)), this, SLOT(handleTabBarClicked(int)));
     connect(textEdit, SIGNAL(textChanged()), this, SLOT(handleTextEditTextChange()));
+    connect(okButton, SIGNAL(clicked()), this, SLOT(handleApplyButtonClicked()));
 
     m_highlighter = new CJsonHighlighter(textEdit->document());
 }
@@ -881,4 +882,18 @@ void CMsgEditorDialog::updateGUIData() {
             }
         }
     }
+}
+
+void CMsgEditorDialog::handleApplyButtonClicked() {
+    if (tabWidget->currentIndex() != static_cast<int>(ETabIdx::eGUI)) {
+        if (btnParse->isEnabled()) {
+            handleJsonParseBtnClicked();
+        }
+
+        if (btnParse->isEnabled()) {
+            return;
+        }
+    }
+
+    accept();
 }
