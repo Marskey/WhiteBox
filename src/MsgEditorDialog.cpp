@@ -92,7 +92,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
             registerBtn(pBtn4, pDescriptor->number());
             connect(pBtn4, SIGNAL(clicked()), this, SLOT(handleClearBtn()));
 
-            auto* pHBoxLayout = new QHBoxLayout(this);
+            auto* pHBoxLayout = new QHBoxLayout();
             pHBoxLayout->addWidget(pBtn1);
             pHBoxLayout->addWidget(pBtn2);
             pHBoxLayout->addWidget(pBtn3);
@@ -107,14 +107,14 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
                 pListWidget->addItem(ProtoManager::instance().getMsgValue(*m_pMessage, pDescriptor, i).c_str());
             }
 
-            auto* pVBoxLayout = new QVBoxLayout(this);
+            auto* pVBoxLayout = new QVBoxLayout();
             pVBoxLayout->addLayout(pHBoxLayout);
             pVBoxLayout->addWidget(pListWidget);
 
             layout.addRow(pFieldLabel, pVBoxLayout);
         } else {
             // repeated input
-            auto* pHBoxLayout = new QHBoxLayout(this);
+            auto* pHBoxLayout = new QHBoxLayout();
             if (pDescriptor->type() == google::protobuf::FieldDescriptor::TYPE_ENUM) {
                 const google::protobuf::EnumDescriptor* pEd = pDescriptor->enum_type();
 
@@ -175,7 +175,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
                 pListWidget->addItem(ProtoManager::instance().getMsgValue(*m_pMessage, pDescriptor, i).c_str());
             }
 
-            auto* pVBoxLayout = new QVBoxLayout(this);
+            auto* pVBoxLayout = new QVBoxLayout();
             pVBoxLayout->addLayout(pHBoxLayout);
             pVBoxLayout->addWidget(pListWidget);
 
@@ -252,7 +252,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
             }
             case google::protobuf::FieldDescriptor::TYPE_MESSAGE:
             {
-                auto* pHBoxLayout = new QHBoxLayout(this);
+                auto* pHBoxLayout = new QHBoxLayout();
                 auto* pBtn1 = new QPushButton("Edit", this);
                 registerBtn(pBtn1, pDescriptor->number());
                 pHBoxLayout->addWidget(pBtn1);
@@ -695,15 +695,6 @@ void CMsgEditorDialog::handleClearBtn() {
     int messageIdx = getBtnRegisterIndex(pBtn);
 
     const google::protobuf::FieldDescriptor* pFd = m_pMessage->GetDescriptor()->FindFieldByNumber(messageIdx);
-
-    QMessageBox msgBox;
-    msgBox.setInformativeText("Do you want to clear?");
-    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Discard);
-    msgBox.setDefaultButton(QMessageBox::Yes);
-    int ret = msgBox.exec();
-    if (ret != QMessageBox::Yes) {
-        return;
-    }
 
     if (pFd->is_repeated()) {
         if (pBtn->parentWidget() != nullptr) {

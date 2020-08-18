@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
     }
     a.setFont(font);
 
+#if 1
     qApp->setStyle(QStyleFactory::create("Fusion"));
     QPalette p = qApp->palette();
     p.setColor(QPalette::Window, QColor(53, 53, 53));
@@ -41,6 +42,7 @@ int main(int argc, char *argv[])
     p.setColor(QPalette::HighlightedText, Qt::white);
     p.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(127, 127, 127));
     qApp->setPalette(p);
+#endif
 
     CMainWindow w;
     w.init();
