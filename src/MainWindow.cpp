@@ -993,7 +993,7 @@ void CMainWindow::handleSearchLogTextChanged() {
     m_listFoundItems.clear();
     m_searchLogResultIdx = -1;
     QPalette p = qApp->palette();
-    QColor defaultColor = p.color(QPalette::Window);
+    QColor defaultColor = p.color(QPalette::Base);
     QString searchString = ui.editLogSearch->text();
     if (searchString.isEmpty()) {
         for (int i = 0; i < ui.listLogs->count(); ++i) {
