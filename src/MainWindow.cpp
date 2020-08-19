@@ -414,8 +414,8 @@ void CMainWindow::loadCache() {
                         pItem->setIcon(QIcon(":/WhiteBox/icon1.ico"));
                         google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
                         pItem->setToolTip(msgStr.c_str());
-                        pItem = ui.listMessage->takeItem(i);
-                        ui.listMessage->insertItem(0, pItem);
+                        //pItem = ui.listMessage->takeItem(i);
+                        //ui.listMessage->insertItem(0, pItem);
                     }
                 }
             }
@@ -629,10 +629,10 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
             for (int i = 0; i < listItems.count(); ++i) {
                 listItems[i]->setToolTip(msgStr.c_str());
             }
-            int rowIdx = ui.listMessage->row(pItem);
-            pItem = ui.listMessage->takeItem(rowIdx);
-            ui.listMessage->insertItem(0, pItem);
-            ui.listMessage->setCurrentRow(rowIdx);
+            //int rowIdx = ui.listMessage->row(pItem);
+            //pItem = ui.listMessage->takeItem(rowIdx);
+            //ui.listMessage->insertItem(0, pItem);
+            //ui.listMessage->setCurrentRow(0);
         }
     }
 
@@ -812,7 +812,7 @@ void CMainWindow::handleSendBtnClicked() {
         google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
         addDetailLogInfo(msgFullName.c_str()
                          , fmt::format("Sent Message {}", selectMsgName.toStdString()).c_str()
-                         , msgStr.c_str(), Qt::black);
+                         , msgStr.c_str(), QColor("#AF7AC5"));
 
         if (0 == ui.listRecentMessage->findItems(selectMsgName, Qt::MatchExactly).count()) {
             auto* pItem = new QListWidgetItem(selectMsgName);
