@@ -10,6 +10,7 @@
 #include "LuaInterface.h"
 #include "LuaScriptSystem.h"
 #include "JsonHighlighter.h"
+#include "LineEdit.h"
 
 extern "C" {
 #include "protobuf/protobuflib.h"
