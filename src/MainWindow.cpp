@@ -903,14 +903,15 @@ void CMainWindow::handleSearchDetailTextChanged() {
 
             if (!highlightCursor.isNull()) {
                 highlightCursor.mergeCharFormat(colorFormat);
-                if (m_vecSearchPos.empty()) {
-                    pos = highlightCursor.position();
-                }
                 m_vecSearchPos.emplace_back(highlightCursor.position());
             }
         }
 
         cursor.endEditBlock();
+
+        if (!m_vecSearchPos.empty()) {
+            pos = m_vecSearchPos[0];
+        }
 
         // 高亮第一个搜索结果
         cursor = ui.textEdit->textCursor();
@@ -922,6 +923,7 @@ void CMainWindow::handleSearchDetailTextChanged() {
         cursor.mergeCharFormat(textFormat);
         cursor.setPosition(pos);
         cursor.endEditBlock();
+        cursor.setCharFormat(plainFormat);
         ui.textEdit->setTextCursor(cursor);
 
         if (!m_vecSearchPos.empty()) {
@@ -947,6 +949,7 @@ void CMainWindow::handleSearchDetailBtnLastResult() {
 
     int pos = m_vecSearchPos[m_searchResultIdx];
 
+    QTextCharFormat plainFormat(ui.textEdit->textCursor().charFormat());
     QTextCursor cursor = ui.textEdit->textCursor();
     cursor.beginEditBlock();
     cursor.setPosition(pos);
@@ -956,6 +959,7 @@ void CMainWindow::handleSearchDetailBtnLastResult() {
     cursor.mergeCharFormat(textFormat);
     cursor.setPosition(pos);
     cursor.endEditBlock();
+    cursor.setCharFormat(plainFormat);
 
     ui.textEdit->setTextCursor(cursor);
     ui.labelSearchCnt->setText(fmt::format("{}/{}", m_searchResultIdx + 1, m_vecSearchPos.size()).c_str());
@@ -975,6 +979,8 @@ void CMainWindow::handleSearchDetailBtnNextResult() {
     int pos = m_vecSearchPos[m_searchResultIdx];
 
     ui.textEdit->document()->undo();
+
+    QTextCharFormat plainFormat(ui.textEdit->textCursor().charFormat());
     QTextCursor cursor = ui.textEdit->textCursor();
     cursor.beginEditBlock();
     cursor.setPosition(pos);
@@ -984,6 +990,7 @@ void CMainWindow::handleSearchDetailBtnNextResult() {
     cursor.mergeCharFormat(textFormat);
     cursor.setPosition(pos);
     cursor.endEditBlock();
+    cursor.setCharFormat(plainFormat);
 
     ui.textEdit->setTextCursor(cursor);
     ui.labelSearchCnt->setText(fmt::format("{}/{}", m_searchResultIdx + 1, m_vecSearchPos.size()).c_str());
