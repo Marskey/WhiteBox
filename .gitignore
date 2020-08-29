@@ -354,3 +354,5 @@ Project/BuildTemp
 Project/Documents/QEmulatorClient/ProtoPath.ini
 Project/Documents/QEmulatorClient/data.bytes
 /Project/PredictedInputCache_LW_Debug_x64.dat
+/out
+/bin
