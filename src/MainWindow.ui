@@ -625,11 +625,7 @@
           </layout>
          </item>
          <item>
-          <widget class="QTextEdit" name="textEdit">
-           <property name="readOnly">
-            <bool>true</bool>
-           </property>
-          </widget>
+          <widget class="QPlainTextEdit" name="plainTextEdit"/>
          </item>
         </layout>
        </widget>
@@ -734,7 +730,6 @@
   <tabstop>editSearchDetail</tabstop>
   <tabstop>btnLastResult</tabstop>
   <tabstop>btnNextResult</tabstop>
-  <tabstop>textEdit</tabstop>
   <tabstop>listRecentMessage</tabstop>
  </tabstops>
  <resources>

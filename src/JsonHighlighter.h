@@ -1,18 +1,17 @@
 #pragma once
 
-#include <QSyntaxHighlighter>
+#include <qapplication.h>
 #include <QRegularExpression>
+#include <QTextDocument>
+#include <QTextCursor>
 
 #include "ConfigHelper.h"
 
-class CJsonHighlighter : public QSyntaxHighlighter
+class CJsonHighlighter
 {
-    Q_OBJECT
-
 public:
-    CJsonHighlighter(QTextDocument* parent = 0) : QSyntaxHighlighter(parent) {
-        pattern = QRegularExpression("(\"(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\"])*\"(\\s*:)?|\\b(true|false)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)");
-
+    CJsonHighlighter(QTextDocument* parent = 0) : m_pParent(parent) {
+        m_pattern = QRegularExpression("(\"(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\"])*\"(\\s*:)?|\\b(true|false)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)");
         QString keyColor = ConfigHelper::instance().getJsonHighlightColor("key");
         m_keyFormat.setForeground(QColor((keyColor.isEmpty()) ? "#AF7AC5" : keyColor));
         QString boolColor = ConfigHelper::instance().getJsonHighlightColor("bool");
@@ -23,10 +22,11 @@ public:
         m_numberFormat.setForeground(QColor((numberColor.isEmpty()) ? "#3498DB" : numberColor));
     }
 
-protected:
-    void highlightBlock(const QString& text) override {
-        QRegularExpressionMatchIterator matchIterator = pattern.globalMatch(text);
+    void hightlight() {
+        QRegularExpressionMatchIterator matchIterator = m_pattern.globalMatch(m_pParent->toPlainText());
         QTextCharFormat* pFormat = &m_numberFormat;
+        QTextCursor cursor(m_pParent);
+        QTextCharFormat plainFormat(cursor.charFormat());
         while (matchIterator.hasNext()) {
             QRegularExpressionMatch match = matchIterator.next();
 
@@ -55,12 +55,17 @@ protected:
                 pFormat = &m_boolFormat;
             }
 
-            setFormat(match.capturedStart(), capturedLength, *pFormat);
+            cursor.setPosition(match.capturedStart());
+            cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, capturedLength);
+            cursor.setCharFormat(*pFormat);
         }
+        cursor.setPosition(0);
+        cursor.setCharFormat(plainFormat);
     }
 
 private:
-    QRegularExpression pattern;
+    QTextDocument* m_pParent = nullptr;
+    QRegularExpression m_pattern;
 
     QTextCharFormat m_keyFormat;
     QTextCharFormat m_numberFormat;

@@ -101,7 +101,7 @@ CMainWindow::CMainWindow(QWidget* parent)
     pLoadingLabel->setFont(font);
 
     // 设置json数据高亮
-    m_highlighter = new CJsonHighlighter(ui.textEdit->document());
+    m_highlighter = new CJsonHighlighter(ui.plainTextEdit->document());
 
     QObject::connect(ui.listMessage, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(handleListMessageItemDoubleClicked(QListWidgetItem*)));
 
@@ -655,7 +655,7 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
 }
 
 void CMainWindow::handleListMessageCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous) {
-    ui.textEdit->clear();
+    ui.plainTextEdit->clear();
 
     QListWidgetItem* pItem = current;
     if (nullptr == pItem) {
@@ -673,9 +673,11 @@ void CMainWindow::handleListMessageCurrentItemChanged(QListWidgetItem* current, 
         return;
     }
 
-    ui.textEdit->setText(fmt::format("{}\r\n\r\n{}"
+    ui.plainTextEdit->setPlainText(fmt::format("{}\r\n\r\n{}"
                                      , pItem->text().toStdString()
                                      , pItem->toolTip().toStdString()).c_str());
+
+    m_highlighter->hightlight();
     handleSearchDetailTextChanged();
 }
 
@@ -693,12 +695,13 @@ void CMainWindow::handleListLogItemCurrentItemChanged(QListWidgetItem* current, 
         return;
     }
 
-    ui.textEdit->clear();
+    ui.plainTextEdit->clear();
 
     std::string detail = pItem->data(Qt::UserRole).toString().toStdString();
-    ui.textEdit->setText(fmt::format("{}\r\n\r\n{}"
+    ui.plainTextEdit->setPlainText(fmt::format("{}\r\n\r\n{}"
                                      , pItem->text().toStdString()
                                      , detail).c_str());
+    m_highlighter->hightlight();
     handleSearchDetailTextChanged();
 }
 
@@ -874,11 +877,13 @@ void CMainWindow::handleConnectBtnClicked() {
 void CMainWindow::handleSearchDetailTextChanged() {
     // 详情搜索栏搜索逻辑
     QString searchString = ui.editSearchDetail->text();
-    QTextDocument* document = ui.textEdit->document();
+    QTextDocument* document = ui.plainTextEdit->document();
 
-    // 需要undo两次
-    document->undo();
-    document->undo();
+    if (m_vecSearchPos.size() != 0) {
+        // 需要undo两次
+        document->undo();
+        document->undo();
+    }
 
     m_vecSearchPos.clear();
     m_searchResultIdx = -1;
@@ -914,7 +919,7 @@ void CMainWindow::handleSearchDetailTextChanged() {
         }
 
         // 高亮第一个搜索结果
-        cursor = ui.textEdit->textCursor();
+        cursor = ui.plainTextEdit->textCursor();
         cursor.beginEditBlock();
         cursor.setPosition(pos);
         cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, searchString.length());
@@ -924,7 +929,7 @@ void CMainWindow::handleSearchDetailTextChanged() {
         cursor.setPosition(pos);
         cursor.endEditBlock();
         cursor.setCharFormat(plainFormat);
-        ui.textEdit->setTextCursor(cursor);
+        ui.plainTextEdit->setTextCursor(cursor);
 
         if (!m_vecSearchPos.empty()) {
             m_searchResultIdx = 0;
@@ -932,7 +937,7 @@ void CMainWindow::handleSearchDetailTextChanged() {
     }
 
     ui.labelSearchCnt->setText(fmt::format("{}/{}", m_searchResultIdx + 1, m_vecSearchPos.size()).c_str());
-}
+};
 
 void CMainWindow::handleSearchDetailBtnLastResult() {
     if (-1 == m_searchResultIdx) {
@@ -943,14 +948,16 @@ void CMainWindow::handleSearchDetailBtnLastResult() {
         m_searchResultIdx = m_vecSearchPos.size();
     }
 
-    ui.textEdit->document()->undo();
+    if (m_vecSearchPos.size() != 0) {
+        ui.plainTextEdit->document()->undo();
+    }
 
     m_searchResultIdx--;
 
     int pos = m_vecSearchPos[m_searchResultIdx];
 
-    QTextCharFormat plainFormat(ui.textEdit->textCursor().charFormat());
-    QTextCursor cursor = ui.textEdit->textCursor();
+    QTextCharFormat plainFormat(ui.plainTextEdit->textCursor().charFormat());
+    QTextCursor cursor = ui.plainTextEdit->textCursor();
     cursor.beginEditBlock();
     cursor.setPosition(pos);
     cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, ui.editSearchDetail->text().length());
@@ -961,7 +968,7 @@ void CMainWindow::handleSearchDetailBtnLastResult() {
     cursor.endEditBlock();
     cursor.setCharFormat(plainFormat);
 
-    ui.textEdit->setTextCursor(cursor);
+    ui.plainTextEdit->setTextCursor(cursor);
     ui.labelSearchCnt->setText(fmt::format("{}/{}", m_searchResultIdx + 1, m_vecSearchPos.size()).c_str());
 }
 
@@ -978,10 +985,12 @@ void CMainWindow::handleSearchDetailBtnNextResult() {
 
     int pos = m_vecSearchPos[m_searchResultIdx];
 
-    ui.textEdit->document()->undo();
+    if (m_vecSearchPos.size() != 0) {
+        ui.plainTextEdit->document()->undo();
+    }
 
-    QTextCharFormat plainFormat(ui.textEdit->textCursor().charFormat());
-    QTextCursor cursor = ui.textEdit->textCursor();
+    QTextCharFormat plainFormat(ui.plainTextEdit->textCursor().charFormat());
+    QTextCursor cursor = ui.plainTextEdit->textCursor();
     cursor.beginEditBlock();
     cursor.setPosition(pos);
     cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, ui.editSearchDetail->text().length());
@@ -992,7 +1001,7 @@ void CMainWindow::handleSearchDetailBtnNextResult() {
     cursor.endEditBlock();
     cursor.setCharFormat(plainFormat);
 
-    ui.textEdit->setTextCursor(cursor);
+    ui.plainTextEdit->setTextCursor(cursor);
     ui.labelSearchCnt->setText(fmt::format("{}/{}", m_searchResultIdx + 1, m_vecSearchPos.size()).c_str());
 }
 
@@ -1176,7 +1185,7 @@ void CMainWindow::keyPressEvent(QKeyEvent* event) {
         handleSearchDetailBtnLastResult();
     } else if (event->modifiers() == Qt::ControlModifier && event->key() == Qt::Key::Key_F3) {
         // 搜索
-        QTextCursor cursor = ui.textEdit->textCursor();
+        QTextCursor cursor = ui.plainTextEdit->textCursor();
         if (cursor.hasSelection()) {
             ui.editSearchDetail->setText(cursor.selectedText());
         }
@@ -1224,7 +1233,7 @@ bool CMainWindow::loadProto() {
     }
 
     LuaScriptSystem::instance().Invoke("__APP_on_proto_reload"
-                                        , static_cast<lua_api::IProtoManager*>(&ProtoManager::instance()));
+                                       , static_cast<lua_api::IProtoManager*>(&ProtoManager::instance()));
 
     // 填充消息列表
     std::list<CProtoManager::MsgInfo> listNames = ProtoManager::instance().getMsgInfos();
@@ -1270,7 +1279,7 @@ void CMainWindow::luaRegisterCppClass() {
     if (nullptr == pLuaState) {
         return;
     }
-    using namespace  lua_api; 
+    using namespace  lua_api;
     luabridge::getGlobalNamespace(pLuaState)
         .beginClass<ISocketReader>("ISocketReader")
         .addFunction("readUint8", &ISocketReader::readUint8)
