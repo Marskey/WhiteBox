@@ -316,11 +316,11 @@ lua_api::IClient* CMainWindow::getClient(const char* name) {
 }
 
 void CMainWindow::log(const char* message) {
-    LOG_INFO(message);
+    m_pPrinter->log(message);
 }
 
 void CMainWindow::logErr(const char* message) {
-    LOG_ERR(message);
+    m_pPrinter->log(message, Qt::red);
 }
 
 void CMainWindow::saveCache() {

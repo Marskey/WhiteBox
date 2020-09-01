@@ -2,6 +2,7 @@
 
 #include "Singleton.h"
 #include "fmt/format.h"
+#include "fmt/printf.h"
 
 class CLogPrinter
 {
@@ -23,7 +24,7 @@ public:
     void setPrinter(CLogPrinter* pPrinter) { m_pPrinter = pPrinter; };
 
     template <typename... Args>
-    void logDebug(const char* text, Args&&... args);
+    void logScriptMsg(const char* text, Args&&... args);
 
     template <typename... Args>
     void logInfo(const char* text, Args&&... args);
@@ -36,16 +37,6 @@ public:
 
     CLogPrinter* m_pPrinter = nullptr;
 };
-
-template <typename ... Args>
-void CLogHelper::logDebug(const char* text, Args&&... args) {
-    std::string message = fmt::format(text, args...);
-    if (m_pPrinter) {
-        m_pPrinter->onPrintInfo(message);
-    } else {
-        printf("%s\n", message.c_str());
-    }
-}
 
 template <typename ... Args>
 void CLogHelper::logInfo(const char* text, Args&&... args) {
