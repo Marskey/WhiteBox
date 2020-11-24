@@ -492,6 +492,11 @@ void CMainWindow::onParseMessage(SocketId socketId, const char* msgFullName, con
         return;
     }
 
+    if (nullptr == pData) {
+        LOG_ERR("Message data is nullptr, check lua script's function \"bindMessage\"", msgFullName);
+        return;
+    }
+
     uint16_t nMessageId = ProtoManager::instance().getMsgTypeByFullName(msgFullName);
     google::protobuf::Message* pRecvMesage = ProtoManager::instance().createMessage(msgFullName);
     if (nullptr == pRecvMesage) {
