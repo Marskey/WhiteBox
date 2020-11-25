@@ -42,12 +42,6 @@ CMainWindow::CMainWindow(QWidget* parent)
 
     setWindowTitle(WINDOWS_TITLE);
 
-    // 恢复上次的布局大小
-    restoreGeometry(ConfigHelper::instance().getMainWindowGeometry());
-    restoreState(ConfigHelper::instance().getMainWindowState());
-    ui.splitterH->restoreState(ConfigHelper::instance().getSplitterH());
-    ui.splitterV->restoreState(ConfigHelper::instance().getSplitterV());
-
     // 用户名
     {
         auto* pLineEdit = new CLineEdit(ui.cbAccount);
@@ -84,6 +78,12 @@ CMainWindow::CMainWindow(QWidget* parent)
 
     // 读取是否自动显示最新
     ConfigHelper::instance().restoreWidgetCheckboxState("AutoShowDetail", *ui.checkIsAutoDetail);
+
+    // 恢复上次的布局大小
+    restoreGeometry(ConfigHelper::instance().getMainWindowGeometry());
+    restoreState(ConfigHelper::instance().getMainWindowState());
+    ui.splitterH->restoreState(ConfigHelper::instance().getSplitterH());
+    ui.splitterV->restoreState(ConfigHelper::instance().getSplitterV());
 
     ui.listMessage->installEventFilter(new ShowItemDetailKeyFilter(ui.listMessage));
     ui.listRecentMessage->installEventFilter(new ShowItemDetailKeyFilter(ui.listRecentMessage));
@@ -822,14 +822,15 @@ void CMainWindow::handleSendBtnClicked() {
                          , fmt::format("Sent Message {}", selectMsgName.toStdString()).c_str()
                          , msgStr.c_str(), QColor("#AF7AC5"));
 
-        if (0 == ui.listRecentMessage->findItems(selectMsgName, Qt::MatchExactly).count()) {
+        if (0 == idx) {
             auto* pItem = new QListWidgetItem(selectMsgName);
             pItem->setToolTip(msgStr.c_str());
+            pItem->setData(Qt::UserRole, msgFullName.c_str());
             ui.listRecentMessage->insertItem(0, pItem);
-        }
 
-        if (ui.listRecentMessage->count() > 50) {
-            delete ui.listRecentMessage->takeItem(ui.listRecentMessage->count());
+            if (ui.listRecentMessage->count() > 50) {
+                delete ui.listRecentMessage->takeItem(ui.listRecentMessage->count());
+            }
         }
     }
 }

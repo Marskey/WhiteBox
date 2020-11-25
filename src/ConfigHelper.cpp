@@ -79,6 +79,11 @@ void CConfigHelper::saveWidgetComboxState(const QString& name, const QComboBox& 
         accountList.append(combox.itemText(index));
     }
     m_pSettings->setValue("/Widget/" + name, accountList.join(","));
+    int currIdx = combox.currentIndex();
+    if (combox.currentText().isEmpty()) {
+        currIdx = -1;
+    }
+    m_pSettings->setValue("/Widget/" + name + "_idx", currIdx);
 }
 
 void CConfigHelper::restoreWidgetComboxState(const QString& name, QComboBox& combox) {
@@ -91,7 +96,7 @@ void CConfigHelper::restoreWidgetComboxState(const QString& name, QComboBox& com
     }
 
     if (!stringList.empty()) {
-        combox.setCurrentIndex(0);
+        combox.setCurrentIndex(m_pSettings->value("/Widget/" + name + "_idx").toInt());
     }
 }
 

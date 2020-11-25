@@ -17,11 +17,13 @@ if(WIN32)
     set(protobuf_source_dir "H:/protobuf")
     set(lua_source_dir "H:/lua-5.4.0/src")
     set(CMAKE_PREFIX_PATH "D:\\Qt\\Qt5.13.2/5.13.2\\msvc2017_64")
+    set(runtime_output_dir "E:\\IGG\\COLX\\src\\Common\\WhiteBox")
 elseif(APPLE)
     message("APPLE")
     set(protobuf_source_dir "~/Work/protobuf-3.12.3")
     set(lua_source_dir "~/Work/lua-5.4.0/src")
     set(CMAKE_PREFIX_PATH "~/work/Qt5.12.9/5.12.9/clang_64")
+    set(runtime_output_dir "${PROJECT_SOURCE_DIR}/bin")
 endif()
 
 find_package(Qt5 COMPONENTS Core Gui Widgets REQUIRED)
@@ -38,7 +40,7 @@ add_subdirectory(src)
 set_target_properties(${APP_NAME} PROPERTIES
     OUTPUT_NAME ${APP_NAME}
     DEBUG_POSTFIX "d"
-    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin
+    RUNTIME_OUTPUT_DIRECTORY ${runtime_output_dir}
 )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
