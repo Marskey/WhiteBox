@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON) 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+set(runtime_output_dir "${PROJECT_SOURCE_DIR}/bin")
 if(WIN32)
     message("WIN")
     set(protobuf_source_dir "H:/protobuf")

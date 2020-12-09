@@ -129,6 +129,8 @@ private:
 private:
     Ui::MainWindowClass ui;
     MapMessages m_mapMessages;
+    std::list<::google::protobuf::Message*> m_listRecentMessages;
+
     std::unordered_set<std::string> m_setIgnoredReceiveMsgType;
 
     EConnectState m_btnConnectState = EConnectState::kDisconnect;

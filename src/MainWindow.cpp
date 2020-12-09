@@ -606,9 +606,20 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
         return;
     }
 
+    google::protobuf::Message* pMessage = nullptr;
+    int idx = ui.tabWidget->currentIndex();
     std::string msgFullName = pItem->data(Qt::UserRole).toString().toStdString();
+    if (0 == idx) {
+      pMessage = getOrCreateMessageByName(msgFullName.c_str());
+    } else if (1 == idx) {
+      int selectIdx = ui.listRecentMessage->currentRow();
+      if (selectIdx != -1 && selectIdx < m_listRecentMessages.size()) {
+          auto itR = m_listRecentMessages.rbegin();
+          std::advance(itR, selectIdx);
+          pMessage = *itR;
+      }
+    }
 
-    google::protobuf::Message* pMessage = getOrCreateMessageByName(msgFullName.c_str());
     if (nullptr == pMessage) {
         return;
     }
@@ -634,10 +645,6 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
             for (int i = 0; i < listItems.count(); ++i) {
                 listItems[i]->setToolTip(msgStr.c_str());
             }
-            //int rowIdx = ui.listMessage->row(pItem);
-            //pItem = ui.listMessage->takeItem(rowIdx);
-            //ui.listMessage->insertItem(0, pItem);
-            //ui.listMessage->setCurrentRow(0);
         }
     }
 
@@ -668,13 +675,6 @@ void CMainWindow::handleListMessageCurrentItemChanged(QListWidgetItem* current, 
     }
 
     if (pItem->text().isEmpty()) {
-        return;
-    }
-
-    std::string msgFullName = pItem->data(Qt::UserRole).toString().toStdString();
-
-    google::protobuf::Message* pMessage = getMessageByName(msgFullName.c_str());
-    if (nullptr == pMessage) {
         return;
     }
 
@@ -797,6 +797,7 @@ void CMainWindow::handleSendBtnClicked() {
         return;
     }
 
+    google::protobuf::Message* pMessage = nullptr;
     int idx = ui.tabWidget->currentIndex();
     QListWidgetItem* pSelectItem = nullptr;
     if (0 == idx) {
@@ -813,7 +814,17 @@ void CMainWindow::handleSendBtnClicked() {
     QString selectMsgName = pSelectItem->text();
     std::string msgFullName = pSelectItem->data(Qt::UserRole).toString().toStdString();
 
-    google::protobuf::Message* pMessage = getOrCreateMessageByName(msgFullName.c_str());
+    if (0 == idx) {
+        pMessage = getOrCreateMessageByName(msgFullName.c_str());
+    } else if (1 == idx) {
+        int selectIdx = ui.listRecentMessage->currentRow();
+        if (selectIdx != -1 && selectIdx < m_listRecentMessages.size()) {
+          auto itR = m_listRecentMessages.rbegin();
+          std::advance(itR, selectIdx);
+          pMessage = *itR;
+        }
+    }
+
     if (nullptr != pMessage) {
         static_cast<CClient*>(pClient)->sendMsg(*pMessage);
         std::string msgStr;
@@ -823,12 +834,17 @@ void CMainWindow::handleSendBtnClicked() {
                          , msgStr.c_str(), QColor("#AF7AC5"));
 
         if (0 == idx) {
-            auto* pItem = new QListWidgetItem(selectMsgName);
+            auto* pItem = new QListWidgetItem(selectMsgName.append(" [")
+                              .append(std::to_string(ui.listRecentMessage->count() + 1).c_str())
+                              .append("]"));
             pItem->setToolTip(msgStr.c_str());
             pItem->setData(Qt::UserRole, msgFullName.c_str());
+            auto* pRecentMsg = ProtoManager::instance().createMessage(msgFullName.c_str());
+            pRecentMsg->CopyFrom(*pMessage);
+            m_listRecentMessages.emplace_back(pRecentMsg);
             ui.listRecentMessage->insertItem(0, pItem);
 
-            if (ui.listRecentMessage->count() > 50) {
+            if (ui.listRecentMessage->count() > 100) {
                 delete ui.listRecentMessage->takeItem(ui.listRecentMessage->count());
             }
         }
