@@ -80,6 +80,9 @@ CMainWindow::CMainWindow(QWidget* parent)
     // 读取是否自动显示最新
     ConfigHelper::instance().restoreWidgetCheckboxState("AutoShowDetail", *ui.checkIsAutoDetail);
 
+    // 是否过滤log
+    ConfigHelper::instance().restoreWidgetCheckboxState("EnableLogFilter", *ui.enableLogFilter);
+
     // 恢复上次的布局大小
     restoreGeometry(ConfigHelper::instance().getMainWindowGeometry());
     restoreState(ConfigHelper::instance().getMainWindowState());
@@ -124,9 +127,8 @@ CMainWindow::CMainWindow(QWidget* parent)
     QObject::connect(ui.btnLastResult, SIGNAL(clicked()), this, SLOT(handleSearchDetailBtnLastResult()));
     QObject::connect(ui.btnNextResult, SIGNAL(clicked()), this, SLOT(handleSearchDetailBtnNextResult()));
 
-    QObject::connect(ui.editLogSearch, SIGNAL(textChanged(const QString&)), this, SLOT(handleSearchLogTextChanged()));
-    QObject::connect(ui.btnLogLastResult, SIGNAL(clicked()), this, SLOT(handleSearchLogBtnLastResult()));
-    QObject::connect(ui.btnLogNextResult, SIGNAL(clicked()), this, SLOT(handleSearchLogBtnNextResult()));
+    QObject::connect(ui.editLogFilter, SIGNAL(textEdited(const QString&)), this, SLOT(handleFilterLogTextChanged()));
+    QObject::connect(ui.enableLogFilter, SIGNAL(stateChanged(int)), this, SLOT(handleEnableLogFilterChanged(int)));
 
     QObject::connect(ui.btnIgnoreMsg, SIGNAL(clicked()), this, SLOT(handleBtnIgnoreMsgClicked()));
     QObject::connect(ui.btnClearLog, SIGNAL(clicked()), this, SLOT(handleBtnClearLogClicked()));
@@ -1024,85 +1026,38 @@ void CMainWindow::handleSearchDetailBtnNextResult() {
     ui.labelSearchCnt->setText(fmt::format("{}/{}", m_searchResultIdx + 1, m_vecSearchPos.size()).c_str());
 }
 
-void CMainWindow::handleSearchLogTextChanged() {
-    // 日志搜索栏搜索逻辑
-    m_listFoundItems.clear();
-    m_searchLogResultIdx = -1;
-    QPalette p = qApp->palette();
-    QColor defaultColor = p.color(QPalette::Base);
-    QString searchString = ui.editLogSearch->text();
-    if (searchString.isEmpty()) {
-        for (int i = 0; i < ui.listLogs->count(); ++i) {
-            QListWidgetItem* pItem = ui.listLogs->item(i);
-            pItem->setBackground(defaultColor);
-        }
-    } else {
-        m_listFoundItems = ui.listLogs->findItems(searchString, Qt::MatchContains);
-        for (int i = 0; i < ui.listLogs->count(); ++i) {
-            QListWidgetItem* pItem = ui.listLogs->item(i);
-            if (m_listFoundItems.contains(pItem)) {
-                pItem->setBackground(QColor(255, 195, 0));
-            } else {
-                pItem->setBackground(defaultColor);
-            }
-        }
-
-        if (m_listFoundItems.count() != 0) {
-            m_searchLogResultIdx = 0;
-            int nCurRow = ui.listLogs->currentRow();
-
-            for (int i = m_listFoundItems.size() - 1; i > 0; i--) {
-                if (ui.listLogs->row(m_listFoundItems[i]) >= nCurRow) {
-                    m_searchLogResultIdx = i;
-                    break;
-                }
-            }
-
-            ui.listLogs->scrollToItem(m_listFoundItems[m_searchLogResultIdx]);
-            ui.listLogs->setCurrentItem(m_listFoundItems[m_searchLogResultIdx]);
-            m_listFoundItems[m_searchLogResultIdx]->setBackground(QColor(255, 150, 50));
-        } else {
-            m_searchLogResultIdx = -1;
-        }
+void CMainWindow::handleFilterLogTextChanged() {
+    QString rexPattern;
+    auto listText = ui.editLogFilter->text().split(QRegExp("[ |]"), QString::SkipEmptyParts);
+    for (auto& word : listText) {
+        word.prepend(".*");
+        word.append(".*");
+        rexPattern.append(word);
+        rexPattern.append("|");
     }
 
-    ui.labelLogSearchCnt->setText(fmt::format("{}/{}", m_searchLogResultIdx + 1, m_listFoundItems.size()).c_str());
+    if (!listText.empty()) {
+        rexPattern.chop(1);
+    }
+
+    for (int i = 0; i < ui.listLogs->count(); ++i) {
+        auto* pListItem = ui.listLogs->item(i);
+        pListItem->setHidden(ui.enableLogFilter->isChecked()
+                             && !ui.editLogFilter->text().isEmpty());
+
+        if (rexPattern.isEmpty()) {
+            continue;
+        }
+
+        QString text = pListItem->data(Qt::UserRole + kText).toString();
+        if (text.contains(QRegExp(rexPattern, Qt::CaseInsensitive))) {
+            pListItem->setHidden(false);
+        }
+    }
 }
 
-void CMainWindow::handleSearchLogBtnLastResult() {
-    if (-1 == m_searchLogResultIdx) {
-        return;
-    }
-
-    m_listFoundItems[m_searchLogResultIdx]->setBackground(QColor(255, 195, 0));
-    if (0 == m_searchLogResultIdx) {
-        m_searchLogResultIdx = m_listFoundItems.size();
-    }
-
-    m_searchLogResultIdx--;
-    m_listFoundItems[m_searchLogResultIdx]->setBackground(QColor(255, 150, 50));
-    ui.listLogs->scrollToItem(m_listFoundItems[m_searchLogResultIdx]);
-    ui.listLogs->setCurrentItem(m_listFoundItems[m_searchLogResultIdx]);
-    ui.labelLogSearchCnt->setText(fmt::format("{}/{}", m_searchLogResultIdx + 1, m_listFoundItems.size()).c_str());
-}
-
-void CMainWindow::handleSearchLogBtnNextResult() {
-    if (-1 == m_searchLogResultIdx) {
-        return;
-    }
-
-    m_listFoundItems[m_searchLogResultIdx]->setBackground(QColor(255, 195, 0));
-
-    if (m_searchLogResultIdx + 1 >= m_listFoundItems.size()) {
-        m_searchLogResultIdx = 0;
-    } else {
-        m_searchLogResultIdx++;
-    }
-
-    m_listFoundItems[m_searchLogResultIdx]->setBackground(QColor(255, 150, 50));
-    ui.listLogs->scrollToItem(m_listFoundItems[m_searchLogResultIdx]);
-    ui.listLogs->setCurrentItem(m_listFoundItems[m_searchLogResultIdx]);
-    ui.labelLogSearchCnt->setText(fmt::format("{}/{}", m_searchLogResultIdx + 1, m_listFoundItems.size()).c_str());
+void CMainWindow::handleEnableLogFilterChanged(int state) {
+    handleFilterLogTextChanged();
 }
 
 void CMainWindow::handleBtnIgnoreMsgClicked() {
@@ -1128,7 +1083,29 @@ void CMainWindow::handleBtnClearLogClicked() {
 }
 
 void CMainWindow::handleLogInfoAdded(const QModelIndex& parent, int start, int end) {
-    handleSearchLogTextChanged();
+    if (ui.enableLogFilter->isChecked()) {
+        QString rexPattern;
+        auto listText = ui.editLogFilter->text().split(QRegExp("[ |]"), QString::SkipEmptyParts);
+        for (auto& word : listText) {
+            word.prepend(".*");
+            word.append(".*");
+            rexPattern.append(word);
+            rexPattern.append("|");
+        }
+
+        if (!listText.empty()) {
+            rexPattern.chop(1);
+        }
+
+        if (!rexPattern.isEmpty()) {
+            auto* pListItem = ui.listLogs->item(end);
+            QString text = pListItem->data(Qt::UserRole + kText).toString();
+            if (!text.contains(QRegExp(rexPattern, Qt::CaseInsensitive))) {
+              pListItem->setHidden(true);
+            }
+        }
+    }
+
     if (m_pLogUpdateTimer != nullptr) {
         if (ui.checkIsAutoDetail->isChecked()) {
             m_pLogUpdateTimer->start(40);
@@ -1185,6 +1162,7 @@ void CMainWindow::closeEvent(QCloseEvent* event) {
     ConfigHelper::instance().saveSplitterH(ui.splitterH->saveState());
     ConfigHelper::instance().saveSplitterV(ui.splitterV->saveState());
     ConfigHelper::instance().saveWidgetCheckboxState("AutoShowDetail", *ui.checkIsAutoDetail);
+    ConfigHelper::instance().saveWidgetCheckboxState("EnableLogFilter", *ui.enableLogFilter);
 
     // 自动保存cache
     saveCache();
@@ -1354,12 +1332,13 @@ void CMainWindow::addDetailLogInfo(const char* msgFullName, const std::string& m
     auto* pListWidgetItem = new QListWidgetItem;
     pListWidgetItem->setData(Qt::UserRole + kMessageData, QString(detail));
     pListWidgetItem->setData(Qt::UserRole + kMessageFullName, msgFullName);
+    pListWidgetItem->setData(Qt::UserRole + kText, msg.c_str());
 
     QDateTime localTime(QDateTime::currentDateTime());
     QString timeStr = "<font color='grey'>" + localTime.time().toString() + "</font> ";
-    QLabel* l = new QLabel(timeStr + msg.c_str());
+    QLabel* lable = new QLabel(timeStr + msg.c_str());
     QHBoxLayout* layout = new QHBoxLayout;
-    layout->addWidget(l);
+    layout->addWidget(lable);
     layout->setSizeConstraint(QLayout::SetFixedSize);
     layout->setContentsMargins(3, 2, 3, 2);
     QWidget* w = new QWidget;

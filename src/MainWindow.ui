@@ -318,14 +318,17 @@
               </spacer>
              </item>
              <item>
-              <widget class="QLabel" name="labelLogSearchCnt">
+              <widget class="QCheckBox" name="enableLogFilter">
+               <property name="toolTip">
+                <string>Enable the Log filter</string>
+               </property>
                <property name="text">
-                <string>0/0</string>
+                <string/>
                </property>
               </widget>
              </item>
              <item>
-              <widget class="QLineEdit" name="editLogSearch">
+              <widget class="QLineEdit" name="editLogFilter">
                <property name="font">
                 <font>
                  <family>Segoe UI Symbol</family>
@@ -335,7 +338,7 @@
                 <string/>
                </property>
                <property name="placeholderText">
-                <string>Search...</string>
+                <string>Filter...</string>
                </property>
                <property name="clearButtonEnabled">
                 <bool>true</bool>
@@ -355,59 +358,6 @@
              <property name="rightMargin">
               <number>0</number>
              </property>
-             <item>
-              <widget class="QPushButton" name="btnLogLastResult">
-               <property name="minimumSize">
-                <size>
-                 <width>1</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>20</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">QStyle::SP_ArrowLeft</string>
-               </property>
-               <property name="text">
-                <string>&lt;</string>
-               </property>
-               <property name="iconSize">
-                <size>
-                 <width>9</width>
-                 <height>9</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="btnLogNextResult">
-               <property name="minimumSize">
-                <size>
-                 <width>1</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>20</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>&gt;</string>
-               </property>
-               <property name="iconSize">
-                <size>
-                 <width>9</width>
-                 <height>9</height>
-                </size>
-               </property>
-              </widget>
-             </item>
             </layout>
            </item>
           </layout>
@@ -721,9 +671,7 @@
   <tabstop>cbAccount</tabstop>
   <tabstop>cbOptionalParam</tabstop>
   <tabstop>btnClearLog</tabstop>
-  <tabstop>editLogSearch</tabstop>
-  <tabstop>btnLogLastResult</tabstop>
-  <tabstop>btnLogNextResult</tabstop>
+  <tabstop>editLogFilter</tabstop>
   <tabstop>listLogs</tabstop>
   <tabstop>checkIsAutoDetail</tabstop>
   <tabstop>btnIgnoreMsg</tabstop>

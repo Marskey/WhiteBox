@@ -22,6 +22,7 @@ enum EListItemData
 {
   kMessageData = 0,
   kMessageFullName,
+  kText,
 };
 
 class CJsonHighlighter;
@@ -79,9 +80,8 @@ public slots:
     void handleSearchDetailBtnLastResult();
     void handleSearchDetailBtnNextResult();
 
-    void handleSearchLogTextChanged();
-    void handleSearchLogBtnLastResult();
-    void handleSearchLogBtnNextResult();
+    void handleFilterLogTextChanged();
+    void handleEnableLogFilterChanged(int state);
 
     void handleBtnIgnoreMsgClicked();
 
@@ -142,9 +142,6 @@ private:
     std::vector<int> m_vecSearchPos;
     int m_searchResultIdx = -1; // 当前高亮的第几个搜索结果(详情界面)
 
-    QList<QListWidgetItem*> m_listFoundItems;
-    int m_searchLogResultIdx = -1; // 当前高亮的第几个搜索结果(日志界面)
-
     CECPrinter* m_pPrinter = nullptr;
 
     std::unordered_map<std::string, CClient*> m_mapClients;
@@ -175,6 +172,7 @@ public:
 
     void log(std::string msg, QColor color = QColor(Qt::GlobalColor(0))) {
       auto* pListWidgetItem = new QListWidgetItem;
+      pListWidgetItem->setData(Qt::UserRole + kText, msg.c_str());
       QDateTime localTime(QDateTime::currentDateTime());
       QString timeStr = "<font color='grey'>" + localTime.time().toString() + "</font> ";
       QString content;
