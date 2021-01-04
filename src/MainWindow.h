@@ -46,7 +46,7 @@ public:
 
 public:
     // ec_net::INetEvent begin
-    void onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) override;
+    void onParseMessage(SocketId socketId, MessageType msgType, const char* msgFullName, const char* pData, size_t size) override;
     void onConnectSucceed(const char* remoteIp
                           , Port port
                           , SocketId socketId) override;

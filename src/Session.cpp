@@ -81,7 +81,8 @@ void* CSession::CReadData::getDataPtr(size_t offset) {
     return reinterpret_cast<void*>(pReadData + offset);
 }
 
-void CSession::CReadData::bindMessage(const char* msgFullName, void* pData, size_t size) {
+void CSession::CReadData::bindMessage(MessageType msgType, const char* msgFullName, void* pData, size_t size) {
+    messageType = msgType;
     messageFullName = msgFullName;
     pMessageData = static_cast<const char*>(pData);
     messageSize = size;
@@ -190,6 +191,7 @@ void CSession::read() {
                 }
 
                 NetManager::instance().handleParseMessage(self->m_id
+                                                          , self->m_readData.messageType
                                                           , self->m_readData.messageFullName
                                                           , self->m_readData.pMessageData
                                                           , self->m_readData.messageSize);

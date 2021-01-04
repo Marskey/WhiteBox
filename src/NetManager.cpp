@@ -116,9 +116,9 @@ void CNetManager::handleError(SocketId socketId, ec_net::ENetError error) {
     }
 }
 
-void CNetManager::handleParseMessage(SocketId socketId, const char* fullName, const char* pData, size_t size) {
+void CNetManager::handleParseMessage(SocketId socketId, MessageType msgType, const char* fullName, const char* pData, size_t size) {
     if (m_pNetEvent) {
-        m_pNetEvent->onParseMessage(socketId, fullName, pData, size);
+        m_pNetEvent->onParseMessage(socketId, msgType, fullName, pData, size);
     }
 }
 

@@ -36,6 +36,7 @@ public:
     size_t dataSize = 0;
     size_t writeSize = 0;
 
+    MessageType messageType = 0;
     const char* messageFullName = "";
     const char* pMessageData = nullptr;
     size_t messageSize = 0;
@@ -47,7 +48,7 @@ public:
     uint32_t readUint32(size_t offset) override;
     int32_t readInt32(size_t offset) override;
     void* getDataPtr(size_t offset) override;
-    void bindMessage(const char* msgFullName, void* pData, size_t size) override;
+    void bindMessage(MessageType msgType, const char* msgFullName, void* pData, size_t size) override;
 };
 
 public:

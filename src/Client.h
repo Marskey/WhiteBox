@@ -20,7 +20,7 @@ public:
     void onConnectSucceed(const char* remoteIp , Port port , SocketId socketId) override;
     void onDisconnect(SocketId socketId) override;
     void onError(SocketId socketId, ec_net::ENetError error) override;
-    void onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) override;
+    void onParseMessage(SocketId socketId, MessageType msgType, const char* msgFullName, const char* pData, size_t size) override;
     // ec_net::INetEvent end
 
     // lua_api::IClient begin

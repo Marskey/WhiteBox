@@ -69,7 +69,7 @@ void CClient::onDisconnect(SocketId socketId) {
 void CClient::onError(SocketId socketId, ec_net::ENetError error) {
 }
 
-void CClient::onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) {
+void CClient::onParseMessage(SocketId socketId, MessageType msgType, const char* msgFullName, const char* pData, size_t size) {
 }
 
 void CClient::connect(const char* ip, Port port, BuffSize recv, BuffSize send) {

@@ -5,6 +5,7 @@
 using SocketId = uint64_t;
 using Port = uint16_t;
 using BuffSize = size_t;
+using MessageType = uint16_t;
 
 #ifndef WIN32
 #define _atoi64(val) strtoll(val, NULL, 10)

@@ -32,7 +32,7 @@ public:
     void handleDisconnect(SocketId socketId);
     void handleError(SocketId socketId, ec_net::ENetError error);
 
-    void handleParseMessage(SocketId socketId, const char* fullName, const char* pData, size_t size);
+    void handleParseMessage(SocketId socketId, MessageType msgType, const char* fullName, const char* pData, size_t size);
 private:
     SocketId genSocketId();
 

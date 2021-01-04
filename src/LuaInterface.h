@@ -52,11 +52,12 @@ namespace lua_api
         virtual void* getDataPtr(size_t offset) = 0;
         /**
          * This function is used to bind the message data of socket packet.
+         * @param messageType
          * @param msgFullName Full name of the protobuf message.
          * @param pData message data pointer
          * @param size Length of the protobuf message data.
          */
-        virtual void bindMessage(const char* msgFullName, void* pData, size_t size) = 0;
+        virtual void bindMessage(MessageType messageType, const char* msgFullName, void* pData, size_t size) = 0;
     };
 
     class ISocketWriter

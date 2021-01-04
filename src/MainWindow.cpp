@@ -494,7 +494,7 @@ void CMainWindow::openSettingDlg() {
     delete pDlg;
 }
 
-void CMainWindow::onParseMessage(SocketId socketId, const char* msgFullName, const char* pData, size_t size) {
+void CMainWindow::onParseMessage(SocketId socketId, MessageType msgType, const char* msgFullName, const char* pData, size_t size) {
     if (msgFullName == nullptr) {
         LOG_ERR("Message name is nullptr, check lua script's function \"bindMessage\"", msgFullName);
         return;
@@ -505,10 +505,9 @@ void CMainWindow::onParseMessage(SocketId socketId, const char* msgFullName, con
         return;
     }
 
-    uint16_t nMessageId = ProtoManager::instance().getMsgTypeByFullName(msgFullName);
     google::protobuf::Message* pRecvMesage = ProtoManager::instance().createMessage(msgFullName);
     if (nullptr == pRecvMesage) {
-        LOG_INFO("Cannot find code of message({0}:{1})", msgFullName, nMessageId);
+        LOG_INFO("Cannot find code of message({0}:{1})", msgFullName, msgType);
         return;
     }
 
@@ -522,7 +521,7 @@ void CMainWindow::onParseMessage(SocketId socketId, const char* msgFullName, con
                                            , "#739d39"
                                            , "#3498DB"
                                            , msgFullName
-                                           , nMessageId
+                                           , msgType
                                            , pRecvMesage->ByteSizeLong())
                              , msgStr.c_str()
             );
@@ -538,7 +537,7 @@ void CMainWindow::onParseMessage(SocketId socketId, const char* msgFullName, con
                                            , msgFullName
                                            , (void*)(&pRecvMesage));
     } else {
-        LOG_ERR("Protobuf message {}({}) parse failed!", msgFullName, nMessageId);
+        LOG_ERR("Protobuf message {}({}) parse failed!", msgFullName, msgType);
     }
 
     delete pRecvMesage;
