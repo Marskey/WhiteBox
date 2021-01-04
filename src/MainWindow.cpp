@@ -760,10 +760,15 @@ void CMainWindow::handleFilterTextChanged(const QString& text) {
             listFound[i]->setHidden(false);
         }
     } else {
-        QString rexPattern = text;
-        rexPattern = rexPattern.replace(" ", ".*");
-        rexPattern.prepend(".*");
-        rexPattern.append(".*");
+        QString rexPattern;
+        auto listText = text.split(QRegExp("[ |]"), QString::SkipEmptyParts);
+        for (auto& word : listText) {
+          word.prepend(".*");
+          word.append(".*");
+          rexPattern.append(word);
+          rexPattern.append("|");
+        }
+        rexPattern.chop(1);
         QList<QListWidgetItem*> listFound = ui.listMessage->findItems(rexPattern, Qt::MatchRegExp);
         for (int i = 0; i < listFound.count(); ++i) {
             listFound[i]->setHidden(false);

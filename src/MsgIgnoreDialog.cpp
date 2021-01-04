@@ -77,10 +77,15 @@ void CMsgIgnoreDialog::filterMessage(const QString& filterText, QListWidget& lis
             listFound[i]->setHidden(false);
         }
     } else {
-        QString rexPattern = filterText;
-        rexPattern = rexPattern.replace(" ", ".*");
-        rexPattern.prepend(".*");
-        rexPattern.append(".*");
+        QString rexPattern;
+        auto listText = filterText.split(QRegExp("[ |]"), QString::SkipEmptyParts);
+        for (auto& word : listText) {
+          word.prepend(".*");
+          word.append(".*");
+          rexPattern.append(word);
+          rexPattern.append("|");
+        }
+        rexPattern.chop(1);
         QList<QListWidgetItem*> listFound = listWidget.findItems(rexPattern, Qt::MatchRegExp);
         for (int i = 0; i < listFound.count(); ++i) {
             listFound[i]->setHidden(false);
