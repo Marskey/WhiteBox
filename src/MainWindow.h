@@ -11,6 +11,8 @@
 #include <QtWidgets/QMainWindow>
 #include <QKeyEvent>
 #include <QDateTime>
+#include <QStyledItemDelegate>
+
 
 
 #include "google/protobuf/message.h"
@@ -65,7 +67,7 @@ public slots:
     void handleListMessageItemDoubleClicked(QListWidgetItem* pItem);
     void handleMouseEntered(QListWidgetItem* pItem);
 
-    void handleListLogItemCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
+    void handleListLogItemCurrentRowChanged(int row);
     void handleListLogCustomContextMenuRequested(const QPoint& pos);
     void handleListLogActionAddToIgnoreList();
 

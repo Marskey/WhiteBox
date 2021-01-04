@@ -1,5 +1,6 @@
 #pragma once
 #include <QLineEdit>
+#include <QStyledItemDelegate>
 
 class CLineEdit : public QLineEdit
 {
@@ -15,3 +16,13 @@ protected:
     bool m_selectOnMousePress;
 };
 
+class PopupItemDelegate : public QStyledItemDelegate
+{
+public:
+  using QStyledItemDelegate::QStyledItemDelegate;
+  QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override {
+    QSize s = QStyledItemDelegate::sizeHint(option, index);
+    s.setHeight(20);
+    return s;
+  }
+};

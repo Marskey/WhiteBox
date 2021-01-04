@@ -7,7 +7,6 @@
 #include <QComboBox>
 #include <QFileDialog>
 #include <QMessageBox>
-#include <QStyledItemDelegate>
 #include <QTextEdit>
 
 
@@ -120,7 +119,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
 
                 // enum select
                 auto* pComboBox = new QComboBox(this);
-                pComboBox->setItemDelegate(new QStyledItemDelegate());
+                pComboBox->view()->setItemDelegate(new PopupItemDelegate(this));
                 pComboBox->setObjectName(("cb_" + std::to_string(pDescriptor->number())).c_str());
 
                 for (int i = 0; i < pEd->value_count(); ++i) {
@@ -133,7 +132,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
                 
             } else if (pDescriptor->type() == google::protobuf::FieldDescriptor::TYPE_BOOL) {
                 auto* pComboBox = new QComboBox(this);
-                pComboBox->setItemDelegate(new QStyledItemDelegate());
+                pComboBox->view()->setItemDelegate(new PopupItemDelegate(this));
                 pComboBox->setObjectName(("cb_" + std::to_string(pDescriptor->number())).c_str());
                 pComboBox->addItem("false", 0);
                 pComboBox->addItem("true", 1);
@@ -192,7 +191,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
 
                 // enum select
                 auto* pComboBox = new QComboBox(this);
-                pComboBox->setItemDelegate(new QStyledItemDelegate());
+                pComboBox->view()->setItemDelegate(new PopupItemDelegate(this));
                 pComboBox->setObjectName(std::to_string(pDescriptor->number()).c_str());
                 QObject::connect(pComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(handleComboxIndexChanged(int)));
 
@@ -241,7 +240,7 @@ void CMsgEditorDialog::createWidget(QFormLayout& layout, std::string strFiledNam
             case google::protobuf::FieldDescriptor::TYPE_BOOL:
             {
                 auto* pComboBox = new QComboBox(this);
-                pComboBox->setItemDelegate(new QStyledItemDelegate());
+                pComboBox->view()->setItemDelegate(new PopupItemDelegate(this));
                 pComboBox->addItem("false", 0);
                 pComboBox->addItem("true", 1);
                 pComboBox->setObjectName(std::to_string(pDescriptor->number()).c_str());

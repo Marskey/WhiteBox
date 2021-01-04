@@ -49,8 +49,8 @@ CMainWindow::CMainWindow(QWidget* parent)
         pLineEdit->setPlaceholderText("Account");
         ui.cbAccount->setLineEdit(pLineEdit);
     }
-    ui.cbAccount->setItemDelegate(new QStyledItemDelegate(ui.cbAccount));
     ui.cbAccount->view()->installEventFilter(new DeleteHighlightedItemFilter(ui.cbAccount));
+    ui.cbAccount->view()->setItemDelegate(new PopupItemDelegate(ui.cbAccount));
     ConfigHelper::instance().restoreWidgetComboxState("Account", *ui.cbAccount);
 
     // ip端口
@@ -61,8 +61,8 @@ CMainWindow::CMainWindow(QWidget* parent)
         pLineEdit->setPlaceholderText("IP:Port");
         ui.cbIp->setLineEdit(pLineEdit);
     }
-    ui.cbIp->setItemDelegate(new QStyledItemDelegate(ui.cbIp));
     ui.cbIp->view()->installEventFilter(new DeleteHighlightedItemFilter(ui.cbIp));
+    ui.cbIp->view()->setItemDelegate(new PopupItemDelegate(ui.cbIp));
     ConfigHelper::instance().restoreWidgetComboxState("Ip_Port", *ui.cbIp);
 
     // 可选项参数
@@ -71,11 +71,11 @@ CMainWindow::CMainWindow(QWidget* parent)
         pLineEdit->setPlaceholderText("Optional");
         ui.cbOptionalParam->setLineEdit(pLineEdit);
     }
-    ui.cbOptionalParam->setItemDelegate(new QStyledItemDelegate(ui.cbOptionalParam));
     ui.cbOptionalParam->view()->installEventFilter(new DeleteHighlightedItemFilter(ui.cbOptionalParam));
+    ui.cbOptionalParam->view()->setItemDelegate(new PopupItemDelegate(ui.cbOptionalParam));
     ConfigHelper::instance().restoreWidgetComboxState("OptionalParam", *ui.cbOptionalParam);
 
-    ui.cbClientName->setItemDelegate(new QStyledItemDelegate(ui.cbClientName));
+    ui.cbClientName->view()->setItemDelegate(new PopupItemDelegate(ui.cbClientName));
 
     // 读取是否自动显示最新
     ConfigHelper::instance().restoreWidgetCheckboxState("AutoShowDetail", *ui.checkIsAutoDetail);
@@ -112,7 +112,8 @@ CMainWindow::CMainWindow(QWidget* parent)
     QObject::connect(ui.listMessage, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(handleMouseEntered(QListWidgetItem*)));
     QObject::connect(ui.listRecentMessage, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(handleMouseEntered(QListWidgetItem*)));
 
-    QObject::connect(ui.listLogs, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this, SLOT(handleListLogItemCurrentItemChanged(QListWidgetItem*, QListWidgetItem*)));
+    QObject::connect(ui.listLogs, SIGNAL(currentRowChanged(int)), this, SLOT(handleListLogItemCurrentRowChanged(int)));
+
     QObject::connect(ui.listLogs->model(), SIGNAL(rowsInserted(const QModelIndex&, int, int)), this, SLOT(handleLogInfoAdded(const QModelIndex&, int, int)));
     QObject::connect(ui.listLogs, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(handleListLogCustomContextMenuRequested(const QPoint&)));
 
@@ -688,22 +689,20 @@ void CMainWindow::handleMouseEntered(QListWidgetItem* pItem) {
     QToolTip::showText(pt, m_highlighter->highlightJsonData(detail.c_str()).c_str(), ui.listMessage);
 }
 
-void CMainWindow::handleListLogItemCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous) {
-    QListWidgetItem* pItem = current;
+void CMainWindow::handleListLogItemCurrentRowChanged(int row) {
+    QListWidgetItem* pItem = ui.listLogs->item(row);
     if (nullptr == pItem) {
-        return;
-    }
-
-    if (pItem->text().isEmpty()) {
         return;
     }
 
     ui.plainTextEdit->clear();
 
     std::string detail = pItem->data(Qt::UserRole + kMessageData).toString().toStdString();
-    ui.plainTextEdit->setPlainText(fmt::format("{}\r\n\r\n{}"
-                                     , pItem->text().toStdString()
-                                     , detail).c_str());
+    if (detail.empty()) {
+      return;
+    }
+
+    ui.plainTextEdit->setPlainText(detail.c_str());
     m_highlighter->hightlight();
     handleSearchDetailTextChanged();
 }
