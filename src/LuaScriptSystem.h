@@ -37,7 +37,6 @@ public:
     }
 
 public:
-    // 运行脚本
     void RunScript(const char* script, size_t len, const char* file_path) {
         lua_pushcclosure(m_L, OnError, 0);
         int errfunc = lua_gettop(m_L);
@@ -129,7 +128,6 @@ private:
         LogHelper::instance().logError("Error: lua error -- {}", content.c_str());
     }
 
-    // 边界条件
     inline int InvokePush(int count) {
         return count;
     }

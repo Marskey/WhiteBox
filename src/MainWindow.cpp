@@ -26,6 +26,7 @@ extern "C" {
 #include <QFile>
 #include <QDirIterator>
 #include <QStyledItemDelegate>
+#include <QToolTip>
 
 const char WINDOWS_TITLE[25] = "WhiteBox";
 
@@ -85,9 +86,6 @@ CMainWindow::CMainWindow(QWidget* parent)
     ui.splitterH->restoreState(ConfigHelper::instance().getSplitterH());
     ui.splitterV->restoreState(ConfigHelper::instance().getSplitterV());
 
-    ui.listMessage->installEventFilter(new ShowItemDetailKeyFilter(ui.listMessage));
-    ui.listRecentMessage->installEventFilter(new ShowItemDetailKeyFilter(ui.listRecentMessage));
-
     // 给log窗口添加右键菜单
     ui.listLogs->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -103,14 +101,18 @@ CMainWindow::CMainWindow(QWidget* parent)
     // 设置json数据高亮
     m_highlighter = new CJsonHighlighter(ui.plainTextEdit->document());
 
+    ui.listMessage->setMouseTracking(true);
+
+
+
     QObject::connect(ui.listMessage, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(handleListMessageItemDoubleClicked(QListWidgetItem*)));
 
     QObject::connect(ui.listRecentMessage, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(handleListMessageItemDoubleClicked(QListWidgetItem*)));
-    QObject::connect(ui.listRecentMessage, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this, SLOT(handleListMessageCurrentItemChanged(QListWidgetItem*, QListWidgetItem*)));
-    QObject::connect(ui.listRecentMessage, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(handleListMessageItemClicked(QListWidgetItem*)));
+
+    QObject::connect(ui.listMessage, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(handleMouseEntered(QListWidgetItem*)));
+    QObject::connect(ui.listRecentMessage, SIGNAL(itemEntered(QListWidgetItem*)), this, SLOT(handleMouseEntered(QListWidgetItem*)));
 
     QObject::connect(ui.listLogs, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this, SLOT(handleListLogItemCurrentItemChanged(QListWidgetItem*, QListWidgetItem*)));
-    QObject::connect(ui.listLogs, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(handleListLogItemClicked(QListWidgetItem*)));
     QObject::connect(ui.listLogs->model(), SIGNAL(rowsInserted(const QModelIndex&, int, int)), this, SLOT(handleLogInfoAdded(const QModelIndex&, int, int)));
     QObject::connect(ui.listLogs, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(handleListLogCustomContextMenuRequested(const QPoint&)));
 
@@ -338,7 +340,8 @@ void CMainWindow::saveCache() {
         json["name"] = pair.first.c_str();
         std::string msgData;
         pair.second->SerializeToString(&msgData);
-        json["data"] = msgData.c_str();
+        QByteArray base64 = msgData.c_str();
+        json["data"] = base64.toBase64().toStdString().c_str();
         msgCacheArray.append(json);
     }
 
@@ -402,23 +405,25 @@ void CMainWindow::loadCache() {
             continue;
         }
 
-        if (pMessage->ParseFromString(obj["data"].toString().toStdString())) {
-            m_mapMessages[msgName] = pMessage;
-
+        std::string msgData = QByteArray::fromBase64(obj["data"].toString().toStdString().c_str()).toStdString();
+        if (pMessage->ParseFromString(msgData)) {
             std::string msgStr;
             for (int i = 0; i < ui.listMessage->count(); ++i) {
                 QListWidgetItem* pItem = ui.listMessage->item(i);
                 if (nullptr != pItem) {
-                    std::string msgFullName = pItem->data(Qt::UserRole).toString().toStdString();
+                    std::string msgFullName = pItem->data(Qt::UserRole + kMessageFullName).toString().toStdString();
                     if (msgFullName == msgName) {
                         pItem->setIcon(QIcon(":/WhiteBox/icon1.ico"));
                         google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
-                        pItem->setToolTip(msgStr.c_str());
-                        //pItem = ui.listMessage->takeItem(i);
-                        //ui.listMessage->insertItem(0, pItem);
+                        //pItem->setToolTip(msgStr.c_str());
+                        pItem->setData(Qt::UserRole + kMessageData, msgStr.c_str());
                     }
                 }
             }
+        }
+        else {
+          delete pMessage;
+          m_mapMessages.erase(msgName);
         }
     }
     ui.labelCacheCnt->setText(std::to_string(m_mapMessages.size()).c_str());
@@ -445,7 +450,8 @@ void CMainWindow::clearCache() {
         QListWidgetItem* pListWidgetItem = ui.listMessage->item(i);
         if (nullptr != pListWidgetItem) {
             pListWidgetItem->setIcon(QIcon());
-            pListWidgetItem->setToolTip("");
+            //pListWidgetItem->setToolTip("");
+            pListWidgetItem->setData(Qt::UserRole + kMessageData, "");
         }
     }
     ui.labelCacheCnt->setText("0");
@@ -453,7 +459,8 @@ void CMainWindow::clearCache() {
     for (int i = 0; i < ui.listRecentMessage->count(); ++i) {
         QListWidgetItem* pListWidgetItem = ui.listRecentMessage->item(i);
         if (nullptr != pListWidgetItem) {
-            pListWidgetItem->setToolTip("");
+            //pListWidgetItem->setToolTip("");
+            pListWidgetItem->setData(Qt::UserRole + kMessageData, "");
         }
     }
 }
@@ -608,7 +615,7 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
 
     google::protobuf::Message* pMessage = nullptr;
     int idx = ui.tabWidget->currentIndex();
-    std::string msgFullName = pItem->data(Qt::UserRole).toString().toStdString();
+    std::string msgFullName = pItem->data(Qt::UserRole + kMessageFullName).toString().toStdString();
     if (0 == idx) {
       pMessage = getOrCreateMessageByName(msgFullName.c_str());
     } else if (1 == idx) {
@@ -639,11 +646,13 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
         google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
         if (!msgStr.empty()) {
             pItem->setIcon(QIcon(":/WhiteBox/icon1.ico"));
-            pItem->setToolTip(msgStr.c_str());
+            //pItem->setToolTip(msgStr.c_str());
+            pItem->setData(Qt::UserRole + kMessageData, msgStr.c_str());
 
             QList<QListWidgetItem*> listItems = pListWidget->findItems(pItem->text(), Qt::MatchExactly);
             for (int i = 0; i < listItems.count(); ++i) {
-                listItems[i]->setToolTip(msgStr.c_str());
+                //listItems[i]->setToolTip(msgStr.c_str());
+                listItems[i]->setData(Qt::UserRole + kMessageData, msgStr.c_str());
             }
         }
     }
@@ -655,39 +664,27 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
         m_mapMessages.erase(msgFullName);
 
         pItem->setIcon(QIcon());
-        pItem->setToolTip("");
+        //pItem->setToolTip("");
+        pItem->setData(Qt::UserRole + kMessageData, "");
 
         QList<QListWidgetItem*> listItems = pListWidget->findItems(pItem->text(), Qt::MatchExactly);
         for (int i = 0; i < listItems.count(); ++i) {
-            listItems[i]->setToolTip("");
+            //listItems[i]->setToolTip("");
+            listItems[i]->setData(Qt::UserRole + kMessageData, "");
         }
     }
 
     ui.labelCacheCnt->setText(std::to_string(m_mapMessages.size()).c_str());
 }
 
-void CMainWindow::handleListMessageCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous) {
-    ui.plainTextEdit->clear();
+void CMainWindow::handleMouseEntered(QListWidgetItem* pItem) {
+    QString msgFullName = pItem->data(Qt::UserRole).toString();
+    std::string detail = pItem->data(Qt::UserRole + kMessageData).toString().toStdString();
 
-    QListWidgetItem* pItem = current;
-    if (nullptr == pItem) {
-        return;
-    }
+    auto rect = ui.listMessage->visualItemRect(pItem);
+    auto pt = ui.listMessage->mapToGlobal(rect.topRight());
 
-    if (pItem->text().isEmpty()) {
-        return;
-    }
-
-    ui.plainTextEdit->setPlainText(fmt::format("{}\r\n\r\n{}"
-                                     , pItem->text().toStdString()
-                                     , pItem->toolTip().toStdString()).c_str());
-
-    m_highlighter->hightlight();
-    handleSearchDetailTextChanged();
-}
-
-void CMainWindow::handleListMessageItemClicked(QListWidgetItem* pItem) {
-    handleListMessageCurrentItemChanged(pItem, nullptr);
+    QToolTip::showText(pt, m_highlighter->highlightJsonData(detail.c_str()).c_str(), ui.listMessage);
 }
 
 void CMainWindow::handleListLogItemCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous) {
@@ -702,16 +699,12 @@ void CMainWindow::handleListLogItemCurrentItemChanged(QListWidgetItem* current, 
 
     ui.plainTextEdit->clear();
 
-    std::string detail = pItem->data(Qt::UserRole).toString().toStdString();
+    std::string detail = pItem->data(Qt::UserRole + kMessageData).toString().toStdString();
     ui.plainTextEdit->setPlainText(fmt::format("{}\r\n\r\n{}"
                                      , pItem->text().toStdString()
                                      , detail).c_str());
     m_highlighter->hightlight();
     handleSearchDetailTextChanged();
-}
-
-void CMainWindow::handleListLogItemClicked(QListWidgetItem* pItem) {
-    handleListLogItemCurrentItemChanged(pItem, nullptr);
 }
 
 void CMainWindow::handleListLogCustomContextMenuRequested(const QPoint& pos) {
@@ -720,7 +713,7 @@ void CMainWindow::handleListLogCustomContextMenuRequested(const QPoint& pos) {
         return;
     }
 
-    if (pCurItem->data(Qt::UserRole).toString().isEmpty()) {
+    if (pCurItem->data(Qt::UserRole + kMessageFullName).toString().isEmpty()) {
         return;
     }
 
@@ -739,7 +732,7 @@ void CMainWindow::handleListLogActionAddToIgnoreList() {
         return;
     }
 
-    QString msgFullName = pCurItem->data(Qt::UserRole + 1).toString();
+    QString msgFullName = pCurItem->data(Qt::UserRole + kMessageFullName).toString();
     if (msgFullName.isEmpty()) {
         return;
     }
@@ -812,7 +805,7 @@ void CMainWindow::handleSendBtnClicked() {
     }
 
     QString selectMsgName = pSelectItem->text();
-    std::string msgFullName = pSelectItem->data(Qt::UserRole).toString().toStdString();
+    std::string msgFullName = pSelectItem->data(Qt::UserRole + kMessageFullName).toString().toStdString();
 
     if (0 == idx) {
         pMessage = getOrCreateMessageByName(msgFullName.c_str());
@@ -837,8 +830,9 @@ void CMainWindow::handleSendBtnClicked() {
             auto* pItem = new QListWidgetItem(selectMsgName.append(" [")
                               .append(std::to_string(ui.listRecentMessage->count() + 1).c_str())
                               .append("]"));
-            pItem->setToolTip(msgStr.c_str());
-            pItem->setData(Qt::UserRole, msgFullName.c_str());
+            //pItem->setToolTip(msgStr.c_str());
+            pItem->setData(Qt::UserRole + kMessageData, msgStr.c_str());
+            pItem->setData(Qt::UserRole + kMessageFullName, msgFullName.c_str());
             auto* pRecentMsg = ProtoManager::instance().createMessage(msgFullName.c_str());
             pRecentMsg->CopyFrom(*pMessage);
             m_listRecentMessages.emplace_back(pRecentMsg);
@@ -1007,7 +1001,7 @@ void CMainWindow::handleSearchDetailBtnNextResult() {
 
     int pos = m_vecSearchPos[m_searchResultIdx];
 
-    if (m_vecSearchPos.size() != 0) {
+    if (!m_vecSearchPos.empty()) {
         ui.plainTextEdit->document()->undo();
     }
 
@@ -1263,7 +1257,7 @@ bool CMainWindow::loadProto() {
     for (; it != listNames.end(); ++it) {
         auto* pListItem = new QListWidgetItem();
         pListItem->setText(it->msgName.c_str());
-        pListItem->setData(Qt::UserRole, it->msgFullName.c_str());
+        pListItem->setData(Qt::UserRole + kMessageFullName, it->msgFullName.c_str());
         ui.listMessage->addItem(pListItem);
     }
 
@@ -1361,8 +1355,8 @@ void CMainWindow::addDetailLogInfo(const char* msgFullName, const char* msg, con
     std::string data = tmp;
     data.append(msg);
     auto* pListWidgetItem = new QListWidgetItem(data.c_str());
-    pListWidgetItem->setData(Qt::UserRole, QString(detail));
-    pListWidgetItem->setData(Qt::UserRole + 1, msgFullName);
+    pListWidgetItem->setData(Qt::UserRole + kMessageData, QString(detail));
+    pListWidgetItem->setData(Qt::UserRole + kMessageFullName, msgFullName);
 
     if (QColor(Qt::GlobalColor(0)) != color) {
         pListWidgetItem->setForeground(color);

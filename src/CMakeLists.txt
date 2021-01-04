@@ -6,7 +6,6 @@ set(whitebox_sources
     LineEdit.cpp
     main.cpp
     MainWindow.cpp
-    MsgDetailDialog.cpp
     MsgEditorDialog.cpp
     MsgIgnoreDialog.cpp
     NetManager.cpp
@@ -17,7 +16,6 @@ set(whitebox_sources
     json.lua
     WhiteBox.qrc
     MainWindow.ui
-    MessageDetail.ui
     MessageEditor.ui
     MessageIgnore.ui
     Setting.ui
@@ -36,7 +34,7 @@ set(whitebox_sources
     LuaInterface.h
     LuaScriptSystem.h
     MainWindow.h
-    MsgDetailDialog.h
+    
     MsgEditorDialog.h
     MsgIgnoreDialog.h
     NetManager.h

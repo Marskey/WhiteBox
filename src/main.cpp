@@ -3,6 +3,7 @@
 
 #include <QtWidgets/QApplication>
 #include <QStyleFactory>
+#include <QToolTip>
 
 int main(int argc, char *argv[])
 {
@@ -26,7 +27,7 @@ int main(int argc, char *argv[])
     p.setColor(QPalette::Disabled, QPalette::WindowText, QColor(127, 127, 127));
     p.setColor(QPalette::Base, QColor(42, 42, 42));
     p.setColor(QPalette::AlternateBase, QColor(66, 66, 66));
-    p.setColor(QPalette::ToolTipBase, Qt::white);
+    p.setColor(QPalette::ToolTipBase, QColor(53, 53, 53));
     p.setColor(QPalette::ToolTipText, Qt::white);
     p.setColor(QPalette::Text, Qt::white);
     p.setColor(QPalette::Disabled, QPalette::Text, QColor(127, 127, 127));
@@ -42,6 +43,7 @@ int main(int argc, char *argv[])
     p.setColor(QPalette::HighlightedText, Qt::white);
     p.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(127, 127, 127));
     qApp->setPalette(p);
+    QToolTip::setPalette(p);
 #endif
 
     CMainWindow w;

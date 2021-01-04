@@ -3,7 +3,6 @@
 #include "INetEvent.h"
 #include "LogHelper.h"
 #include "ConfigHelper.h"
-#include "MsgDetailDialog.h"
 #include "ProtoManager.h"
 #include "Client.h"
 #include "ComboxItemFilter.h"
@@ -15,6 +14,12 @@
 
 #include "google/protobuf/message.h"
 #include "google/protobuf/util/json_util.h"
+
+enum EListItemData
+{
+  kMessageData = 0,
+  kMessageFullName,
+};
 
 class CJsonHighlighter;
 class CECPrinter;
@@ -35,8 +40,6 @@ public:
     ~CMainWindow();
 
     bool init();
-
-    //static std::string highlightJsonData(const QString& jsonData);
 
 public:
     // ec_net::INetEvent begin
@@ -59,11 +62,9 @@ public slots:
     void openSettingDlg();
 
     void handleListMessageItemDoubleClicked(QListWidgetItem* pItem);
-    void handleListMessageCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
-    void handleListMessageItemClicked(QListWidgetItem* pItem);
+    void handleMouseEntered(QListWidgetItem* pItem);
 
     void handleListLogItemCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
-    void handleListLogItemClicked(QListWidgetItem* pItem);
     void handleListLogCustomContextMenuRequested(const QPoint& pos);
     void handleListLogActionAddToIgnoreList();
 
@@ -186,47 +187,4 @@ public:
     }
 
     QListWidget* m_logWidget = nullptr;
-};
-
-class ShowItemDetailKeyFilter : public QObject
-{
-    Q_OBJECT
-public:
-    ShowItemDetailKeyFilter(QObject* parent = nullptr) : QObject(parent) {}
-protected:
-    bool eventFilter(QObject* obj, QEvent* event) override {
-        if (event->type() == QEvent::KeyRelease) {
-            auto keyEvent = static_cast<QKeyEvent*>(event);
-            if (!keyEvent->isAutoRepeat()) {
-                if (keyEvent->key() == Qt::Key::Key_Space) {
-                    auto itemView = qobject_cast<QAbstractItemView*>(obj);
-                    if (itemView->model() != nullptr) {
-                        QModelIndex modelIdx = itemView->currentIndex();
-                        QString msgFullName = modelIdx.data(Qt::UserRole).toString();
-                        std::string detail = modelIdx.data(Qt::ToolTipRole).toString().toStdString();
-
-                        if (detail.empty()) {
-                            google::protobuf::Message* pMessage = ProtoManager::instance().createMessage(msgFullName.toStdString().c_str());
-                            if (pMessage == nullptr) {
-                                return false;
-                            }
-                            if (0 != pMessage->ByteSizeLong()) {
-                                google::protobuf::util::MessageToJsonString(*pMessage, &detail, ConfigHelper::instance().getJsonPrintOption());
-                            } else {
-                                delete pMessage;
-                            }
-                        }
-
-                        QString msgName = modelIdx.data(Qt::DisplayRole).toString();
-                        CMsgDetailDialog* pDlg = new CMsgDetailDialog(qApp->activeWindow(), msgName, detail.c_str());
-                        pDlg->exec();
-                        delete pDlg;
-
-                        return true;
-                    }
-                }
-            }
-        }
-        return QObject::eventFilter(obj, event);
-    }
 };
