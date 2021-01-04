@@ -102,8 +102,7 @@ CMainWindow::CMainWindow(QWidget* parent)
     m_highlighter = new CJsonHighlighter(ui.plainTextEdit->document());
 
     ui.listMessage->setMouseTracking(true);
-
-
+    ui.listMessage->setSortingEnabled(true);
 
     QObject::connect(ui.listMessage, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(handleListMessageItemDoubleClicked(QListWidgetItem*)));
 
