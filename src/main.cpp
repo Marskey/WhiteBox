@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     p.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(127, 127, 127));
     p.setColor(QPalette::BrightText, Qt::red);
     p.setColor(QPalette::Link, QColor(42, 130, 218));
-    p.setColor(QPalette::Highlight, QColor(42, 130, 218));
+    p.setColor(QPalette::Highlight, QColor(42, 130, 218, 60));
     p.setColor(QPalette::Disabled, QPalette::Highlight, QColor(80, 80, 80));
     p.setColor(QPalette::HighlightedText, Qt::white);
     p.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(127, 127, 127));

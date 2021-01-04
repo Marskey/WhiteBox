@@ -10,6 +10,7 @@
 #include "ui_MainWindow.h"
 #include <QtWidgets/QMainWindow>
 #include <QKeyEvent>
+#include <QDateTime>
 
 
 #include "google/protobuf/message.h"
@@ -106,7 +107,7 @@ private:
     ///注册类对象给lua
     void luaRegisterCppClass();
 
-    void addDetailLogInfo(const char* msgFullName, const char* msg, const char* detail, QColor color = QColor(Qt::GlobalColor(0)));
+    void addDetailLogInfo(const char* msgFullName, const std::string& msg, const char* detail);
 
     void connectStateChange(EConnectState state);
 
@@ -171,19 +172,25 @@ public:
     }
 
     void log(std::string msg, QColor color = QColor(Qt::GlobalColor(0))) {
-        time_t t = time(0);
-        char tmp[64];
-        strftime(tmp, sizeof(tmp), "[%X] ", localtime(&t));
-
-        msg = tmp + msg;
-        auto* pListWidgetItem = new QListWidgetItem(msg.c_str(), m_logWidget);
-
-        if (QColor(Qt::GlobalColor(0)) != color) {
-            pListWidgetItem->setForeground(color);
-            pListWidgetItem->setBackground(QColor(53, 53, 53));
-        }
-
-        m_logWidget->addItem(pListWidgetItem);
+      auto* pListWidgetItem = new QListWidgetItem;
+      QDateTime localTime(QDateTime::currentDateTime());
+      QString timeStr = "<font color='grey'>" + localTime.time().toString() + "</font> ";
+      QString content;
+      if (color != Qt::GlobalColor(0)) {
+        content = "<font color=" + color.name(QColor::HexArgb) + ">" + msg.c_str() + "</font>";
+      } else {
+        content = msg.c_str();
+      }
+      QLabel* l = new QLabel(timeStr + content);
+      QHBoxLayout* layout = new QHBoxLayout;
+      layout->addWidget(l);
+      layout->setSizeConstraint(QLayout::SetFixedSize);
+      layout->setContentsMargins(3, 3, 3, 3);
+      QWidget* w = new QWidget;
+      w->setLayout(layout);
+      pListWidgetItem->setSizeHint(w->sizeHint());
+      m_logWidget->addItem(pListWidgetItem);
+      m_logWidget->setItemWidget(pListWidgetItem, w);
     }
 
     QListWidget* m_logWidget = nullptr;

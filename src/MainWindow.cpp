@@ -517,12 +517,13 @@ void CMainWindow::onParseMessage(SocketId socketId, const char* msgFullName, con
             std::string msgStr;
             google::protobuf::util::MessageToJsonString(*pRecvMesage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
             addDetailLogInfo(msgFullName
-                             , fmt::format("Received {}({}) size: {}"
+                             , fmt::format("Received <font color='{0}'>{2}</font> (<font color='{1}'>{3}</font>) size: <font color='{1}'>{4}</font>"
+                                           , "#739d39"
+                                           , "#3498DB"
                                            , msgFullName
                                            , nMessageId
-                                           , pRecvMesage->ByteSizeLong()).c_str()
+                                           , pRecvMesage->ByteSizeLong())
                              , msgStr.c_str()
-                             , QColor(57, 115, 157)
             );
         }
 
@@ -823,8 +824,8 @@ void CMainWindow::handleSendBtnClicked() {
         std::string msgStr;
         google::protobuf::util::MessageToJsonString(*pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
         addDetailLogInfo(msgFullName.c_str()
-                         , fmt::format("Sent Message {}", selectMsgName.toStdString()).c_str()
-                         , msgStr.c_str(), QColor("#AF7AC5"));
+                         , fmt::format("Sent Message <font color='{0}'>{1}</font>", "#AF7AC5", selectMsgName.toStdString())
+                         , msgStr.c_str());
 
         if (0 == idx) {
             auto* pItem = new QListWidgetItem(selectMsgName.append(" [")
@@ -1347,20 +1348,21 @@ void CMainWindow::luaRegisterCppClass() {
     luabridge::setGlobal(pLuaState, static_cast<IMainApp*>(this), "App");
 }
 
-void CMainWindow::addDetailLogInfo(const char* msgFullName, const char* msg, const char* detail, QColor color /*= QColor(Qt::GlobalColor(0))*/) {
-    time_t t = time(nullptr);
-    char tmp[64];
-    strftime(tmp, sizeof(tmp), "[%X] ", localtime(&t));
-
-    std::string data = tmp;
-    data.append(msg);
-    auto* pListWidgetItem = new QListWidgetItem(data.c_str());
+void CMainWindow::addDetailLogInfo(const char* msgFullName, const std::string& msg, const char* detail) {
+    auto* pListWidgetItem = new QListWidgetItem;
     pListWidgetItem->setData(Qt::UserRole + kMessageData, QString(detail));
     pListWidgetItem->setData(Qt::UserRole + kMessageFullName, msgFullName);
 
-    if (QColor(Qt::GlobalColor(0)) != color) {
-        pListWidgetItem->setForeground(color);
-    }
-
+    QDateTime localTime(QDateTime::currentDateTime());
+    QString timeStr = "<font color='grey'>" + localTime.time().toString() + "</font> ";
+    QLabel* l = new QLabel(timeStr + msg.c_str());
+    QHBoxLayout* layout = new QHBoxLayout;
+    layout->addWidget(l);
+    layout->setSizeConstraint(QLayout::SetFixedSize);
+    layout->setContentsMargins(3, 2, 3, 2);
+    QWidget* w = new QWidget;
+    w->setLayout(layout);
+    pListWidgetItem->setSizeHint(w->sizeHint());
     ui.listLogs->addItem(pListWidgetItem);
+    ui.listLogs->setItemWidget(pListWidgetItem, w);
 }
