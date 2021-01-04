@@ -1054,6 +1054,8 @@ void CMainWindow::handleFilterLogTextChanged() {
             pListItem->setHidden(false);
         }
     }
+
+    ui.listLogs->scrollToBottom();
 }
 
 void CMainWindow::handleEnableLogFilterChanged(int state) {

@@ -185,7 +185,7 @@ public:
       QHBoxLayout* layout = new QHBoxLayout;
       layout->addWidget(l);
       layout->setSizeConstraint(QLayout::SetFixedSize);
-      layout->setContentsMargins(3, 3, 3, 3);
+      layout->setContentsMargins(3, 2, 3, 2);
       QWidget* w = new QWidget;
       w->setLayout(layout);
       pListWidgetItem->setSizeHint(w->sizeHint());
