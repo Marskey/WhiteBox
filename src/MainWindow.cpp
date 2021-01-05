@@ -35,7 +35,7 @@ struct ECVersion
     int main;
     int sub;
     int build;
-} const g_version = { 3 , 1 , 5 };
+} const g_version = { 3 , 2 , 0 };
 
 CMainWindow::CMainWindow(QWidget* parent)
     : QMainWindow(parent) {
@@ -106,6 +106,8 @@ CMainWindow::CMainWindow(QWidget* parent)
 
     ui.listMessage->setMouseTracking(true);
     ui.listMessage->setSortingEnabled(true);
+    ui.listMessage->setSpacing(2);
+    ui.listRecentMessage->setSpacing(2);
 
     QObject::connect(ui.listMessage, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(handleListMessageItemDoubleClicked(QListWidgetItem*)));
 
@@ -784,7 +786,7 @@ void CMainWindow::handleSendBtnClicked() {
         return;
     }
 
-    lua_api::IClient* pClient = getClient(clientName.toStdString().c_str());
+    CClient* pClient = static_cast<CClient*>(getClient(clientName.toStdString().c_str()));
     if (nullptr == pClient) {
         QMessageBox::warning(nullptr, "", fmt::format("Cannot find client name: {}", clientName.toStdString()).c_str());
         return;
@@ -833,7 +835,7 @@ void CMainWindow::handleSendBtnClicked() {
 
         if (0 == idx) {
             auto* pItem = new QListWidgetItem(selectMsgName.append(" [")
-                              .append(std::to_string(ui.listRecentMessage->count() + 1).c_str())
+                              .append(std::to_string(pClient->getSocketID()).c_str())
                               .append("]"));
             //pItem->setToolTip(msgStr.c_str());
             pItem->setData(Qt::UserRole + kMessageData, msgStr.c_str());
@@ -1238,8 +1240,7 @@ bool CMainWindow::loadProto() {
     std::list<CProtoManager::MsgInfo> listNames = ProtoManager::instance().getMsgInfos();
     auto it = listNames.begin();
     for (; it != listNames.end(); ++it) {
-        auto* pListItem = new QListWidgetItem();
-        pListItem->setText(it->msgName.c_str());
+        auto* pListItem = new QListWidgetItem(it->msgName.c_str());
         pListItem->setData(Qt::UserRole + kMessageFullName, it->msgFullName.c_str());
         ui.listMessage->addItem(pListItem);
     }
