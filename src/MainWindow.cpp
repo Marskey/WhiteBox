@@ -481,7 +481,12 @@ void CMainWindow::update() {
 
 void CMainWindow::updateLog() {
     if (ui.checkIsAutoDetail->isChecked()) {
-        ui.listLogs->setCurrentRow(ui.listLogs->count() - 1);
+        int row = ui.listLogs->count() - 1;
+        auto* pListItem = ui.listLogs->item(row);
+        if (nullptr != pListItem
+            && !pListItem->isHidden()) {
+            ui.listLogs->setCurrentRow(row);
+        }
     } else {
         m_pLogUpdateTimer->stop();
     }
