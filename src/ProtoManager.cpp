@@ -95,7 +95,7 @@ const CProtoManager::MsgInfo* CProtoManager::getMsgInfoByMsgType(uint16_t msgTyp
     return nullptr;
 }
 
-std::string CProtoManager::getMsgValue(google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd) {
+std::string CProtoManager::getMsgValue(const google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd) {
     if (nullptr == pFd) {
         return "";
     }
@@ -151,7 +151,7 @@ std::string CProtoManager::getMsgValue(google::protobuf::Message& message, const
     return "";
 }
 
-std::string CProtoManager::getMsgValue(google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd, int index) {
+std::string CProtoManager::getMsgValue(const google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd, int index) {
     if (nullptr == pFd) {
         return "";
     }

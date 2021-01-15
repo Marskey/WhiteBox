@@ -66,8 +66,8 @@ public:
 
     const MsgInfo* getMsgInfoByMsgType(uint16_t msgType);
 
-    std::string getMsgValue(google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd);
-    std::string getMsgValue(google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd, int index);
+    std::string getMsgValue(const google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd);
+    std::string getMsgValue(const google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd, int index);
 
     // lua_api::IProtoManager begin
     void addProtoMessage(int msgType, const char* msgFullName, const char* msgName) override;

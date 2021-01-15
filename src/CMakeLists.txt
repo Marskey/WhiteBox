@@ -12,6 +12,9 @@ set(whitebox_sources
     ProtoManager.cpp
     Session.cpp
     SettingDialog.cpp
+    ProtoTreeItem.cpp
+    ProtoTreeModel.cpp
+
     WhiteBox.ico
     json.lua
     WhiteBox.qrc
@@ -34,6 +37,8 @@ set(whitebox_sources
     LuaInterface.h
     LuaScriptSystem.h
     MainWindow.h
+    ProtoTreeItem.h
+    ProtoTreeModel.h
     
     MsgEditorDialog.h
     MsgIgnoreDialog.h

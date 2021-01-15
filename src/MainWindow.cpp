@@ -646,7 +646,7 @@ void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
     }
 
     auto* pDlg = new CMsgEditorDialog(this);
-    pDlg->initDialogByMessage(pMessage);
+    pDlg->initDialogByMessage(*pMessage);
 
     int ret = pDlg->exec();
     if (ret == QDialog::Accepted) {
