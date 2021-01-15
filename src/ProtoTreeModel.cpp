@@ -200,9 +200,46 @@ bool ProtoTreeModel::removeRows(int position, int rows, const QModelIndex& paren
   return success;
 }
 
+QMimeData* ProtoTreeModel::mimeData(const QModelIndexList& indexes) const {
+  QMimeData* mimeData = new QMimeData;
+  QByteArray data; //a kind of RAW format for datas
+  QDataStream stream(&data, QIODevice::WriteOnly);
+  QList<ProtoTreeItem*> nodes;
+  foreach(const QModelIndex & index, indexes) {
+    ProtoTreeItem* node = getItem(index);
+
+    //  Do i make a tree structure here by recursion function for the tree item
+    if (!nodes.contains(node))
+      nodes << node;
+  }
+  stream << QCoreApplication::applicationPid();
+  stream << nodes.count();
+  foreach(ProtoTreeItem* node, nodes) {
+    stream << reinterpret_cast<qlonglong>(node);
+  }
+  mimeData->setData("treeNodeMimeType", data);
+  return mimeData;
+}
+
 bool ProtoTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) {
   if (!canDropMimeData(data, action, row, column, parent))
     return false;
+
+  //test if the data type is the good one
+  if (!data->hasFormat("treeNodeMimeType")) {
+    return false;
+  }
+  QByteArray byteData = data->data("treeNodeMimeType");
+  QDataStream stream(&byteData, QIODevice::ReadOnly);
+  qint64 senderPid;
+  stream >> senderPid;
+  if (senderPid != QCoreApplication::applicationPid()) {
+    // Let's not cast pointers that come from another process...
+    return false;
+  }
+  ProtoTreeItem* parentNode = getItem(parent);
+  int count;
+  stream >> count;
 
   int beginRow;
 

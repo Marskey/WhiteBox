@@ -48,6 +48,8 @@ public:
                   const QModelIndex& parent = QModelIndex()) override;
   bool removeRows(int position, int rows,
                   const QModelIndex& parent = QModelIndex()) override;
+
+  QMimeData* mimeData(const QModelIndexList& indexes) const override;
   bool dropMimeData(const QMimeData* data, Qt::DropAction action,
                             int row, int column, const QModelIndex& parent) override;
   Qt::DropActions supportedDropActions() const override;
