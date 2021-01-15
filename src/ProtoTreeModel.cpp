@@ -221,11 +221,14 @@ QMimeData* ProtoTreeModel::mimeData(const QModelIndexList& indexes) const {
   return mimeData;
 }
 
+bool ProtoTreeModel::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const {
+  return true;
+}
+
 bool ProtoTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) {
   if (!canDropMimeData(data, action, row, column, parent))
     return false;
 
-  //test if the data type is the good one
   if (!data->hasFormat("treeNodeMimeType")) {
     return false;
   }
