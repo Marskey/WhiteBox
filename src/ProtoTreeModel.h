@@ -48,7 +48,7 @@ public:
                   const QModelIndex& parent = QModelIndex()) override;
   bool removeRows(int position, int rows,
                   const QModelIndex& parent = QModelIndex()) override;
-
+  QStringList mimeTypes() const override;
   QMimeData* mimeData(const QModelIndexList& indexes) const override;
   bool canDropMimeData(const QMimeData* data, Qt::DropAction action,
                        int row, int column, const QModelIndex& parent) const override;

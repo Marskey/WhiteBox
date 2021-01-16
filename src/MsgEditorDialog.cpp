@@ -167,8 +167,8 @@ void CMsgEditorDialog::handleApplyButtonClicked() {
         }
     }
 
-    auto* model = static_cast<ProtoTreeModel*>(treeView->model());
-    model->getMessage(*m_pMessage);
+//    auto* model = static_cast<ProtoTreeModel*>(treeView->model());
+//    model->getMessage(*m_pMessage);
 
     accept();
 }

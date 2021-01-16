@@ -40,7 +40,6 @@ class CMsgEditorDialog : public QDialog, public Ui_MessageEditor
         eJSON = 1,
     };
 public:
-
     CMsgEditorDialog(QWidget* parent = 0);
     ~CMsgEditorDialog();
 

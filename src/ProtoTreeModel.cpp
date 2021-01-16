@@ -2,6 +2,8 @@
 #include <list>
 #include <QtGui>
 
+static auto TREE_NODE_MIME_TYPE = "application/x-treenode";
+
 ProtoTreeModel::ProtoTreeModel(const ::google::protobuf::Message& data,
                                QObject* parent /*= nullptr*/)
   : QAbstractItemModel(parent) {
@@ -200,6 +202,11 @@ bool ProtoTreeModel::removeRows(int position, int rows, const QModelIndex& paren
   return success;
 }
 
+QStringList ProtoTreeModel::mimeTypes() const
+{
+    return QAbstractItemModel::mimeTypes() << TREE_NODE_MIME_TYPE;
+}
+
 QMimeData* ProtoTreeModel::mimeData(const QModelIndexList& indexes) const {
   QMimeData* mimeData = new QMimeData;
   QByteArray data; //a kind of RAW format for datas
@@ -217,22 +224,23 @@ QMimeData* ProtoTreeModel::mimeData(const QModelIndexList& indexes) const {
   foreach(ProtoTreeItem* node, nodes) {
     stream << reinterpret_cast<qlonglong>(node);
   }
-  mimeData->setData("treeNodeMimeType", data);
+  mimeData->setData(TREE_NODE_MIME_TYPE, data);
   return mimeData;
 }
 
 bool ProtoTreeModel::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const {
-  return true;
+  if (action == Qt::MoveAction
+      && row != -1 && column != -1) {
+    return true;
+  }
+  return false;
 }
 
 bool ProtoTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) {
-  if (!canDropMimeData(data, action, row, column, parent))
-    return false;
-
-  if (!data->hasFormat("treeNodeMimeType")) {
+  if (!data->hasFormat(TREE_NODE_MIME_TYPE)) {
     return false;
   }
-  QByteArray byteData = data->data("treeNodeMimeType");
+  QByteArray byteData = data->data(TREE_NODE_MIME_TYPE);
   QDataStream stream(&byteData, QIODevice::ReadOnly);
   qint64 senderPid;
   stream >> senderPid;
@@ -265,11 +273,11 @@ bool ProtoTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, 
 }
 
 Qt::DropActions ProtoTreeModel::supportedDropActions() const {
-  return Qt::CopyAction | Qt::MoveAction;
+  return Qt::MoveAction;
 }
 
 Qt::DropActions ProtoTreeModel::supportedDragActions() const {
-  return Qt::CopyAction | Qt::MoveAction;
+  return Qt::MoveAction;
 }
 
 int ProtoTreeModel::rowCount(const QModelIndex& parent) const {
