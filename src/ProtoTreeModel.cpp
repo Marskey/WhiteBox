@@ -150,15 +150,6 @@ QModelIndex ProtoTreeModel::index(int row, int column, const QModelIndex& parent
   return QModelIndex();
 }
 
-bool ProtoTreeModel::insertColumns(int position, int columns, const QModelIndex& parent) {
-
-  beginInsertColumns(parent, position, position + columns - 1);
-  bool success = rootItem->insertColumns(position, columns);
-  endInsertColumns();
-
-  return success;
-}
-
 bool ProtoTreeModel::insertRows(int position, int rows, const QModelIndex& parent) {
   ProtoTreeItem* parentItem = getItem(parent);
 
@@ -182,17 +173,6 @@ QModelIndex ProtoTreeModel::parent(const QModelIndex& index) const {
   return createIndex(parentItem->childNumber(), 0, parentItem);
 }
 
-bool ProtoTreeModel::removeColumns(int position, int columns, const QModelIndex& parent) {
-  beginRemoveColumns(parent, position, position + columns - 1);
-  bool success = rootItem->removeColumns(position, columns);
-  endRemoveColumns();
-
-  if (rootItem->columnCount() == 0)
-    removeRows(0, rowCount());
-
-  return success;
-}
-
 bool ProtoTreeModel::removeRows(int position, int rows, const QModelIndex& parent) {
   ProtoTreeItem* parentItem = getItem(parent);
   beginRemoveRows(parent, position, position + rows - 1);
@@ -202,28 +182,40 @@ bool ProtoTreeModel::removeRows(int position, int rows, const QModelIndex& paren
   return success;
 }
 
+bool ProtoTreeModel::moveRows(const QModelIndex &sourceParent, int sourceRow, int count,
+                              const QModelIndex &destinationParent, int destinationChild) {
+  ProtoTreeItem* parentItem = getItem(destinationParent);
+  beginMoveRows(sourceParent, sourceRow, sourceRow + count - 1, destinationParent, destinationChild);
+  bool success = parentItem->insertChildren(destinationChild, 1, kColumnSize);
+  endMoveRows();
+
+  return success;
+}
 QStringList ProtoTreeModel::mimeTypes() const
 {
     return QAbstractItemModel::mimeTypes() << TREE_NODE_MIME_TYPE;
 }
 
 QMimeData* ProtoTreeModel::mimeData(const QModelIndexList& indexes) const {
-  QMimeData* mimeData = new QMimeData;
+  auto* mimeData = new QMimeData;
   QByteArray data; //a kind of RAW format for datas
   QDataStream stream(&data, QIODevice::WriteOnly);
-  QList<ProtoTreeItem*> nodes;
-  foreach(const QModelIndex & index, indexes) {
-    ProtoTreeItem* node = getItem(index);
-
-    //  Do i make a tree structure here by recursion function for the tree item
-    if (!nodes.contains(node))
-      nodes << node;
-  }
   stream << QCoreApplication::applicationPid();
-  stream << nodes.count();
-  foreach(ProtoTreeItem* node, nodes) {
-    stream << reinterpret_cast<qlonglong>(node);
+  for (const QModelIndex& index : indexes) {
+    stream << index.row();
+    break;
   }
+//  stream << QCoreApplication::applicationPid();
+//  QList<ProtoTreeItem*> treeItems;
+//  for (const QModelIndex& index : indexes) {
+//    ProtoTreeItem* treeItem = getItem(index);
+//    if (!treeItems.contains(treeItem))
+//      treeItems << treeItem;
+//  }
+//  stream << treeItems.count();
+//  for (ProtoTreeItem* treeItem : treeItems) {
+//    stream << reinterpret_cast<int64_t>(treeItem);
+//  }
   mimeData->setData(TREE_NODE_MIME_TYPE, data);
   return mimeData;
 }
@@ -237,39 +229,24 @@ bool ProtoTreeModel::canDropMimeData(const QMimeData* data, Qt::DropAction actio
 }
 
 bool ProtoTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) {
-  if (!data->hasFormat(TREE_NODE_MIME_TYPE)) {
+  if (!data->hasFormat(TREE_NODE_MIME_TYPE))
     return false;
-  }
+
   QByteArray byteData = data->data(TREE_NODE_MIME_TYPE);
   QDataStream stream(&byteData, QIODevice::ReadOnly);
-  qint64 senderPid;
+  int64_t senderPid;
   stream >> senderPid;
-  if (senderPid != QCoreApplication::applicationPid()) {
-    // Let's not cast pointers that come from another process...
+  if (senderPid != QCoreApplication::applicationPid())
+    return false;
+
+  int32_t src_row;
+  stream >> src_row;
+
+  if (src_row == row) {
     return false;
   }
-  ProtoTreeItem* parentNode = getItem(parent);
-  int count;
-  stream >> count;
 
-  int beginRow;
-
-  if (row != -1)
-    beginRow = row;
-  else if (parent.isValid())
-    beginRow = parent.row();
-  else
-    beginRow = rowCount(QModelIndex());
-
-  if (action == Qt::MoveAction)
-    removeRow(row, parent);
-  insertRow(beginRow, parent);
-
-  setData(parent.child(beginRow, kColumnTypeName), "Name");
-  setData(parent.child(beginRow, kColumnTypeType), "Type");
-  setData(parent.child(beginRow, kColumnTypeValue), "Value");
-
-  return true;
+  return moveRows(parent, src_row, 1, parent, row);
 }
 
 Qt::DropActions ProtoTreeModel::supportedDropActions() const {

@@ -40,14 +40,13 @@ public:
   bool setHeaderData(int section, Qt::Orientation orientation,
                      const QVariant& value, int role = Qt::DisplayRole) override;
 
-  bool insertColumns(int position, int columns,
-                     const QModelIndex& parent = QModelIndex()) override;
-  bool removeColumns(int position, int columns,
-                     const QModelIndex& parent = QModelIndex()) override;
   bool insertRows(int position, int rows,
                   const QModelIndex& parent = QModelIndex()) override;
   bool removeRows(int position, int rows,
                   const QModelIndex& parent = QModelIndex()) override;
+  bool moveRows(const QModelIndex &sourceParent, int sourceRow, int count,
+                        const QModelIndex &destinationParent, int destinationChild) override;
+
   QStringList mimeTypes() const override;
   QMimeData* mimeData(const QModelIndexList& indexes) const override;
   bool canDropMimeData(const QMimeData* data, Qt::DropAction action,
