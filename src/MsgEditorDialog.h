@@ -46,6 +46,7 @@ public:
     void initDialogByMessage(const ::google::protobuf::Message& message);
     const ::google::protobuf::Message& getMessage();
 
+
 private:
     void updateGUIData();
 
@@ -56,6 +57,7 @@ private slots:
     void handleJsonParseBtnClicked();
     void handleTabBarClicked(int index);
     void handleTextEditTextChange();
+    void handleCustomContextMenuRequested(const QPoint& pos);
 private:
     ::google::protobuf::Message* m_pMessage = nullptr;
     CJsonHighlighter* m_highlighter;

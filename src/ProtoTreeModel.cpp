@@ -1,5 +1,4 @@
 #include "ProtoTreeModel.h"
-#include <list>
 #include <QtGui>
 
 static auto TREE_NODE_MIME_TYPE = "application/x-treenode";
@@ -138,9 +137,6 @@ QVariant ProtoTreeModel::headerData(int section, Qt::Orientation orientation,
 }
 
 QModelIndex ProtoTreeModel::index(int row, int column, const QModelIndex& parent) const {
-  if (parent.isValid() && parent.column() != 0)
-    return QModelIndex();
-
   ProtoTreeItem* parentItem = getItem(parent);
 
   ProtoTreeItem* childItem = parentItem->child(row);
@@ -156,7 +152,6 @@ bool ProtoTreeModel::insertRows(int position, int rows, const QModelIndex& paren
   beginInsertRows(parent, position, position + rows - 1);
   bool success = parentItem->insertChildren(position, rows, rootItem->columnCount());
   endInsertRows();
-
   return success;
 }
 
@@ -182,18 +177,45 @@ bool ProtoTreeModel::removeRows(int position, int rows, const QModelIndex& paren
   return success;
 }
 
-bool ProtoTreeModel::moveRows(const QModelIndex &sourceParent, int sourceRow, int count,
-                              const QModelIndex &destinationParent, int destinationChild) {
-  ProtoTreeItem* parentItem = getItem(destinationParent);
-  beginMoveRows(sourceParent, sourceRow, sourceRow + count - 1, destinationParent, destinationChild);
-  bool success = parentItem->insertChildren(destinationChild, 1, kColumnSize);
+bool ProtoTreeModel::moveRows(const QModelIndex& sourceParent, int sourceRow, int count,
+                              const QModelIndex& destinationParent, int destinationChild) {
+  ProtoTreeItem* sourceParentItem = getItem(sourceParent);
+  ProtoTreeItem* destinationParentItem = getItem(destinationParent);
+  if (sourceParentItem == nullptr
+      || destinationParentItem == nullptr) {
+    return false;
+  }
+  bool success = beginMoveRows(sourceParent, sourceRow, sourceRow + count - 1, destinationParent, destinationChild);
+  if (!success) {
+    return false;
+  }
+  auto listItems = sourceParentItem->takeChildren(sourceRow, count);
+  if (sourceParentItem == destinationParentItem
+      && destinationChild > sourceRow) {
+    success = destinationParentItem->insertChildren(destinationChild - count, listItems);
+  } else {
+    success = destinationParentItem->insertChildren(destinationChild, listItems);
+  }
+
+  for (int i = 0; i < sourceParentItem->childCount(); ++i) {
+    auto child = sourceParentItem->child(i);
+    child->setData(kColumnTypeName, QString().sprintf("%d", i));
+  }
+
+  if (sourceParentItem != destinationParentItem) {
+    for (int i = 0; i < destinationParentItem->childCount(); ++i) {
+      auto child = destinationParentItem->child(i);
+      child->setData(kColumnTypeName, QString().sprintf("%d", i));
+    }
+  }
+
   endMoveRows();
 
   return success;
 }
-QStringList ProtoTreeModel::mimeTypes() const
-{
-    return QAbstractItemModel::mimeTypes() << TREE_NODE_MIME_TYPE;
+
+QStringList ProtoTreeModel::mimeTypes() const {
+  return QAbstractItemModel::mimeTypes() << TREE_NODE_MIME_TYPE;
 }
 
 QMimeData* ProtoTreeModel::mimeData(const QModelIndexList& indexes) const {
@@ -205,33 +227,23 @@ QMimeData* ProtoTreeModel::mimeData(const QModelIndexList& indexes) const {
     stream << index.row();
     break;
   }
-//  stream << QCoreApplication::applicationPid();
-//  QList<ProtoTreeItem*> treeItems;
-//  for (const QModelIndex& index : indexes) {
-//    ProtoTreeItem* treeItem = getItem(index);
-//    if (!treeItems.contains(treeItem))
-//      treeItems << treeItem;
-//  }
-//  stream << treeItems.count();
-//  for (ProtoTreeItem* treeItem : treeItems) {
-//    stream << reinterpret_cast<int64_t>(treeItem);
-//  }
   mimeData->setData(TREE_NODE_MIME_TYPE, data);
   return mimeData;
 }
 
 bool ProtoTreeModel::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const {
-  if (action == Qt::MoveAction
-      && row != -1 && column != -1) {
-    return true;
-  }
-  return false;
-}
-
-bool ProtoTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) {
   if (!data->hasFormat(TREE_NODE_MIME_TYPE))
     return false;
 
+  if (action != Qt::MoveAction
+      || row == -1 || column == -1) {
+    return false;
+  }
+
+  return true;
+}
+
+bool ProtoTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) {
   QByteArray byteData = data->data(TREE_NODE_MIME_TYPE);
   QDataStream stream(&byteData, QIODevice::ReadOnly);
   int64_t senderPid;
@@ -242,11 +254,11 @@ bool ProtoTreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, 
   int32_t src_row;
   stream >> src_row;
 
-  if (src_row == row) {
+  if (src_row == row)
     return false;
-  }
 
-  return moveRows(parent, src_row, 1, parent, row);
+  bool success = moveRows(parent, src_row, 1, parent, row);
+  return success;
 }
 
 Qt::DropActions ProtoTreeModel::supportedDropActions() const {
@@ -309,7 +321,7 @@ void ProtoTreeModel::setupModelData(const ::google::protobuf::Message& data, Pro
     keyType = QVariant(typeName);
 
     if (fieldDesc->is_repeated()) {
-      keyType = QVariant("repeated " + typeName);
+      keyType = QVariant("repeated");
       child->setFlag(Qt::ItemIsDropEnabled);
     } else if (google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE == fieldDesc->cpp_type()) {
 #pragma push_macro("GetMessage")
@@ -323,7 +335,10 @@ void ProtoTreeModel::setupModelData(const ::google::protobuf::Message& data, Pro
     }
 
     child->setData(kColumnTypeName, keyIndex);
+
     child->setData(kColumnTypeType, keyType);
+    child->setData(kColumnTypeType, QColor("#569ad6"), Qt::ForegroundRole);
+
     child->setData(kColumnTypeValue, keyData);
     child->setData(kColumnTypeValue, fieldDesc->cpp_type(), Qt::UserRole);
     if (fieldDesc->cpp_type() == google::protobuf::FieldDescriptor::CPPTYPE_ENUM) {
@@ -349,7 +364,10 @@ void ProtoTreeModel::setupModelData(const ::google::protobuf::Message& data, Pro
         child->insertChildren(child->childCount(), 1, rootItem->columnCount());
         ProtoTreeItem* repeatedChild = child->child(child->childCount() - 1);
         repeatedChild->setData(kColumnTypeName, keyIndex);
+
         repeatedChild->setData(kColumnTypeType, keyType);
+        repeatedChild->setData(kColumnTypeType, QColor("#569ad6"), Qt::ForegroundRole);
+
         repeatedChild->setData(kColumnTypeValue, fieldDesc->cpp_type(), Qt::UserRole);
         repeatedChild->setFlag(Qt::ItemIsDragEnabled);
 
@@ -423,7 +441,7 @@ void ProtoTreeModel::loadModelData(google::protobuf::Message& data, ProtoTreeIte
         case google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE:
           {
             auto* subData = data.GetReflection()->AddMessage(&data, fieldDesc);
-            loadModelData(*subData, child);
+            loadModelData(*subData, subChild);
           }
           break;
         default:
@@ -485,4 +503,8 @@ ProtoTreeItem* ProtoTreeModel::getRootItem() {
 
 void ProtoTreeModel::getMessage(google::protobuf::Message& data) {
   loadModelData(data, rootItem);
+}
+
+const ProtoTreeItem* ProtoTreeModel::item(const QModelIndex& index) const {
+  return getItem(index);
 }

@@ -46,7 +46,6 @@ public:
                   const QModelIndex& parent = QModelIndex()) override;
   bool moveRows(const QModelIndex &sourceParent, int sourceRow, int count,
                         const QModelIndex &destinationParent, int destinationChild) override;
-
   QStringList mimeTypes() const override;
   QMimeData* mimeData(const QModelIndexList& indexes) const override;
   bool canDropMimeData(const QMimeData* data, Qt::DropAction action,
@@ -59,6 +58,8 @@ public:
 
   ProtoTreeItem* getRootItem();
   void getMessage(google::protobuf::Message& data);
+
+  const ProtoTreeItem* item(const QModelIndex& index) const;
 
 private:
   void setupModelData(const ::google::protobuf::Message& data, ProtoTreeItem* parent);

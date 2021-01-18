@@ -2,138 +2,201 @@
 #include "LineEdit.h"
 #include "JsonHighlighter.h"
 
-#include <QFormLayout>
 #include <QListWidget>
 #include <QComboBox>
 #include <QFileDialog>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <qpainter.h>
 #include <QTextEdit>
 
-
 #include "ConfigHelper.h"
-#include "google/protobuf/repeated_field.h"
 #include "ProtoManager.h"
 #include "ProtoTreeModel.h"
 
-//#569ad6
-
 class ProtoTreeModel;
 
-CMsgEditorDialog::CMsgEditorDialog(QWidget *parent)
-    : QDialog(parent, Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint) {
-    setupUi(this);
+CMsgEditorDialog::CMsgEditorDialog(QWidget* parent)
+  : QDialog(parent, Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint) {
+  setupUi(this);
 
-    connect(btnBrowse, SIGNAL(clicked()), this, SLOT(handleJsonBrowseBtnClicked()));
-    connect(btnParse, SIGNAL(clicked()), this, SLOT(handleJsonParseBtnClicked()));
-    connect(tabWidget, SIGNAL(tabBarClicked(int)), this, SLOT(handleTabBarClicked(int)));
-    connect(textEdit, SIGNAL(textChanged()), this, SLOT(handleTextEditTextChange()));
-    connect(okButton, SIGNAL(clicked()), this, SLOT(handleApplyButtonClicked()));
+  connect(btnBrowse, SIGNAL(clicked()), this, SLOT(handleJsonBrowseBtnClicked()));
+  connect(btnParse, SIGNAL(clicked()), this, SLOT(handleJsonParseBtnClicked()));
+  connect(tabWidget, SIGNAL(tabBarClicked(int)), this, SLOT(handleTabBarClicked(int)));
+  connect(textEdit, SIGNAL(textChanged()), this, SLOT(handleTextEditTextChange()));
+  connect(okButton, SIGNAL(clicked()), this, SLOT(handleApplyButtonClicked()));
 
-    m_highlighter = new CJsonHighlighter(textEdit->document());
+  m_highlighter = new CJsonHighlighter(textEdit->document());
+  treeView->setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(treeView, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(handleCustomContextMenuRequested(const QPoint&)));
 }
 
 CMsgEditorDialog::~CMsgEditorDialog() {
-    delete m_pMessage;
-    m_pMessage = nullptr;
+  delete m_pMessage;
+  m_pMessage = nullptr;
 }
 
 void CMsgEditorDialog::initDialogByMessage(const ::google::protobuf::Message& message) {
-    m_pMessage = message.New();
-    m_pMessage->CopyFrom(message);
+  m_pMessage = message.New();
+  m_pMessage->CopyFrom(message);
 
-    m_isAnyType = "google.protobuf.Any" == m_pMessage->GetTypeName();
+  m_isAnyType = "google.protobuf.Any" == m_pMessage->GetTypeName();
 
-    // 设置标题
-    labelTitle->setText(m_pMessage->GetTypeName().c_str());
+  // 设置标题
+  labelTitle->setText(m_pMessage->GetTypeName().c_str());
 
-    if (!m_isAnyType) {
-      QAbstractItemModel* oldModel = treeView->model();
-      if (oldModel != nullptr) {
-        oldModel->disconnect(SIGNAL(dataChanged(QModelIndex, QModelIndex)));
-      }
-
-      auto* model = new ProtoTreeModel(message);
-      QItemSelectionModel* selectionModel = treeView->selectionModel();
-      connect(model, SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(treeViewDataChanged()));
-      treeView->setItemDelegate(&m_delegate);
-      treeView->setModel(model);
-      treeView->reset();
-      delete selectionModel;
-      delete oldModel;
-
-      treeView->expandAll();
-      for (int i = 0; i < treeView->model()->columnCount(); i++) {
-        treeView->resizeColumnToContents(i);
-      }
-    } else {
-        tabWidget->removeTab(static_cast<int>(ETabIdx::eGUI));
+  if (!m_isAnyType) {
+    QAbstractItemModel* oldModel = treeView->model();
+    if (oldModel != nullptr) {
+      oldModel->disconnect(SIGNAL(dataChanged(QModelIndex, QModelIndex)));
     }
+
+    auto* model = new ProtoTreeModel(message);
+    QItemSelectionModel* selectionModel = treeView->selectionModel();
+    connect(model, SIGNAL(dataChanged(QModelIndex, QModelIndex)), this, SLOT(treeViewDataChanged()));
+    treeView->setItemDelegate(&m_delegate);
+    treeView->setModel(model);
+    treeView->reset();
+    delete selectionModel;
+    delete oldModel;
+
+    treeView->expandAll();
+    for (int i = 0; i < treeView->model()->columnCount(); i++) {
+      treeView->resizeColumnToContents(i);
+    }
+  } else {
+    tabWidget->removeTab(static_cast<int>(ETabIdx::eGUI));
+  }
 }
 
 const ::google::protobuf::Message& CMsgEditorDialog::getMessage() {
-    return *m_pMessage;
+  return *m_pMessage;
+}
+
+void CMsgEditorDialog::handleCustomContextMenuRequested(const QPoint& pos) {
+  QModelIndex index = treeView->indexAt(pos);
+  if (!index.isValid()) {
+    return;
+  }
+
+  index = index.siblingAtColumn(0);
+
+  ProtoTreeModel* model = static_cast<ProtoTreeModel*>(treeView->model());
+  const ProtoTreeItem* item = model->item(index);
+  auto itemType = (item->data(ProtoTreeModel::kColumnTypeType, Qt::DisplayRole).toString());
+
+  auto parentIndex = model->parent(index);
+  const ProtoTreeItem* parentItem = model->item(parentIndex);
+
+  auto parentType = (parentItem->data(ProtoTreeModel::kColumnTypeType, Qt::DisplayRole).toString());
+
+  if (parentType != "repeated"
+      && itemType != "repeated") {
+      return;
+  }
+
+  QMenu* popMenu = new QMenu(this);
+
+  if (itemType == "repeated") {
+    QAction* pAdd = new QAction(tr("Add"), this);
+    popMenu->addAction(pAdd);
+    connect(pAdd, &QAction::triggered, this, [=]() {
+      model->insertRow(item->childCount(), index);
+
+      QModelIndex child = model->index(item->childCount() - 1, ProtoTreeModel::kColumnTypeName, index);
+      model->setData(child, QVariant("Name"));
+
+      child = model->index(item->childCount() - 1, ProtoTreeModel::kColumnTypeType, index);
+      model->setData(child, QVariant("Type"));
+
+      child = model->index(item->childCount() - 1, ProtoTreeModel::kColumnTypeValue, index);
+      model->setData(child, QVariant("Value"));
+    });
+  }
+
+  if (parentType == "repeated") {
+    QAction* pInsert = new QAction(tr("Insert"), this);
+    popMenu->addAction(pInsert);
+    connect(pInsert, SIGNAL(triggered()), this, SLOT(handleListLogActionAddToIgnoreList()));
+
+    QAction* pDuplicate = new QAction(tr("Duplicate"), this);
+    popMenu->addAction(pDuplicate);
+    connect(pDuplicate, &QAction::triggered, this, [=]() {
+            });
+
+    QAction* pDel = new QAction(tr("Delete"), this);
+    popMenu->addAction(pDel);
+    connect(pDel, &QAction::triggered, this, [=]() {
+      model->removeRow(index.row(), parentIndex);
+            });
+  }
+
+  popMenu->exec(QCursor::pos());
+  delete popMenu;
 }
 
 void CMsgEditorDialog::handleJsonBrowseBtnClicked() {
-    QString jsonFileName = QFileDialog::getOpenFileName(this,
-                                                  tr("Open json file"),
-                                                  QString(),
-                                                  "Json (*.json *txt)");
+  QString jsonFileName = QFileDialog::getOpenFileName(this,
+                                                      tr("Open json file"),
+                                                      QString(),
+                                                      "Json (*.json *txt)");
 
-    if (jsonFileName.isEmpty()) {
-        return;
-    }
+  if (jsonFileName.isEmpty()) {
+    return;
+  }
 
-    QFile jsonFile(jsonFileName);
-    jsonFile.open(QIODevice::ReadOnly | QIODevice::Text);
-    if (!jsonFile.isOpen()) {
-        QMessageBox::warning(nullptr, "Open error", "cannot open" + jsonFileName);
-        return;
-    }
+  QFile jsonFile(jsonFileName);
+  jsonFile.open(QIODevice::ReadOnly | QIODevice::Text);
+  if (!jsonFile.isOpen()) {
+    QMessageBox::warning(nullptr, "Open error", "cannot open" + jsonFileName);
+    return;
+  }
 
-    if (!jsonFile.isReadable()) {
-        QMessageBox::warning(nullptr, "Open error", "cannot read" + jsonFileName);
-        return;
-    }
+  if (!jsonFile.isReadable()) {
+    QMessageBox::warning(nullptr, "Open error", "cannot read" + jsonFileName);
+    return;
+  }
 
-    textEdit->setText(jsonFile.readAll());
+  textEdit->setText(jsonFile.readAll());
 }
 
 void CMsgEditorDialog::handleJsonParseBtnClicked() {
-    auto status = google::protobuf::util::JsonStringToMessage(textEdit->toPlainText().toStdString(), m_pMessage);
-    if (status.ok()) {
-        btnParse->setText("Parsed");
-        btnParse->setDisabled(true);
-        // 刷新
-        if (!m_isAnyType) {
-            updateGUIData();
-        }
-    } else {
-        QMessageBox::warning(nullptr, "Parse error", status.error_message().data());
+  auto status = google::protobuf::util::JsonStringToMessage(textEdit->toPlainText().toStdString(), m_pMessage);
+  if (status.ok()) {
+    btnParse->setText("Parsed");
+    btnParse->setDisabled(true);
+    // 刷新
+    if (!m_isAnyType) {
+      updateGUIData();
     }
+  } else {
+    QMessageBox::warning(nullptr, "Parse error", status.error_message().data());
+  }
 }
 
 void CMsgEditorDialog::handleTabBarClicked(int index) {
-    // 切换到json编辑分页
-    if (static_cast<int>(ETabIdx::eJSON) == index) {
-        std::string msgStr;
-        auto status = google::protobuf::util::MessageToJsonString(*m_pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
+  // 切换到json编辑分页
+  if (static_cast<int>(ETabIdx::eJSON) == index) {
+    auto* model = static_cast<ProtoTreeModel*>(treeView->model());
+    m_pMessage->Clear();
+    model->getMessage(*m_pMessage);
+    std::string msgStr;
+    auto status = google::protobuf::util::MessageToJsonString(*m_pMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
 
-        if (status.ok()) {
-            textEdit->setText(msgStr.c_str());
-            btnParse->setText("Parsed");
-            btnParse->setDisabled(true);
-        } else {
-            QMessageBox::warning(nullptr, "Serialize error", status.error_message().data());
-        }
+    if (status.ok()) {
+      textEdit->setText(msgStr.c_str());
+      btnParse->setText("Parsed");
+      btnParse->setDisabled(true);
+    } else {
+      QMessageBox::warning(nullptr, "Serialize error", status.error_message().data());
     }
+  }
 }
 
 void CMsgEditorDialog::handleTextEditTextChange() {
-    btnParse->setText("Parse");
-    btnParse->setDisabled(false);
-    btnParse->setDefault(true);
+  btnParse->setText("Parse");
+  btnParse->setDisabled(false);
+  btnParse->setDefault(true);
 }
 
 void CMsgEditorDialog::updateGUIData() {
@@ -157,20 +220,21 @@ void CMsgEditorDialog::updateGUIData() {
 }
 
 void CMsgEditorDialog::handleApplyButtonClicked() {
-    if (tabWidget->currentIndex() != static_cast<int>(ETabIdx::eGUI)) {
-        if (btnParse->isEnabled()) {
-            handleJsonParseBtnClicked();
-        }
-
-        if (btnParse->isEnabled()) {
-            return;
-        }
+  if (tabWidget->currentIndex() != static_cast<int>(ETabIdx::eGUI)) {
+    if (btnParse->isEnabled()) {
+      handleJsonParseBtnClicked();
     }
 
-//    auto* model = static_cast<ProtoTreeModel*>(treeView->model());
-//    model->getMessage(*m_pMessage);
+    if (btnParse->isEnabled()) {
+      return;
+    }
+  } else {
+    auto* model = static_cast<ProtoTreeModel*>(treeView->model());
+    m_pMessage->Clear();
+    model->getMessage(*m_pMessage);
+  }
 
-    accept();
+  accept();
 }
 
 void CMsgEditorDialog::treeViewDataChanged() {
@@ -258,7 +322,8 @@ void QtTreeViewItemDelegate::paint(QPainter* painter, const QStyleOptionViewItem
         buttonOption.state |= ((index.flags() & Qt::ItemIsEditable) ? QStyle::State_Enabled : QStyle::State_ReadOnly);
         buttonOption.state |= (checked ? QStyle::State_On : QStyle::State_Off);
         QRect checkBoxRect = QApplication::style()->subElementRect(QStyle::SE_CheckBoxIndicator, &buttonOption); // Only used to get size of native checkbox widget.
-        buttonOption.rect = QStyle::alignedRect(option.direction, Qt::AlignLeft, checkBoxRect.size(), option.rect); // Our checkbox rect.
+        buttonOption.rect = QStyle::alignedRect(option.direction, Qt::AlignLeft | Qt::AlignVCenter, checkBoxRect.size(), option.rect); // Our checkbox rect.
+        buttonOption.rect.adjust(3, 0, 0, 0);
         buttonOption.palette.setColor(QPalette::Window, Qt::white);
         QApplication::style()->drawControl(QStyle::CE_CheckBox, &buttonOption, painter);
         return;

@@ -12,6 +12,20 @@ ProtoTreeItem::~ProtoTreeItem() {
   qDeleteAll(childItems);
 }
 
+void ProtoTreeItem::copyFrom(const ProtoTreeItem& item) {
+  for (int i = 0; i < childCount(); ++i) {
+    if (i > item.childCount()) {
+      break;
+    }
+
+    childItems[i]->copyFrom(*item.childItems[i]);
+  }
+
+  itemData = item.itemData;
+  values = item.values;
+  m_flags = item.m_flags;
+}
+
 ProtoTreeItem* ProtoTreeItem::child(int number) {
   return childItems.value(number);
 }
@@ -26,6 +40,20 @@ int ProtoTreeItem::childNumber() const {
   }
 
   return 0;
+}
+
+QList<ProtoTreeItem*> ProtoTreeItem::takeChildren(int position, int count) {
+  QList<ProtoTreeItem*> list;
+  if (position < 0 || position + count > childItems.size()) {
+    return list;
+  }
+
+
+  for (int row = 0; row < count; ++row) {
+    list.append(childItems.takeAt(position));
+  }
+
+  return list;
 }
 
 int ProtoTreeItem::columnCount() const {
@@ -60,6 +88,19 @@ bool ProtoTreeItem::insertChildren(int position, int count, int columns) {
     QVector<QVariant> data(columns);
     ProtoTreeItem* item = new ProtoTreeItem(data, this);
     childItems.insert(position, item);
+  }
+
+  return true;
+}
+
+bool ProtoTreeItem::insertChildren(int position, QList<ProtoTreeItem*> items) {
+  if (position < 0 || position > childItems.size()) {
+    return false;
+  }
+
+  auto it = items.rbegin();
+  for (; it != items.rend(); ++it) {
+    childItems.insert(position, *it);
   }
 
   return true;
