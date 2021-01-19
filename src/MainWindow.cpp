@@ -35,7 +35,7 @@ struct ECVersion
     int main;
     int sub;
     int build;
-} const g_version = { 3 , 2 , 0 };
+} const g_version = { 4 , 0 , 0 };
 
 CMainWindow::CMainWindow(QWidget* parent)
     : QMainWindow(parent) {
