@@ -22,9 +22,10 @@ CMsgEditorDialog::CMsgEditorDialog(QWidget* parent)
 
   connect(btnBrowse, SIGNAL(clicked()), this, SLOT(handleJsonBrowseBtnClicked()));
   connect(btnParse, SIGNAL(clicked()), this, SLOT(handleJsonParseBtnClicked()));
-  connect(tabWidget, SIGNAL(tabBarClicked(int)), this, SLOT(handleTabBarClicked(int)));
+  connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT(handleTabBarChanged(int)));
   connect(textEdit, SIGNAL(textChanged()), this, SLOT(handleTextEditTextChange()));
   connect(okButton, SIGNAL(clicked()), this, SLOT(handleApplyButtonClicked()));
+  connect(treeView, SIGNAL(expanded(const QModelIndex&)), this, SLOT(handleTreeViewExpanded(const QModelIndex&)));
 
   m_highlighter = new CJsonHighlighter(textEdit->document());
   treeView->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -61,7 +62,7 @@ void CMsgEditorDialog::initDialogByMessage(const ::google::protobuf::Message& me
     delete oldModel;
 
     treeView->expandAll();
-    for (int i = 0; i < treeView->model()->columnCount(); i++) {
+    for (int i = 1; i < treeView->model()->columnCount(); i++) {
       treeView->resizeColumnToContents(i);
     }
   } else {
@@ -96,43 +97,60 @@ void CMsgEditorDialog::handleCustomContextMenuRequested(const QPoint& pos) {
   }
 
   QMenu* popMenu = new QMenu(this);
-
   if (itemType == "repeated") {
     QAction* pAdd = new QAction(tr("Add"), this);
     popMenu->addAction(pAdd);
     connect(pAdd, &QAction::triggered, this, [=]() {
-      model->insertRow(item->childCount(), index);
+      if (!model->insertModelData(m_pMessage->GetDescriptor(), index, item->childCount())) {
+        QMessageBox::warning(nullptr, "Opt error", "Add item failed!");
+      }
+    });
+    
+    QAction* pClear = new QAction(tr("Clear"), this);
+    popMenu->addAction(pClear);
+    connect(pClear, &QAction::triggered, this, [=]() {
+      if (QMessageBox::No == QMessageBox::question(this, "Warning", "Are you sure to clear it?")) {
+        return;
+      }
 
-      QModelIndex child = model->index(item->childCount() - 1, ProtoTreeModel::kColumnTypeName, index);
-      model->setData(child, QVariant("Name"));
-
-      child = model->index(item->childCount() - 1, ProtoTreeModel::kColumnTypeType, index);
-      model->setData(child, QVariant("Type"));
-
-      child = model->index(item->childCount() - 1, ProtoTreeModel::kColumnTypeValue, index);
-      model->setData(child, QVariant("Value"));
+      if (!model->removeRows(0, item->childCount(), index)) {
+        QMessageBox::warning(this, "Opt error", "Clear item failed!");
+      }
     });
   }
 
   if (parentType == "repeated") {
     QAction* pInsert = new QAction(tr("Insert"), this);
     popMenu->addAction(pInsert);
-    connect(pInsert, SIGNAL(triggered()), this, SLOT(handleListLogActionAddToIgnoreList()));
+    connect(pInsert, &QAction::triggered, this, [=]() {
+      if (!model->insertModelData(m_pMessage->GetDescriptor(), parentIndex, index.row())) {
+        QMessageBox::warning(this, "Opt error", "Insert item failed!");
+      }
+    });
 
     QAction* pDuplicate = new QAction(tr("Duplicate"), this);
     popMenu->addAction(pDuplicate);
     connect(pDuplicate, &QAction::triggered, this, [=]() {
+      if (!model->duplicateModelData(parentIndex, index.row())) {
+        QMessageBox::warning(this, "Opt error", "Duplicate item failed!");
+      }
             });
 
     QAction* pDel = new QAction(tr("Delete"), this);
     popMenu->addAction(pDel);
     connect(pDel, &QAction::triggered, this, [=]() {
-      model->removeRow(index.row(), parentIndex);
+      if (!model->removeModelData(parentIndex, index.row())) {
+        QMessageBox::warning(this, "Opt error", "Remove item failed!");
+      }
             });
   }
 
   popMenu->exec(QCursor::pos());
   delete popMenu;
+}
+
+void CMsgEditorDialog::handleTreeViewExpanded(const QModelIndex& index) {
+  treeView->resizeColumnToContents(0);
 }
 
 void CMsgEditorDialog::handleJsonBrowseBtnClicked() {
@@ -165,6 +183,8 @@ void CMsgEditorDialog::handleJsonParseBtnClicked() {
   if (status.ok()) {
     btnParse->setText("Parsed");
     btnParse->setDisabled(true);
+    okButton->setDisabled(false);
+    okButton->setDefault(true);
     // 刷新
     if (!m_isAnyType) {
       updateGUIData();
@@ -174,7 +194,7 @@ void CMsgEditorDialog::handleJsonParseBtnClicked() {
   }
 }
 
-void CMsgEditorDialog::handleTabBarClicked(int index) {
+void CMsgEditorDialog::handleTabBarChanged(int index) {
   // 切换到json编辑分页
   if (static_cast<int>(ETabIdx::eJSON) == index) {
     auto* model = static_cast<ProtoTreeModel*>(treeView->model());
@@ -191,12 +211,14 @@ void CMsgEditorDialog::handleTabBarClicked(int index) {
       QMessageBox::warning(nullptr, "Serialize error", status.error_message().data());
     }
   }
+  okButton->setDisabled(false);
 }
 
 void CMsgEditorDialog::handleTextEditTextChange() {
   btnParse->setText("Parse");
   btnParse->setDisabled(false);
   btnParse->setDefault(true);
+  okButton->setDisabled(true);
 }
 
 void CMsgEditorDialog::updateGUIData() {
@@ -214,7 +236,7 @@ void CMsgEditorDialog::updateGUIData() {
   delete oldModel;
 
   treeView->expandAll();
-  for (int i = 0; i < treeView->model()->columnCount(); i++) {
+  for (int i = 1; i < treeView->model()->columnCount(); i++) {
     treeView->resizeColumnToContents(i);
   }
 }
@@ -276,10 +298,6 @@ QWidget* QtTreeViewItemDelegate::createEditor(QWidget* parent, const QStyleOptio
     }
   }
   return QStyledItemDelegate::createEditor(parent, option, index);
-}
-
-void QtTreeViewItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const {
-  QStyledItemDelegate::setEditorData(editor, index);
 }
 
 void QtTreeViewItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const {

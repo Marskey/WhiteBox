@@ -37,6 +37,8 @@ public:
     bool setData(int column, const QVariant &value, int role = Qt::DisplayRole);
     void setFlag(Qt::ItemFlags flags);
     Qt::ItemFlags getFlag();
+
+    void getIndexOfMessage(std::list<int32_t>& rows);
 private:
     QList<ProtoTreeItem*> childItems;
     QVector<QVariant> itemData;

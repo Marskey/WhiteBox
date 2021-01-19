@@ -61,12 +61,20 @@ public:
 
   const ProtoTreeItem* item(const QModelIndex& index) const;
 
+  bool insertModelData(const google::protobuf::Descriptor* desc, const QModelIndex& parent, int32_t row);
+  bool duplicateModelData(const QModelIndex& parent, int32_t row);
+  bool removeModelData(const QModelIndex& parent, int32_t row);
+
 private:
   void setupModelData(const ::google::protobuf::Message& data, ProtoTreeItem* parent);
   void loadModelData(google::protobuf::Message& data, ProtoTreeItem* parent);
 
+  void duplicateTreeItem(ProtoTreeItem* source, ProtoTreeItem* destination, const QModelIndex& parent);
+
+  bool insertMessageData(const google::protobuf::Descriptor* desc, const QModelIndex& parent);
+
   ProtoTreeItem* getItem(const QModelIndex& index) const;
-  std::string getMsgTypeName(const google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd);
+  std::string getMsgTypeName(const google::protobuf::FieldDescriptor* pFd);
 
   QVariant getMsgValue(const google::protobuf::Message& data, const google::protobuf::FieldDescriptor* fieldDesc);
   QVariant getMsgValue(const google::protobuf::Message& data, const google::protobuf::FieldDescriptor* fieldDesc, int index);

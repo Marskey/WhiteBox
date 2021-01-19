@@ -17,7 +17,6 @@ public:
   QtTreeViewItemDelegate(QWidget* parent = 0) : QStyledItemDelegate(parent) {}
 
   QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const Q_DECL_OVERRIDE;
-  void setEditorData(QWidget* editor, const QModelIndex& index) const Q_DECL_OVERRIDE;
   void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const Q_DECL_OVERRIDE;
   void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const Q_DECL_OVERRIDE;
   QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
@@ -46,7 +45,6 @@ public:
     void initDialogByMessage(const ::google::protobuf::Message& message);
     const ::google::protobuf::Message& getMessage();
 
-
 private:
     void updateGUIData();
 
@@ -55,9 +53,10 @@ private slots:
     void treeViewDataChanged();
     void handleJsonBrowseBtnClicked();
     void handleJsonParseBtnClicked();
-    void handleTabBarClicked(int index);
+    void handleTabBarChanged(int index);
     void handleTextEditTextChange();
     void handleCustomContextMenuRequested(const QPoint& pos);
+    void handleTreeViewExpanded(const QModelIndex& index);
 private:
     ::google::protobuf::Message* m_pMessage = nullptr;
     CJsonHighlighter* m_highlighter;

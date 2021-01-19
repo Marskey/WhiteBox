@@ -13,14 +13,6 @@ ProtoTreeItem::~ProtoTreeItem() {
 }
 
 void ProtoTreeItem::copyFrom(const ProtoTreeItem& item) {
-  for (int i = 0; i < childCount(); ++i) {
-    if (i > item.childCount()) {
-      break;
-    }
-
-    childItems[i]->copyFrom(*item.childItems[i]);
-  }
-
   itemData = item.itemData;
   values = item.values;
   m_flags = item.m_flags;
@@ -204,4 +196,13 @@ void ProtoTreeItem::setFlag(Qt::ItemFlags flags) {
 
 Qt::ItemFlags ProtoTreeItem::getFlag() {
   return m_flags;
+}
+
+void ProtoTreeItem::getIndexOfMessage(std::list<int32_t>& rows) {
+  if (parentItem) {
+    parentItem->getIndexOfMessage(rows);
+
+    if ((m_flags & Qt::ItemIsDragEnabled) != Qt::ItemIsDragEnabled)
+      rows.emplace_back(childNumber());
+  }
 }

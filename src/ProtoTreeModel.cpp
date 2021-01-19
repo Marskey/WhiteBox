@@ -32,10 +32,6 @@ QVariant ProtoTreeModel::data(const QModelIndex& index, int role) const {
   }
 
   ProtoTreeItem* item = getItem(index);
-  if (item == nullptr) {
-    return QVariant();
-  }
-
   return item->data(index.column(), role);
 }
 
@@ -46,9 +42,7 @@ Qt::ItemFlags ProtoTreeModel::flags(const QModelIndex& index) const {
 
   Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
   ProtoTreeItem* item = getItem(index);
-  if (item != nullptr) {
-    flags |= item->getFlag();
-  }
+  flags |= item->getFlag();
 
   if (index.column() != kColumnTypeValue) {
     flags = flags & ~Qt::ItemIsEditable;
@@ -67,7 +61,7 @@ ProtoTreeItem* ProtoTreeModel::getItem(const QModelIndex& index) const {
   return rootItem;
 }
 
-std::string ProtoTreeModel::getMsgTypeName(const google::protobuf::Message& message, const google::protobuf::FieldDescriptor* pFd) {
+std::string ProtoTreeModel::getMsgTypeName(const google::protobuf::FieldDescriptor* pFd) {
   if (pFd->type() == google::protobuf::FieldDescriptor::TYPE_MESSAGE) {
     const google::protobuf::Descriptor* desc = pFd->message_type();
     return desc->name();
@@ -198,14 +192,14 @@ bool ProtoTreeModel::moveRows(const QModelIndex& sourceParent, int sourceRow, in
   }
 
   for (int i = 0; i < sourceParentItem->childCount(); ++i) {
-    auto child = sourceParentItem->child(i);
-    child->setData(kColumnTypeName, QString().sprintf("%d", i));
+    sourceParentItem->child(i)->setData(kColumnTypeName
+                                        , QString().sprintf("%d", i));
   }
 
   if (sourceParentItem != destinationParentItem) {
     for (int i = 0; i < destinationParentItem->childCount(); ++i) {
-      auto child = destinationParentItem->child(i);
-      child->setData(kColumnTypeName, QString().sprintf("%d", i));
+      destinationParentItem->child(i)->setData(kColumnTypeName
+                                               , QString().sprintf("%d", i));
     }
   }
 
@@ -317,7 +311,7 @@ void ProtoTreeModel::setupModelData(const ::google::protobuf::Message& data, Pro
     QVariant keyIndex, keyData, keyType;
 
     keyIndex = QVariant(tr(fieldDesc->name().c_str()));
-    QString typeName = getMsgTypeName(data, fieldDesc).c_str();
+    QString typeName = getMsgTypeName(fieldDesc).c_str();
     keyType = QVariant(typeName);
 
     if (fieldDesc->is_repeated()) {
@@ -497,6 +491,100 @@ void ProtoTreeModel::loadModelData(google::protobuf::Message& data, ProtoTreeIte
   }
 }
 
+void ProtoTreeModel::duplicateTreeItem(ProtoTreeItem* source, ProtoTreeItem* destination, const QModelIndex& parent) {
+  for (int i = 0; i < source->childCount(); ++i) {
+    insertRow(i, parent);
+    auto* sourceChild = source->child(i);
+    auto* destinationChild = destination->child(i);
+    auto modelIdx = index(i, 0, parent);
+    duplicateTreeItem(sourceChild, destinationChild, modelIdx);
+  }
+
+  destination->copyFrom(*source);
+}
+
+bool ProtoTreeModel::insertMessageData(const google::protobuf::Descriptor* desc, const QModelIndex& parent) {
+  if (!desc) {
+    return false;
+  }
+
+  ProtoTreeItem* parentItem = getItem(parent);
+
+  int fieldCnt = desc->field_count();
+  for (int fieldIdx = 0; fieldIdx < fieldCnt; ++fieldIdx) {
+    const google::protobuf::FieldDescriptor* targetFieldDesc = desc->field(fieldIdx);
+    if (targetFieldDesc == nullptr) {
+      continue;
+    }
+
+    insertRow(parentItem->childCount(), parent);
+    ProtoTreeItem* fieldItem = parentItem->child(parentItem->childCount() - 1);
+
+    QVariant keyIndex, keyData, keyType;
+    keyIndex = QVariant(tr(targetFieldDesc->name().c_str()));
+    QString typeName = getMsgTypeName(targetFieldDesc).c_str();
+    keyType = QVariant(typeName);
+
+    if (targetFieldDesc->is_repeated()) {
+      keyType = QVariant("repeated");
+      fieldItem->setFlag(Qt::ItemIsDropEnabled);
+    } else if (google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE == targetFieldDesc->cpp_type()) {
+      auto newModelIndex = index(fieldIdx, 0, parent);
+      insertMessageData(targetFieldDesc->message_type(), newModelIndex);
+    } else {
+      fieldItem->setFlag(Qt::ItemIsEditable);
+      switch (targetFieldDesc->cpp_type()) {
+      case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
+        fieldItem->setData(kColumnTypeValue, targetFieldDesc->default_value_int32());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
+        fieldItem->setData(kColumnTypeValue, targetFieldDesc->default_value_int64());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
+        fieldItem->setData(kColumnTypeValue, targetFieldDesc->default_value_uint32());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
+        fieldItem->setData(kColumnTypeValue, targetFieldDesc->default_value_uint64());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE:
+        fieldItem->setData(kColumnTypeValue, targetFieldDesc->default_value_double());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT:
+        fieldItem->setData(kColumnTypeValue, targetFieldDesc->default_value_float());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_BOOL:
+        fieldItem->setData(kColumnTypeValue, targetFieldDesc->default_value_bool());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
+        {
+          QStringList enumData;
+          const auto* enumDesc = targetFieldDesc->enum_type();
+          if (enumDesc) {
+            for (int enumIdx = 0; enumIdx < enumDesc->value_count(); ++enumIdx) {
+              const auto* enumValue = enumDesc->value(enumIdx);
+              if (enumValue) {
+                enumData.append(enumValue->name().c_str());
+              }
+            }
+          }
+          fieldItem->setData(kColumnTypeValue, enumData, Qt::UserRole + 1);
+        }
+        break;
+      default:
+        break;
+      }
+    }
+
+    fieldItem->setData(kColumnTypeName, keyIndex);
+
+    fieldItem->setData(kColumnTypeType, keyType);
+    fieldItem->setData(kColumnTypeType, QColor("#569ad6"), Qt::ForegroundRole);
+
+    fieldItem->setData(kColumnTypeValue, targetFieldDesc->cpp_type(), Qt::UserRole);
+  }
+  return true;
+}
+
 ProtoTreeItem* ProtoTreeModel::getRootItem() {
   return rootItem;
 }
@@ -507,4 +595,137 @@ void ProtoTreeModel::getMessage(google::protobuf::Message& data) {
 
 const ProtoTreeItem* ProtoTreeModel::item(const QModelIndex& index) const {
   return getItem(index);
+}
+
+bool ProtoTreeModel::insertModelData(const google::protobuf::Descriptor* desc, const QModelIndex& parent, int32_t row) {
+  ProtoTreeItem* parentItem = getItem(parent);
+
+  std::list<int32_t> messageIdxs;
+  parentItem->getIndexOfMessage(messageIdxs);
+
+  auto it = messageIdxs.begin();
+  for (size_t i = 0; it != messageIdxs.end(); ++it, ++i) {
+    const auto* fieldDesc = desc->field(*it);
+    if (nullptr == fieldDesc) {
+      return false;
+    }
+
+    if (i != messageIdxs.size() - 1) {
+      if (fieldDesc->cpp_type() == google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE) {
+        desc = fieldDesc->message_type();
+        continue;
+      }
+
+      // repeated 的子会多一层
+      if (!fieldDesc->is_repeated()) {
+        continue;
+      }
+    }
+
+    if (!fieldDesc->is_repeated()) {
+      return false;
+    }
+
+    // reach target
+    insertRow(row, parent);
+    auto subIndex = this->index(row, 0, parent);
+    ProtoTreeItem* repeatedChild = parentItem->child(row);
+    repeatedChild->setData(kColumnTypeName, QVariant(row));
+    // if not insert to last, need rename
+    if (row != parentItem->childCount() - 1) {
+      for (int childIdx = 0; childIdx < parentItem->childCount(); ++childIdx) {
+        parentItem->child(childIdx)->setData(kColumnTypeName
+                                             , QString().sprintf("%d", childIdx));
+      }
+    }
+
+    repeatedChild->setData(kColumnTypeType, getMsgTypeName(fieldDesc).c_str());
+    repeatedChild->setData(kColumnTypeType, QColor("#569ad6"), Qt::ForegroundRole);
+
+    repeatedChild->setData(kColumnTypeValue, fieldDesc->cpp_type(), Qt::UserRole);
+    repeatedChild->setFlag(Qt::ItemIsDragEnabled);
+
+    if (fieldDesc->cpp_type() == google::protobuf::FieldDescriptor::CPPTYPE_MESSAGE) {
+      if (!insertMessageData(fieldDesc->message_type(), subIndex)) {
+        return false;
+      }
+    } else {
+      repeatedChild->setFlag(Qt::ItemIsEditable);
+      switch (fieldDesc->cpp_type()) {
+      case google::protobuf::FieldDescriptor::CPPTYPE_INT32:
+        repeatedChild->setData(kColumnTypeValue, fieldDesc->default_value_int32());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_INT64:
+        repeatedChild->setData(kColumnTypeValue, fieldDesc->default_value_int64());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_UINT32:
+        repeatedChild->setData(kColumnTypeValue, fieldDesc->default_value_uint32());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_UINT64:
+        repeatedChild->setData(kColumnTypeValue, fieldDesc->default_value_uint64());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_DOUBLE:
+        repeatedChild->setData(kColumnTypeValue, fieldDesc->default_value_double());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_FLOAT:
+        repeatedChild->setData(kColumnTypeValue, fieldDesc->default_value_float());
+        break;
+      case google::protobuf::FieldDescriptor::CPPTYPE_BOOL:
+        repeatedChild->setData(kColumnTypeValue, fieldDesc->default_value_bool());
+        break;
+      default:
+        break;
+      }
+    }
+  }
+  return true;
+}
+
+bool ProtoTreeModel::duplicateModelData(const QModelIndex& parent, int32_t row) {
+  ProtoTreeItem* parentItem = getItem(parent);
+  bool needResetIdxName = true;
+  if (row >= parentItem->childCount()) {
+    return false;
+  }
+
+  if (row == parentItem->childCount() - 1) {
+    needResetIdxName = false;
+  }
+
+  ProtoTreeItem* sourceItem = parentItem->child(row);
+  insertRow(row + 1, parent);
+  auto modelIndex = index(row + 1, 0, parent);
+  ProtoTreeItem* duplicateItem = parentItem->child(row + 1);
+
+  duplicateTreeItem(sourceItem, duplicateItem, modelIndex);
+
+  if (needResetIdxName) {
+    for (int childIdx = 0; childIdx < parentItem->childCount(); ++childIdx) {
+      parentItem->child(childIdx)->setData(kColumnTypeName
+                                           , QString().sprintf("%d", childIdx));
+    }
+  }
+
+  return true;
+}
+
+bool ProtoTreeModel::removeModelData(const QModelIndex& parent, int32_t row) {
+  ProtoTreeItem* parentItem = getItem(parent);
+  bool needResetName = true;
+  if (row == parentItem->childCount() - 1) {
+    needResetName = false;
+  }
+
+  bool ret = removeRow(row, parent);
+  if (!ret) {
+    return false;
+  }
+
+  if (needResetName) {
+    for (int childIdx = 0; childIdx < parentItem->childCount(); ++childIdx) {
+      parentItem->child(childIdx)->setData(ProtoTreeModel::kColumnTypeName
+                                           , QString().sprintf("%d", childIdx));
+    }
+  }
+  return true;
 }
