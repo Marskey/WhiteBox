@@ -219,6 +219,7 @@ QMimeData* ProtoTreeModel::mimeData(const QModelIndexList& indexes) const {
   stream << QCoreApplication::applicationPid();
   for (const QModelIndex& index : indexes) {
     stream << index.row();
+    stream << index.parent().internalId();
     break;
   }
   mimeData->setData(TREE_NODE_MIME_TYPE, data);
@@ -231,6 +232,26 @@ bool ProtoTreeModel::canDropMimeData(const QMimeData* data, Qt::DropAction actio
 
   if (action != Qt::MoveAction
       || row == -1 || column == -1) {
+    return false;
+  }
+
+  QByteArray byteData = data->data(TREE_NODE_MIME_TYPE);
+  QDataStream stream(&byteData, QIODevice::ReadOnly);
+  int64_t senderPid;
+  stream >> senderPid;
+  if (senderPid != QCoreApplication::applicationPid())
+    return false;
+
+  int32_t srcRow;
+  stream >> srcRow;
+
+  if (srcRow == row)
+    return false;
+
+  uint64_t internalId;
+  stream >> internalId;
+
+  if (internalId != parent.internalId()) {
     return false;
   }
 
