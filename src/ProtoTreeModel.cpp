@@ -193,13 +193,13 @@ bool ProtoTreeModel::moveRows(const QModelIndex& sourceParent, int sourceRow, in
 
   for (int i = 0; i < sourceParentItem->childCount(); ++i) {
     sourceParentItem->child(i)->setData(kColumnTypeName
-                                        , QString().sprintf("%d", i));
+                                        , QVariant(i));
   }
 
   if (sourceParentItem != destinationParentItem) {
     for (int i = 0; i < destinationParentItem->childCount(); ++i) {
       destinationParentItem->child(i)->setData(kColumnTypeName
-                                               , QString().sprintf("%d", i));
+                                               , QVariant(i));
     }
   }
 
@@ -657,7 +657,7 @@ bool ProtoTreeModel::insertModelData(const google::protobuf::Descriptor* desc, c
     if (row != parentItem->childCount() - 1) {
       for (int childIdx = 0; childIdx < parentItem->childCount(); ++childIdx) {
         parentItem->child(childIdx)->setData(kColumnTypeName
-                                             , QString().sprintf("%d", childIdx));
+                                             , QVariant(childIdx));
       }
     }
 
@@ -720,11 +720,12 @@ bool ProtoTreeModel::duplicateModelData(const QModelIndex& parent, int32_t row) 
   ProtoTreeItem* duplicateItem = parentItem->child(row + 1);
 
   duplicateTreeItem(sourceItem, duplicateItem, modelIndex);
+  duplicateItem->setData(kColumnTypeName, QVariant(row + 1));
 
   if (needResetIdxName) {
     for (int childIdx = 0; childIdx < parentItem->childCount(); ++childIdx) {
       parentItem->child(childIdx)->setData(kColumnTypeName
-                                           , QString().sprintf("%d", childIdx));
+                                           , QVariant(childIdx));
     }
   }
 
@@ -746,7 +747,7 @@ bool ProtoTreeModel::removeModelData(const QModelIndex& parent, int32_t row) {
   if (needResetName) {
     for (int childIdx = 0; childIdx < parentItem->childCount(); ++childIdx) {
       parentItem->child(childIdx)->setData(ProtoTreeModel::kColumnTypeName
-                                           , QString().sprintf("%d", childIdx));
+                                           , QVariant(childIdx));
     }
   }
   return true;
