@@ -28,20 +28,9 @@ extern "C" {
 #include <QStyledItemDelegate>
 #include <QToolTip>
 
-const char WINDOWS_TITLE[25] = "WhiteBox";
-
-struct ECVersion
-{
-    int main;
-    int sub;
-    int build;
-} const g_version = { 4 , 0 , 0 };
-
 CMainWindow::CMainWindow(QWidget* parent)
     : QMainWindow(parent) {
     ui.setupUi(this);
-
-    setWindowTitle(WINDOWS_TITLE);
 
     // 用户名
     {
@@ -198,7 +187,7 @@ bool CMainWindow::init() {
     // 加载缓存 
     loadCache();
 
-    LOG_INFO("Ready.             - Version {}.{}.{} By marskey.", g_version.main, g_version.sub, g_version.build);
+    LOG_INFO("Ready.             - Version {} By {}", QApplication::applicationVersion().toStdString(), QApplication::organizationName().toStdString());
     return true;
 }
 
@@ -710,7 +699,7 @@ void CMainWindow::handleListLogItemCurrentRowChanged(int row) {
     }
 
     ui.plainTextEdit->setPlainText(detail.c_str());
-    m_highlighter->hightlight();
+    //m_highlighter->hightlight();
     handleSearchDetailTextChanged();
 }
 
@@ -899,7 +888,7 @@ void CMainWindow::handleConnectBtnClicked() {
     connectStateChange(EConnectState::kConnecting);
     LOG_INFO("Connecting to {}:{}...", ip, port);
 
-    setWindowTitle(fmt::format("{}:{}", WINDOWS_TITLE, ui.cbAccount->currentText().toStdString()).c_str());
+    setWindowTitle(fmt::format("{}:{}", QApplication::applicationName().toStdString(), ui.cbAccount->currentText().toStdString()).c_str());
 }
 
 void CMainWindow::handleSearchDetailTextChanged() {

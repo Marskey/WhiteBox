@@ -392,6 +392,7 @@ void ProtoTreeModel::setupModelData(const ::google::protobuf::Message& data, Pro
         } else {
           keyData = getMsgValue(data, fieldDesc, index);
           repeatedChild->setData(kColumnTypeValue, keyData);
+          repeatedChild->setFlag(Qt::ItemIsDragEnabled | Qt::ItemIsEditable);
         }
       }
     }

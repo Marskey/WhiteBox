@@ -1,16 +1,17 @@
 #pragma once
 
-#include <qapplication.h>
 #include <QRegularExpression>
+#include <qsyntaxhighlighter.h>
 #include <QTextDocument>
 #include <QTextCursor>
 
 #include "ConfigHelper.h"
 
-class CJsonHighlighter
+class CJsonHighlighter : public QSyntaxHighlighter
 {
+  Q_OBJECT
 public:
-    CJsonHighlighter(QTextDocument* parent = 0) : m_pParent(parent) {
+    CJsonHighlighter(QTextDocument* parent = 0) : QSyntaxHighlighter(parent) {
         m_pattern = QRegularExpression("(\"(\\\\u[a-zA-Z0-9]{4}|\\\\[^u]|[^\"])*\"(\\s*:)?|\\b(true|false)\\b|-?\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d+)?)");
         m_keyColor = ConfigHelper::instance().getJsonHighlightColor("key");
         m_keyColor = (m_keyColor.isEmpty()) ? "#AF7AC5" : m_keyColor;
@@ -29,11 +30,11 @@ public:
         m_numberFormat.setForeground(QColor(m_numberColor));
     }
 
-    void hightlight() {
-        QRegularExpressionMatchIterator matchIterator = m_pattern.globalMatch(m_pParent->toPlainText());
+    void highlightBlock(const QString &text) override {
+        QRegularExpressionMatchIterator matchIterator = m_pattern.globalMatch(text);
         QTextCharFormat* pFormat = &m_numberFormat;
-        QTextCursor cursor(m_pParent);
-        QTextCharFormat plainFormat(cursor.charFormat());
+        //QTextCursor cursor(m_pParent);
+        //QTextCharFormat plainFormat(cursor.charFormat());
         while (matchIterator.hasNext()) {
             QRegularExpressionMatch match = matchIterator.next();
 
@@ -62,12 +63,13 @@ public:
                 pFormat = &m_boolFormat;
             }
 
-            cursor.setPosition(match.capturedStart());
-            cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, capturedLength);
-            cursor.setCharFormat(*pFormat);
+            setFormat(match.capturedStart(), capturedLength, *pFormat);
+            //cursor.setPosition(match.capturedStart());
+            //cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, capturedLength);
+            //cursor.setCharFormat(*pFormat);
         }
-        cursor.setPosition(0);
-        cursor.setCharFormat(plainFormat);
+        //cursor.setPosition(0);
+        //cursor.setCharFormat(plainFormat);
     }
 
     std::string highlightJsonData(const QString& jsonData) {
@@ -126,7 +128,6 @@ public:
 
 
 private:
-    QTextDocument* m_pParent = nullptr;
     QRegularExpression m_pattern;
 
     QTextCharFormat m_keyFormat;

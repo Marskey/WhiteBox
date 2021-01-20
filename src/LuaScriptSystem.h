@@ -132,7 +132,6 @@ private:
         return count;
     }
 
-    // 必须使用尾递归的写法，否则调用会产生非常大的代价
     template<typename T1, typename ...T2>
     inline int InvokePush(int count, T1 arg, T2 ...args) {
         luabridge::push(m_L, arg);
@@ -140,7 +139,6 @@ private:
     }
 
 public:
-    // C++ 调用全局lua函数
     template<typename R, typename ...T>
     R Invoke(const char* name, T ...args) {
         R r = R();

@@ -2,12 +2,10 @@
 #include "LineEdit.h"
 #include "JsonHighlighter.h"
 
-#include <QListWidget>
 #include <QComboBox>
 #include <QFileDialog>
 #include <QMenuBar>
 #include <QMessageBox>
-#include <qpainter.h>
 #include <QTextEdit>
 
 #include "ConfigHelper.h"
@@ -103,7 +101,11 @@ void CMsgEditorDialog::handleCustomContextMenuRequested(const QPoint& pos) {
     connect(pAdd, &QAction::triggered, this, [=]() {
       if (!model->insertModelData(m_pMessage->GetDescriptor(), index, item->childCount())) {
         QMessageBox::warning(nullptr, "Opt error", "Add item failed!");
-      }
+        return;
+      } 
+
+      treeView->selectionModel()->clear();
+      treeView->selectionModel()->select(model->index(item->childCount() - 1, 0), QItemSelectionModel::Rows | QItemSelectionModel::Select);
     });
     
     QAction* pClear = new QAction(tr("Clear"), this);
@@ -115,6 +117,7 @@ void CMsgEditorDialog::handleCustomContextMenuRequested(const QPoint& pos) {
 
       if (!model->removeRows(0, item->childCount(), index)) {
         QMessageBox::warning(this, "Opt error", "Clear item failed!");
+        return;
       }
     });
   }
@@ -125,7 +128,11 @@ void CMsgEditorDialog::handleCustomContextMenuRequested(const QPoint& pos) {
     connect(pInsert, &QAction::triggered, this, [=]() {
       if (!model->insertModelData(m_pMessage->GetDescriptor(), parentIndex, index.row())) {
         QMessageBox::warning(this, "Opt error", "Insert item failed!");
+        return;
       }
+
+      treeView->selectionModel()->clear();
+      treeView->selectionModel()->select(index.siblingAtRow(index.row()), QItemSelectionModel::Rows | QItemSelectionModel::Select);
     });
 
     QAction* pDuplicate = new QAction(tr("Duplicate"), this);
@@ -133,16 +140,21 @@ void CMsgEditorDialog::handleCustomContextMenuRequested(const QPoint& pos) {
     connect(pDuplicate, &QAction::triggered, this, [=]() {
       if (!model->duplicateModelData(parentIndex, index.row())) {
         QMessageBox::warning(this, "Opt error", "Duplicate item failed!");
+        return;
       }
-            });
+
+      treeView->selectionModel()->clear();
+      treeView->selectionModel()->select(index.siblingAtRow(index.row() + 1), QItemSelectionModel::Rows | QItemSelectionModel::Select);
+    });
 
     QAction* pDel = new QAction(tr("Delete"), this);
     popMenu->addAction(pDel);
     connect(pDel, &QAction::triggered, this, [=]() {
       if (!model->removeModelData(parentIndex, index.row())) {
         QMessageBox::warning(this, "Opt error", "Remove item failed!");
+        return;
       }
-            });
+    });
   }
 
   popMenu->exec(QCursor::pos());

@@ -40,7 +40,7 @@ private:
     ec_net::INetEvent* m_pNetEvent = nullptr;
     asio::io_context m_ioContext;
 
-    // 从0 开始自增
+    // base on 0
     SocketId m_incrediId = 0;
     std::unordered_map<SocketId, SessionPtr> m_mapSessions;
 };

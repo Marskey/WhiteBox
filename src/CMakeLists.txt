@@ -39,6 +39,7 @@ set(whitebox_sources
     MainWindow.h
     ProtoTreeItem.h
     ProtoTreeModel.h
+    version.h
     
     MsgEditorDialog.h
     MsgIgnoreDialog.h

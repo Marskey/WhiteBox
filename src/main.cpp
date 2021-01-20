@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "ConfigHelper.h"
+#include "version.h"
 
 #include <QtWidgets/QApplication>
 #include <QStyleFactory>
@@ -18,6 +19,9 @@ int main(int argc, char *argv[])
         ConfigHelper::instance().saveFont(font.family());
     }
     a.setFont(font);
+    a.setApplicationName(VER_INTERNALNAME_STR);
+    a.setOrganizationName(VER_COMPANYNAME_STR);
+    a.setApplicationVersion(VER_FILEVERSION_STR);
 
 #if 1
     qApp->setStyle(QStyleFactory::create("Fusion"));
