@@ -25,7 +25,6 @@ CMsgEditorDialog::CMsgEditorDialog(QWidget* parent)
   connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT(handleTabBarChanged(int)));
   connect(textEdit, SIGNAL(textChanged()), this, SLOT(handleTextEditTextChange()));
   connect(okButton, SIGNAL(clicked()), this, SLOT(handleApplyButtonClicked()));
-  connect(treeView, SIGNAL(expanded(const QModelIndex&)), this, SLOT(handleTreeViewExpanded(const QModelIndex&)));
 
   m_highlighter = new CJsonHighlighter(textEdit->document());
   treeView->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -62,9 +61,10 @@ void CMsgEditorDialog::initDialogByMessage(const ::google::protobuf::Message& me
     delete oldModel;
 
     treeView->expandAll();
-    for (int i = 1; i < treeView->model()->columnCount(); i++) {
+    for (int i = 0; i < treeView->model()->columnCount(); i++) {
       treeView->resizeColumnToContents(i);
     }
+    connect(treeView, SIGNAL(expanded(const QModelIndex&)), this, SLOT(handleTreeViewExpanded(const QModelIndex&)));
   } else {
     tabWidget->removeTab(static_cast<int>(ETabIdx::eGUI));
   }
@@ -236,7 +236,7 @@ void CMsgEditorDialog::updateGUIData() {
   delete oldModel;
 
   treeView->expandAll();
-  for (int i = 1; i < treeView->model()->columnCount(); i++) {
+  for (int i = 0; i < treeView->model()->columnCount(); i++) {
     treeView->resizeColumnToContents(i);
   }
 }
