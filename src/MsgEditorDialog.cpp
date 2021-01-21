@@ -248,9 +248,6 @@ void CMsgEditorDialog::updateGUIData() {
   delete oldModel;
 
   treeView->expandAll();
-  for (int i = 0; i < treeView->model()->columnCount(); i++) {
-    treeView->resizeColumnToContents(i);
-  }
 }
 
 void CMsgEditorDialog::handleApplyButtonClicked() {

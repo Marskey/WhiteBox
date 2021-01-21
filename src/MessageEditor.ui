@@ -222,7 +222,9 @@
   <tabstop>textEdit</tabstop>
   <tabstop>btnBrowse</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="WhiteBox.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>cancelButton</sender>
