@@ -1,5 +1,9 @@
 <RCC>
   <qresource prefix="/WhiteBox">
+    <file>Resources/add.png</file>
+    <file>Resources/duplicate.png</file>
+    <file>Resources/insert.png</file>
+    <file>Resources/remove.png</file>
     <file alias="icon1.ico">Resources/icon1.ico</file>
   </qresource>
 </RCC>
