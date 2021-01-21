@@ -6,26 +6,26 @@
 
 class CMsgIgnoreDialog : public QDialog, public Ui_MsgIgnore
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    CMsgIgnoreDialog(QWidget *parent = 0);
-    ~CMsgIgnoreDialog();
+  CMsgIgnoreDialog(QWidget* parent = 0);
+  ~CMsgIgnoreDialog();
 
-    void init(std::unordered_set<std::string>& setIgnoredMsg);
-    std::list<std::string> getIgnoredMsg();
+  void init(std::unordered_set<std::string>& setIgnoredMsg);
+  std::list<std::string> getIgnoredMsg();
 
 private:
-    void filterMessage(const QString& filterText, QListWidget& listWidget);
+  void filterMessage(const QString& filterText, QListWidget& listWidget);
 
 private slots:
-    void handleLeftFilterTextChanged(const QString& text);
-    void handleRightFilterTextChanged(const QString& text);
+  void handleLeftFilterTextChanged(const QString& text);
+  void handleRightFilterTextChanged(const QString& text);
 
-    void handleAll2RightBtnClicked();
-    void handleAll2LeftBtnClicked();
+  void handleAll2RightBtnClicked();
+  void handleAll2LeftBtnClicked();
 
-    void handleOne2RightBtnClicked();
-    void handleOne2LeftBtnClicked();
+  void handleOne2RightBtnClicked();
+  void handleOne2LeftBtnClicked();
 
 };

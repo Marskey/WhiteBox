@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QAbstractItemModel>
 #include <QModelIndex>
 #include <QVariant>
 #include "ProtoTreeItem.h"
@@ -44,14 +43,14 @@ public:
                   const QModelIndex& parent = QModelIndex()) override;
   bool removeRows(int position, int rows,
                   const QModelIndex& parent = QModelIndex()) override;
-  bool moveRows(const QModelIndex &sourceParent, int sourceRow, int count,
-                        const QModelIndex &destinationParent, int destinationChild) override;
+  bool moveRows(const QModelIndex& sourceParent, int sourceRow, int count,
+                const QModelIndex& destinationParent, int destinationChild) override;
   QStringList mimeTypes() const override;
   QMimeData* mimeData(const QModelIndexList& indexes) const override;
   bool canDropMimeData(const QMimeData* data, Qt::DropAction action,
                        int row, int column, const QModelIndex& parent) const override;
   bool dropMimeData(const QMimeData* data, Qt::DropAction action,
-                            int row, int column, const QModelIndex& parent) override;
+                    int row, int column, const QModelIndex& parent) override;
   Qt::DropActions supportedDropActions() const override;
 
   Qt::DropActions supportedDragActions() const override;

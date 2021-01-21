@@ -4,9 +4,9 @@
 
 typedef struct _importer
 {
-	void* source_tree;
-	void* error_collector;
-	void* importer;
+  void* source_tree;
+  void* error_collector;
+  void* importer;
 } importer;
 
 void protobuf_shutdown();

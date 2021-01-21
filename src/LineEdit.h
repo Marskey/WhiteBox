@@ -4,16 +4,16 @@
 
 class CLineEdit : public QLineEdit
 {
-    Q_OBJECT
+  Q_OBJECT
 public:
-    CLineEdit(QWidget* parent);
-    virtual ~CLineEdit() {}
+  CLineEdit(QWidget* parent);
+  virtual ~CLineEdit() {}
 
 protected:
-    void focusInEvent(QFocusEvent* e);
-    void mousePressEvent(QMouseEvent* me);
+  void focusInEvent(QFocusEvent* e);
+  void mousePressEvent(QMouseEvent* me);
 
-    bool m_selectOnMousePress;
+  bool m_selectOnMousePress;
 };
 
 class PopupItemDelegate : public QStyledItemDelegate

@@ -31,35 +31,35 @@ class CLineEdit;
 class QFormLayout;
 class CMsgEditorDialog : public QDialog, public Ui_MessageEditor
 {
-    Q_OBJECT
+  Q_OBJECT
 
     enum class ETabIdx : int
-    {
-        eGUI = 0,
-        eJSON = 1,
-    };
+  {
+    eGUI = 0,
+    eJSON = 1,
+  };
 public:
-    CMsgEditorDialog(QWidget* parent = 0);
-    ~CMsgEditorDialog();
+  CMsgEditorDialog(QWidget* parent = 0);
+  ~CMsgEditorDialog();
 
-    void initDialogByMessage(const ::google::protobuf::Message& message);
-    const ::google::protobuf::Message& getMessage();
+  void initDialogByMessage(const ::google::protobuf::Message& message);
+  const ::google::protobuf::Message& getMessage();
 
 private:
-    void updateGUIData();
+  void updateGUIData();
 
 private slots:
-    void handleApplyButtonClicked();
-    void treeViewDataChanged();
-    void handleJsonBrowseBtnClicked();
-    void handleJsonParseBtnClicked();
-    void handleTabBarChanged(int index);
-    void handleTextEditTextChange();
-    void handleCustomContextMenuRequested(const QPoint& pos);
-    void handleTreeViewExpanded(const QModelIndex& index);
+  void handleApplyButtonClicked();
+  void treeViewDataChanged();
+  void handleJsonBrowseBtnClicked();
+  void handleJsonParseBtnClicked();
+  void handleTabBarChanged(int index);
+  void handleTextEditTextChange();
+  void handleCustomContextMenuRequested(const QPoint& pos);
+  void handleTreeViewExpanded(const QModelIndex& index);
 private:
-    ::google::protobuf::Message* m_pMessage = nullptr;
-    CJsonHighlighter* m_highlighter;
-    bool m_isAnyType = false;
-    QtTreeViewItemDelegate m_delegate;
+  ::google::protobuf::Message* m_pMessage = nullptr;
+  CJsonHighlighter* m_highlighter;
+  bool m_isAnyType = false;
+  QtTreeViewItemDelegate m_delegate;
 };

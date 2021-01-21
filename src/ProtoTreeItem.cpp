@@ -54,21 +54,21 @@ int ProtoTreeItem::columnCount() const {
 
 QVariant ProtoTreeItem::data(int column, int role) const {
   switch (role) {
-    case Qt::EditRole:
-    case Qt::DisplayRole:
-        if (column >= 0 && column < itemData.count())
-            return itemData.at(column);
-        break;
-   default:
-        if (column >= 0 && column < values.size()) {
-            const QVector<ItemRoleData> &column_values = values.at(column);
-            for (const auto &column_value : column_values) {
-                if (column_value.role == role)
-                    return column_value.value;
-            }
-        }
+  case Qt::EditRole:
+  case Qt::DisplayRole:
+    if (column >= 0 && column < itemData.count())
+      return itemData.at(column);
+    break;
+  default:
+    if (column >= 0 && column < values.size()) {
+      const QVector<ItemRoleData>& column_values = values.at(column);
+      for (const auto& column_value : column_values) {
+        if (column_value.role == role)
+          return column_value.value;
+      }
     }
-    return QVariant();
+  }
+  return QVariant();
 }
 
 bool ProtoTreeItem::insertChildren(int position, int count, int columns) {
@@ -146,7 +146,7 @@ bool ProtoTreeItem::removeColumns(int position, int columns) {
   return true;
 }
 
-bool ProtoTreeItem::setData(int column, const QVariant &value, int role) {
+bool ProtoTreeItem::setData(int column, const QVariant& value, int role) {
   if (column < 0) {
     return false;
   }

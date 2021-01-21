@@ -28,7 +28,7 @@ set(whitebox_sources
     ComboxItemFilter.h
     ConfigHelper.h
     define.h
-    IClientNetEvent.h
+    
     INetEvent.h
     ip4validator.h
     JsonHighlighter.h

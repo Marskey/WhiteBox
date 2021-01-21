@@ -8,57 +8,57 @@ class QCheckBox;
 class QComboBox;
 class CConfigHelper : public QObject
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    CConfigHelper(QObject *parent = nullptr);
-    ~CConfigHelper();
+  CConfigHelper(QObject* parent = nullptr);
+  ~CConfigHelper();
 
-    bool init(const QString &configuration);
+  bool init(const QString& configuration);
 
-    bool isFirstCreateFile();
-    void deleteConfigFile();
+  bool isFirstCreateFile();
+  void deleteConfigFile();
 
-    void saveMainWindowGeometry(const QByteArray &geometry);
-    void saveMainWindowState(const QByteArray &state);
+  void saveMainWindowGeometry(const QByteArray& geometry);
+  void saveMainWindowState(const QByteArray& state);
 
-    QByteArray getMainWindowGeometry() const;
-    QByteArray getMainWindowState() const;
+  QByteArray getMainWindowGeometry() const;
+  QByteArray getMainWindowState() const;
 
-    void saveSplitterH(const QByteArray& state);
-    void saveSplitterV(const QByteArray& state);
+  void saveSplitterH(const QByteArray& state);
+  void saveSplitterV(const QByteArray& state);
 
-    QByteArray getSplitterH() const;
-    QByteArray getSplitterV() const;
+  QByteArray getSplitterH() const;
+  QByteArray getSplitterV() const;
 
-    void saveWidgetComboxState(const QString& name, const QComboBox& combox);
-    void restoreWidgetComboxState(const QString& name, QComboBox& combox);
-    QString getWidgetComboxStateText(const QString& name, int index);
+  void saveWidgetComboxState(const QString& name, const QComboBox& combox);
+  void restoreWidgetComboxState(const QString& name, QComboBox& combox);
+  QString getWidgetComboxStateText(const QString& name, int index);
 
-    void saveWidgetCheckboxState(const QString& name, const QCheckBox& checkbox);
-    void restoreWidgetCheckboxState(const QString& name, QCheckBox& checkbox);
+  void saveWidgetCheckboxState(const QString& name, const QCheckBox& checkbox);
+  void restoreWidgetCheckboxState(const QString& name, QCheckBox& checkbox);
 
-    int getHistroyComboxItemMaxCnt();
+  int getHistroyComboxItemMaxCnt();
 
-    void saveCachePath(const QString& path);
-    QString getCachePath();
+  void saveCachePath(const QString& path);
+  QString getCachePath();
 
-    QString getFont();
-    void saveFont(const QString& family);
+  QString getFont();
+  void saveFont(const QString& family);
 
-    QString getJsonHighlightColor(const QString& name);
+  QString getJsonHighlightColor(const QString& name);
 
-    google::protobuf::util::JsonPrintOptions& getJsonPrintOption();
+  google::protobuf::util::JsonPrintOptions& getJsonPrintOption();
 
 private:
-    QSettings *m_pSettings;
-    QString m_configFile;
+  QSettings* m_pSettings;
+  QString m_configFile;
 
-    bool m_bFirstCreateFile = false;
+  bool m_bFirstCreateFile = false;
 
-    QByteArray m_subWindowGeometry;
-    int m_maxComboxHistroyItemCnt = 0;
-    google::protobuf::util::JsonPrintOptions m_protoJsonOption;
+  QByteArray m_subWindowGeometry;
+  int m_maxComboxHistroyItemCnt = 0;
+  google::protobuf::util::JsonPrintOptions m_protoJsonOption;
 };
 
 typedef CSingleton<CConfigHelper> ConfigHelper;

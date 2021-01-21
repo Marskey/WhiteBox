@@ -5,21 +5,21 @@
 
 class CSettingDialog : public QDialog, public Ui_SettingDlg
 {
-    Q_OBJECT
+  Q_OBJECT
 
 public:
-    CSettingDialog(QWidget *parent);
-    ~CSettingDialog();
+  CSettingDialog(QWidget* parent);
+  ~CSettingDialog();
 
-    void init(bool bFirstOpen);
+  void init(bool bFirstOpen);
 
 public slots:
-    void handleSelectProtoBtnClicked();
-    void handleSelectScriptBtnClicked();
-    void handlePathChanged(const QString& newText);
-    void handleOkBtnClicked();
+  void handleSelectProtoBtnClicked();
+  void handleSelectScriptBtnClicked();
+  void handlePathChanged(const QString& newText);
+  void handleOkBtnClicked();
 
 private:
-    void checkAvailable();
-    void addNewItemIntoCombox(QComboBox& combox);
+  void checkAvailable();
+  void addNewItemIntoCombox(QComboBox& combox);
 };
