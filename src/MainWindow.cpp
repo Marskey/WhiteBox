@@ -1033,7 +1033,7 @@ void CMainWindow::handleFilterLogTextChanged() {
     rexPattern.chop(1);
   }
 
-  int shownItemRow = -1;
+  m_curRowAvailableToScroll = ui.listLogs->count() - 1;
   for (int i = 0; i < ui.listLogs->count(); ++i) {
     auto* pListItem = ui.listLogs->item(i);
     pListItem->setHidden(ui.enableLogFilter->isChecked()
@@ -1049,12 +1049,12 @@ void CMainWindow::handleFilterLogTextChanged() {
     }
 
     if (!pListItem->isHidden()) {
-      shownItemRow = i;
+      m_curRowAvailableToScroll = i;
     }
   }
 
-  if (shownItemRow != -1) {
-    ui.listLogs->setCurrentRow(shownItemRow);
+  if (m_curRowAvailableToScroll != -1) {
+    ui.listLogs->setCurrentRow(m_curRowAvailableToScroll);
   }
 }
 
@@ -1112,6 +1112,8 @@ void CMainWindow::handleLogInfoAdded(const QModelIndex& parent, int start, int e
         m_curRowAvailableToScroll = end;
       }
     }
+  } else {
+    m_curRowAvailableToScroll = end;
   }
 
   if (m_pLogUpdateTimer != nullptr) {
