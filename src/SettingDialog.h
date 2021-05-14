@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ui_Setting.h"
-#include "ComboxItemFilter.h"
+#include "ComboBoxItemFilter.h"
 
 class CSettingDialog : public QDialog, public Ui_SettingDlg
 {
@@ -21,5 +21,5 @@ public slots:
 
 private:
   void checkAvailable();
-  void addNewItemIntoCombox(QComboBox& combox);
+  void addNewItemIntoComboBox(QComboBox& comboBox);
 };

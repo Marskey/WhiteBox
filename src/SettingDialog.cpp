@@ -25,17 +25,15 @@ void CSettingDialog::init(bool bFirstOpen) {
     auto* pLineEdit = new CLineEdit(cbProtoPath);
     cbProtoPath->setLineEdit(pLineEdit);
   }
-  cbProtoPath->setItemDelegate(new QStyledItemDelegate(cbProtoPath));
   cbProtoPath->view()->installEventFilter(new DeleteHighlightedItemFilter(cbProtoPath));
-  ConfigHelper::instance().restoreWidgetComboxState("ProtoPath", *cbProtoPath);
+  ConfigHelper::instance().restoreWidgetComboBoxState("ProtoPath", *cbProtoPath);
 
   {
     auto* pLineEdit = new CLineEdit(cbScriptPath);
     cbScriptPath->setLineEdit(pLineEdit);
   }
-  cbScriptPath->setItemDelegate(new QStyledItemDelegate(cbScriptPath));
   cbScriptPath->view()->installEventFilter(new DeleteHighlightedItemFilter(cbScriptPath));
-  ConfigHelper::instance().restoreWidgetComboxState("LuaScriptPath", *cbScriptPath);
+  ConfigHelper::instance().restoreWidgetComboBoxState("LuaScriptPath", *cbScriptPath);
 
   checkAvailable();
   if (bFirstOpen) {
@@ -77,13 +75,13 @@ void CSettingDialog::handlePathChanged(const QString& newText) {
 
 void CSettingDialog::handleOkBtnClicked() {
   if (!cbProtoPath->lineEdit()->text().isEmpty()) {
-    addNewItemIntoCombox(*cbProtoPath);
-    ConfigHelper::instance().saveWidgetComboxState("ProtoPath", *cbProtoPath);
+    addNewItemIntoComboBox(*cbProtoPath);
+    ConfigHelper::instance().saveWidgetComboBoxState("ProtoPath", *cbProtoPath);
   }
 
   if (!cbScriptPath->lineEdit()->text().isEmpty()) {
-    addNewItemIntoCombox(*cbScriptPath);
-    ConfigHelper::instance().saveWidgetComboxState("LuaScriptPath", *cbScriptPath);
+    addNewItemIntoComboBox(*cbScriptPath);
+    ConfigHelper::instance().saveWidgetComboBoxState("LuaScriptPath", *cbScriptPath);
   }
 }
 
@@ -96,17 +94,17 @@ void CSettingDialog::checkAvailable() {
   }
 }
 
-void CSettingDialog::addNewItemIntoCombox(QComboBox& combox) {
-  int cbIdx = combox.findText(combox.currentText());
+void CSettingDialog::addNewItemIntoComboBox(QComboBox& comboBox) {
+  int cbIdx = comboBox.findText(comboBox.currentText());
   if (-1 == cbIdx) {
-    combox.insertItem(0, combox.currentText());
-    if (combox.count() > ConfigHelper::instance().getHistroyComboxItemMaxCnt()) {
-      combox.removeItem(combox.count() - 1);
+    comboBox.insertItem(0, comboBox.currentText());
+    if (comboBox.count() > ConfigHelper::instance().getHistroyComboBoxItemMaxCnt()) {
+      comboBox.removeItem(comboBox.count() - 1);
     }
   } else {
-    QString text = combox.currentText();
-    combox.removeItem(cbIdx);
-    combox.insertItem(0, text);
+    QString text = comboBox.currentText();
+    comboBox.removeItem(cbIdx);
+    comboBox.insertItem(0, text);
   }
-  combox.setCurrentIndex(0);
+  comboBox.setCurrentIndex(0);
 }

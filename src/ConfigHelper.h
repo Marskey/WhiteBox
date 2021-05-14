@@ -31,14 +31,14 @@ public:
   QByteArray getSplitterH() const;
   QByteArray getSplitterV() const;
 
-  void saveWidgetComboxState(const QString& name, const QComboBox& combox);
-  void restoreWidgetComboxState(const QString& name, QComboBox& combox);
-  QString getWidgetComboxStateText(const QString& name, int index);
+  void saveWidgetComboBoxState(const QString& name, const QComboBox& comboBox);
+  void restoreWidgetComboBoxState(const QString& name, QComboBox& comboBox);
+  QString getWidgetComboBoxStateText(const QString& name, int index);
 
   void saveWidgetCheckboxState(const QString& name, const QCheckBox& checkbox);
   void restoreWidgetCheckboxState(const QString& name, QCheckBox& checkbox);
 
-  int getHistroyComboxItemMaxCnt();
+  int getHistroyComboBoxItemMaxCnt();
 
   void saveCachePath(const QString& path);
   QString getCachePath();
@@ -57,7 +57,7 @@ private:
   bool m_bFirstCreateFile = false;
 
   QByteArray m_subWindowGeometry;
-  int m_maxComboxHistroyItemCnt = 0;
+  int m_maxComboBoxHistroyItemCnt = 0;
   google::protobuf::util::JsonPrintOptions m_protoJsonOption;
 };
 

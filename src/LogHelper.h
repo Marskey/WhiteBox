@@ -2,7 +2,6 @@
 
 #include "Singleton.h"
 #include "fmt/format.h"
-#include "fmt/printf.h"
 
 class CLogPrinter
 {

@@ -289,7 +289,7 @@ QWidget* QtTreeViewItemDelegate::createEditor(QWidget* parent, const QStyleOptio
     case google::protobuf::FieldDescriptor::CPPTYPE_ENUM:
       {
         QComboBox* editor = new QComboBox(parent);
-        editor->view()->setItemDelegate(new PopupItemDelegate);
+        editor->view()->setItemDelegate(new ItemSizeDelegate);
 
         auto enumNames = index.data(Qt::UserRole + 1).toStringList();
 

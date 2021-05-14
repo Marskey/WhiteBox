@@ -1,6 +1,6 @@
 #pragma once
 
-#include "INetEvent.h"
+#include "Net/INetEvent.h"
 #include "LuaInterface.h"
 
 #include <google/protobuf/message.h>
@@ -13,7 +13,7 @@ public:
   virtual ~CClient();
 
   bool sendMsg(const google::protobuf::Message& message);
-  unsigned int getSocketID();
+  SocketId getSocketID();
   void setName(const char* name);
 
   // ec_net::INetEvent begin
@@ -31,7 +31,7 @@ public:
   void sendJsonMsg(const char* msgFullName, const char* jsonData) override;
   // lua_api::IClient end
 private:
-  unsigned int m_socketId = 0;
+  SocketId m_socketId = 0;
   std::string m_name;
   std::vector<char> m_sendMsgDataBuf;
 };

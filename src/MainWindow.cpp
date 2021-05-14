@@ -1,6 +1,6 @@
 #include "MainWindow.h"
 #include "ProtoManager.h"
-#include "NetManager.h"
+#include "Net/NetManager.h"
 #include "Client.h"
 #include "ip4validator.h"
 #include "MsgEditorDialog.h"
@@ -39,8 +39,8 @@ CMainWindow::CMainWindow(QWidget* parent)
     ui.cbAccount->setLineEdit(pLineEdit);
   }
   ui.cbAccount->view()->installEventFilter(&m_deleteHighlightedItemFilter);
-  ui.cbAccount->view()->setItemDelegate(&m_popupItemDelegate);
-  ConfigHelper::instance().restoreWidgetComboxState("Account", *ui.cbAccount);
+  ui.cbAccount->view()->setItemDelegate(&m_itemSizeDelegate);
+  ConfigHelper::instance().restoreWidgetComboBoxState("Account", *ui.cbAccount);
 
   // ip端口
   {
@@ -51,8 +51,8 @@ CMainWindow::CMainWindow(QWidget* parent)
     ui.cbIp->setLineEdit(pLineEdit);
   }
   ui.cbIp->view()->installEventFilter(&m_deleteHighlightedItemFilter);
-  ui.cbIp->view()->setItemDelegate(&m_popupItemDelegate);
-  ConfigHelper::instance().restoreWidgetComboxState("Ip_Port", *ui.cbIp);
+  ui.cbIp->view()->setItemDelegate(&m_itemSizeDelegate);
+  ConfigHelper::instance().restoreWidgetComboBoxState("Ip_Port", *ui.cbIp);
 
   // 可选项参数
   {
@@ -61,10 +61,10 @@ CMainWindow::CMainWindow(QWidget* parent)
     ui.cbOptionalParam->setLineEdit(pLineEdit);
   }
   ui.cbOptionalParam->view()->installEventFilter(&m_deleteHighlightedItemFilter);
-  ui.cbOptionalParam->view()->setItemDelegate(&m_popupItemDelegate);
-  ConfigHelper::instance().restoreWidgetComboxState("OptionalParam", *ui.cbOptionalParam);
+  ui.cbOptionalParam->view()->setItemDelegate(&m_itemSizeDelegate);
+  ConfigHelper::instance().restoreWidgetComboBoxState("OptionalParam", *ui.cbOptionalParam);
 
-  ui.cbClientName->view()->setItemDelegate(&m_popupItemDelegate);
+  ui.cbClientName->view()->setItemDelegate(&m_itemSizeDelegate);
 
   // 读取是否自动显示最新
   ConfigHelper::instance().restoreWidgetCheckboxState("AutoShowDetail", *ui.checkIsAutoDetail);
@@ -95,9 +95,9 @@ CMainWindow::CMainWindow(QWidget* parent)
 
   ui.listMessage->setMouseTracking(true);
   ui.listMessage->setSortingEnabled(true);
-  ui.listMessage->setItemDelegate(&m_popupItemDelegate);
-  ui.listRecentMessage->setItemDelegate(&m_popupItemDelegate);
-  ui.listLogs->setItemDelegate(&m_popupItemDelegate);
+  ui.listMessage->setItemDelegate(&m_itemSizeDelegate);
+  ui.listRecentMessage->setItemDelegate(&m_itemSizeDelegate);
+  ui.listLogs->setItemDelegate(&m_itemSizeDelegate);
 
   QObject::connect(ui.listMessage, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(handleListMessageItemDoubleClicked(QListWidgetItem*)));
 
@@ -854,7 +854,7 @@ void CMainWindow::handleConnectBtnClicked() {
   }
 
   // 判断是不是新的ip和端口，如果是，添加历史
-  addNewItemIntoCombox(*ui.cbIp);
+  addNewItemIntoComboBox(*ui.cbIp);
 
   QStringList ipAndPort = ui.cbIp->currentText().split(":");
   if (ipAndPort.size() != 2) {
@@ -867,10 +867,10 @@ void CMainWindow::handleConnectBtnClicked() {
     return;
   }
 
-  addNewItemIntoCombox(*ui.cbAccount);
+  addNewItemIntoComboBox(*ui.cbAccount);
 
   if (!ui.cbOptionalParam->currentText().isEmpty()) {
-    addNewItemIntoCombox(*ui.cbOptionalParam);
+    addNewItemIntoComboBox(*ui.cbOptionalParam);
   }
 
   std::string ip = ipAndPort[0].toStdString();
@@ -1140,14 +1140,14 @@ void CMainWindow::doReload() {
   clearCache();
 
   LOG_INFO("Reloading lua script path: \"{}\"..."
-           , ConfigHelper::instance().getWidgetComboxStateText("LuaScriptPath", 0).toStdString());
+           , ConfigHelper::instance().getWidgetComboBoxStateText("LuaScriptPath", 0).toStdString());
   qApp->processEvents();
   if (!loadLua()) {
     m_pMaskWidget->hide();
     return;
   }
   LOG_INFO("Reloading proto files from path:\"{}\"..."
-           , ConfigHelper::instance().getWidgetComboxStateText("ProtoPath", 0).toStdString());
+           , ConfigHelper::instance().getWidgetComboBoxStateText("ProtoPath", 0).toStdString());
   qApp->processEvents();
   if (!loadProto()) {
     m_pMaskWidget->hide();
@@ -1164,9 +1164,9 @@ void CMainWindow::doReload() {
 }
 
 void CMainWindow::closeEvent(QCloseEvent* event) {
-  ConfigHelper::instance().saveWidgetComboxState("Account", *ui.cbAccount);
-  ConfigHelper::instance().saveWidgetComboxState("Ip_Port", *ui.cbIp);
-  ConfigHelper::instance().saveWidgetComboxState("OptionalParam", *ui.cbOptionalParam);
+  ConfigHelper::instance().saveWidgetComboBoxState("Account", *ui.cbAccount);
+  ConfigHelper::instance().saveWidgetComboBoxState("Ip_Port", *ui.cbIp);
+  ConfigHelper::instance().saveWidgetComboBoxState("OptionalParam", *ui.cbOptionalParam);
   ConfigHelper::instance().saveMainWindowGeometry(saveGeometry());
   ConfigHelper::instance().saveMainWindowState(saveState());
   ConfigHelper::instance().saveSplitterH(ui.splitterH->saveState());
@@ -1206,23 +1206,23 @@ void CMainWindow::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void CMainWindow::addNewItemIntoCombox(QComboBox& combox) {
-  int cbIdx = combox.findText(combox.currentText());
+void CMainWindow::addNewItemIntoComboBox(QComboBox& comboBox) {
+  int cbIdx = comboBox.findText(comboBox.currentText());
   if (-1 == cbIdx) {
-    combox.insertItem(0, combox.currentText());
-    if (combox.count() > ConfigHelper::instance().getHistroyComboxItemMaxCnt()) {
-      combox.removeItem(combox.count() - 1);
+    comboBox.insertItem(0, comboBox.currentText());
+    if (comboBox.count() > ConfigHelper::instance().getHistroyComboBoxItemMaxCnt()) {
+      comboBox.removeItem(comboBox.count() - 1);
     }
   } else {
-    QString text = combox.currentText();
-    combox.removeItem(cbIdx);
-    combox.insertItem(0, text);
+    QString text = comboBox.currentText();
+    comboBox.removeItem(cbIdx);
+    comboBox.insertItem(0, text);
   }
-  combox.setCurrentIndex(0);
+  comboBox.setCurrentIndex(0);
 }
 
 bool CMainWindow::loadProto() {
-  QString strPath = ConfigHelper::instance().getWidgetComboxStateText("ProtoPath", 0);
+  QString strPath = ConfigHelper::instance().getWidgetComboBoxStateText("ProtoPath", 0);
   QDir protoDir = strPath;
   ProtoManager::instance().init(protoDir.absolutePath().toStdString());
   LOG_INFO("Importing proto files... from {}", strPath.toStdString());
@@ -1263,7 +1263,7 @@ bool CMainWindow::loadLua() {
   luaRegisterCppClass();
   LOG_INFO("Initiated lua script system");
 
-  QString luaScriptPath = ConfigHelper::instance().getWidgetComboxStateText("LuaScriptPath", 0);
+  QString luaScriptPath = ConfigHelper::instance().getWidgetComboBoxStateText("LuaScriptPath", 0);
   LOG_INFO("Loading lua script: \"{}\"", luaScriptPath.toStdString());
   if (!LuaScriptSystem::instance().RunScript(luaScriptPath.toStdString().c_str())) {
     LOG_ERR("Error: Load lua script: \"{}\" failed!", luaScriptPath.toStdString());

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "INetEvent.h"
+#include "Net/INetEvent.h"
 #include "LogHelper.h"
 #include "ConfigHelper.h"
 #include "ProtoManager.h"
 #include "Client.h"
-#include "ComboxItemFilter.h"
+#include "ComboBoxItemFilter.h"
 
 #include "ui_MainWindow.h"
 #include <QtWidgets/QMainWindow>
@@ -97,7 +97,7 @@ protected:
   // 按键事件
   void keyPressEvent(QKeyEvent* event) override;
 
-  void addNewItemIntoCombox(QComboBox& combox);
+  void addNewItemIntoComboBox(QComboBox& comboBox);
 
 private:
   void clearProto();
@@ -152,7 +152,7 @@ private:
   QWidget* m_pMaskWidget = nullptr;
   CJsonHighlighter* m_highlighter = nullptr;
 
-  PopupItemDelegate m_popupItemDelegate;
+  ItemSizeDelegate m_itemSizeDelegate;
   DeleteHighlightedItemFilter m_deleteHighlightedItemFilter;
 };
 

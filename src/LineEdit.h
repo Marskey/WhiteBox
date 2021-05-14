@@ -1,4 +1,6 @@
 #pragma once
+#include <QApplication>
+#include <QLabel>
 #include <QLineEdit>
 #include <QStyledItemDelegate>
 
@@ -16,10 +18,9 @@ protected:
   bool m_selectOnMousePress;
 };
 
-class PopupItemDelegate : public QStyledItemDelegate
+class ItemSizeDelegate : public QStyledItemDelegate
 {
 public:
-  using QStyledItemDelegate::QStyledItemDelegate;
   QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override {
     QSize s = QStyledItemDelegate::sizeHint(option, index);
     s.setHeight(20);

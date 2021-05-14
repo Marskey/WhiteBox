@@ -60,7 +60,7 @@ std::list<std::string> CMsgIgnoreDialog::getIgnoredMsg() {
 void CMsgIgnoreDialog::filterMessage(const QString& filterText, QListWidget& listWidget) {
   // 搜索栏搜索逻辑
   for (int i = 0; i < listWidget.count(); ++i) {
-    listWidget.setItemHidden(listWidget.item(i), !filterText.isEmpty());
+    listWidget.item(i)->setHidden(!filterText.isEmpty());
   }
 
   bool bIsNumberic = false;

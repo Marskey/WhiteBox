@@ -24,9 +24,9 @@ bool CConfigHelper::init(const QString& configuration) {
   m_bFirstCreateFile = !file.exists();
   m_pSettings = new QSettings(m_configFile, QSettings::IniFormat, this);
 
-  m_maxComboxHistroyItemCnt = m_pSettings->value("/Widget/ComboxMaxHistroyCount").toInt();
-  if (0 == m_maxComboxHistroyItemCnt) {
-    m_maxComboxHistroyItemCnt = MAX_LIST_HISTROY_CNT;
+  m_maxComboBoxHistroyItemCnt = m_pSettings->value("/Widget/ComboBoxMaxHistroyCount").toInt();
+  if (0 == m_maxComboBoxHistroyItemCnt) {
+    m_maxComboBoxHistroyItemCnt = MAX_LIST_HISTROY_CNT;
   }
 
   return true;
@@ -73,34 +73,35 @@ QByteArray CConfigHelper::getSplitterV() const {
   return m_pSettings->value("/Window/SplitterVertical").toByteArray();
 }
 
-void CConfigHelper::saveWidgetComboxState(const QString& name, const QComboBox& combox) {
+void CConfigHelper::saveWidgetComboBoxState(const QString& name, const QComboBox& comboBox) {
   QStringList accountList;
-  for (int index = 0; index < combox.count(); index++) {
-    accountList.append(combox.itemText(index));
+  for (int index = 0; index < comboBox.count(); index++) {
+    accountList.append(comboBox.itemText(index));
   }
   m_pSettings->setValue("/Widget/" + name, accountList.join(","));
-  int currIdx = combox.currentIndex();
-  if (combox.currentText().isEmpty()) {
+  int currIdx = comboBox.currentIndex();
+  if (comboBox.currentText().isEmpty()) {
     currIdx = -1;
   }
   m_pSettings->setValue("/Widget/" + name + "_idx", currIdx);
 }
 
-void CConfigHelper::restoreWidgetComboxState(const QString& name, QComboBox& combox) {
+void CConfigHelper::restoreWidgetComboBoxState(const QString& name, QComboBox& comboBox) {
   QStringList stringList = m_pSettings->value("/Widget/" + name).toString().split(",");
   for (int i = 0; i < stringList.count(); ++i) {
     if (stringList[i].isEmpty()) {
       continue;
     }
-    combox.addItem(stringList[i]);
+    comboBox.addItem(stringList[i]);
+    comboBox.setItemData(i, "bc2", Qt::UserRole);
   }
 
   if (!stringList.empty()) {
-    combox.setCurrentIndex(m_pSettings->value("/Widget/" + name + "_idx").toInt());
+    comboBox.setCurrentIndex(m_pSettings->value("/Widget/" + name + "_idx").toInt());
   }
 }
 
-QString CConfigHelper::getWidgetComboxStateText(const QString& name, int index) {
+QString CConfigHelper::getWidgetComboBoxStateText(const QString& name, int index) {
   QStringList stringList = m_pSettings->value("/Widget/" + name).toString().split(",");
   if (stringList.count() > index
       && index >= 0) {
@@ -117,8 +118,8 @@ void CConfigHelper::restoreWidgetCheckboxState(const QString& name, QCheckBox& c
   checkbox.setCheckState(static_cast<Qt::CheckState>(m_pSettings->value("/Widget/" + name).toInt()));
 }
 
-int CConfigHelper::getHistroyComboxItemMaxCnt() {
-  return m_maxComboxHistroyItemCnt;
+int CConfigHelper::getHistroyComboBoxItemMaxCnt() {
+  return m_maxComboBoxHistroyItemCnt;
 }
 
 void CConfigHelper::saveCachePath(const QString& path) {

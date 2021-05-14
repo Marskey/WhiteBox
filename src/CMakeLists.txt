@@ -1,55 +1,55 @@
 set(whitebox_sources
     #WhiteBox.aps
-    Client.cpp
-    ConfigHelper.cpp
-    ip4validator.cpp
-    LineEdit.cpp
-    main.cpp
-    MainWindow.cpp
-    MsgEditorDialog.cpp
-    MsgIgnoreDialog.cpp
-    NetManager.cpp
-    ProtoManager.cpp
-    Session.cpp
-    SettingDialog.cpp
-    ProtoTreeItem.cpp
-    ProtoTreeModel.cpp
+    "Client.cpp"
+    "ConfigHelper.cpp"
+    "ip4validator.cpp"
+    "LineEdit.cpp"
+    "main.cpp"
+    "MainWindow.cpp"
+    "MsgEditorDialog.cpp"
+    "MsgIgnoreDialog.cpp"
+    "Net/NetManager.cpp"
+    "ProtoManager.cpp"
+    "Net/Session.cpp"
+    "SettingDialog.cpp"
+    "ProtoTreeItem.cpp"
+    "ProtoTreeModel.cpp"
 
-    WhiteBox.ico
-    json.lua
-    WhiteBox.qrc
-    MainWindow.ui
-    MessageEditor.ui
-    MessageIgnore.ui
-    Setting.ui
-    protobuf/protobuflib.c
-    protobuf/protobuf.cpp
-    Client.h
-    ComboxItemFilter.h
-    ConfigHelper.h
-    define.h
-    
-    INetEvent.h
-    ip4validator.h
-    JsonHighlighter.h
-    LineEdit.h
-    LogHelper.h
-    LuaInterface.h
-    LuaScriptSystem.h
-    MainWindow.h
-    ProtoTreeItem.h
-    ProtoTreeModel.h
-    version.h
-    
-    MsgEditorDialog.h
-    MsgIgnoreDialog.h
-    NetManager.h
-    ProtoManager.h
-    Session.h
-    SettingDialog.h
-    Singleton.h
-    protobuf/protobuf.h
-    protobuf/protobuflib.h
+    "WhiteBox.ico"
+    "json.lua"
+    "WhiteBox.qrc"
+    "MainWindow.ui"
+    "MessageEditor.ui"
+    "MessageIgnore.ui"
+    "Setting.ui"
+    "protobuf/protobuflib.c"
+    "protobuf/protobuf.cpp"
+    "Client.h"
+    "ComboBoxItemFilter.h"
+    "ConfigHelper.h"
+    "define.h"
+
+    "Net/INetEvent.h"
+    "ip4validator.h"
+    "JsonHighlighter.h"
+    "LineEdit.h"
+    "LogHelper.h"
+    "LuaInterface.h"
+    "LuaScriptSystem.h"
+    "MainWindow.h"
+    "ProtoTreeItem.h"
+    "ProtoTreeModel.h"
+    "version.h"
+
+    "MsgEditorDialog.h"
+    "MsgIgnoreDialog.h"
+    "Net/NetManager.h"
+    "ProtoManager.h"
+    "Net/Session.h"
+    "SettingDialog.h"
+    "Singleton.h"
+    "protobuf/protobuf.h"
+    "protobuf/protobuflib.h"
 )
 
 if (WIN32)

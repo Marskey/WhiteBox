@@ -1,5 +1,5 @@
 #include "Client.h"
-#include "NetManager.h"
+#include "Net/NetManager.h"
 #include "ProtoManager.h"
 #include "LuaScriptSystem.h"
 
@@ -19,7 +19,7 @@ bool CClient::sendMsg(const google::protobuf::Message& message) {
         m_sendMsgDataBuf.reserve(messageSize);
     }
 
-    if (!message.SerializeToArray(m_sendMsgDataBuf.data(), m_sendMsgDataBuf.capacity())) {
+    if (!message.SerializeToArray(m_sendMsgDataBuf.data(), static_cast<int>(m_sendMsgDataBuf.capacity()))) {
         return false;
     }
 
@@ -29,7 +29,7 @@ bool CClient::sendMsg(const google::protobuf::Message& message) {
                                                 , message.ByteSizeLong());
 }
 
-unsigned int CClient::getSocketID() {
+SocketId CClient::getSocketID() {
     return m_socketId;
 }
 
