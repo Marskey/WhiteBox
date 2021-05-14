@@ -535,6 +535,7 @@ void CMainWindow::onParseMessage(SocketId socketId, MessageType msgType, const c
   }
 
   delete pRecvMesage;
+  qApp->processEvents();
 }
 
 void CMainWindow::onConnectSucceed(const char* remoteIp, Port port, SocketId socketId) {

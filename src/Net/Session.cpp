@@ -127,7 +127,7 @@ void CSession::connect(const char* ip, Port port) {
     self->read();
   });
 
-  strcpy(m_ip, ip);
+  m_ip = ip ;
   m_port = port;
 }
 
@@ -150,7 +150,7 @@ void CSession::close(bool notice) {
 }
 
 const char* CSession::getRemoteIP() {
-  return m_ip;
+  return m_ip.c_str();
 }
 
 Port CSession::getRemotePort() {

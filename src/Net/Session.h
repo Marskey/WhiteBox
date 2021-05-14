@@ -80,6 +80,6 @@ private:
 
   size_t m_sendBuffSize = 0;
 
-  char m_ip[32] = "111.111.111.111";
+  std::string m_ip = "111.111.111.111";
   Port m_port;
 };
