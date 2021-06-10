@@ -5,22 +5,22 @@
 
 #include <google/protobuf/message.h>
 
+class CMainWindow;
 class CClient : public ec_net::INetEvent, public lua_api::IClient
 {
 
 public:
-  CClient();
+  CClient(CMainWindow& window);
   virtual ~CClient();
 
   bool sendMsg(const google::protobuf::Message& message);
-  SocketId getSocketID();
   void setName(const char* name);
 
   // ec_net::INetEvent begin
-  void onConnectSucceed(const char* remoteIp, Port port, SocketId socketId) override;
-  void onDisconnect(SocketId socketId) override;
-  void onError(SocketId socketId, ec_net::ENetError error) override;
-  void onParseMessage(SocketId socketId, MessageType msgType, const char* msgFullName, const char* pData, size_t size) override;
+  void onConnectSucceed(const char* remoteIp, Port port) override;
+  void onDisconnect() override;
+  void onError(ec_net::ENetError error) override;
+  void onParseMessage(MessageType msgType, const char* msgFullName, const char* pData, size_t size) override;
   // ec_net::INetEvent end
 
   // lua_api::IClient begin
@@ -31,7 +31,8 @@ public:
   void sendJsonMsg(const char* msgFullName, const char* jsonData) override;
   // lua_api::IClient end
 private:
-  SocketId m_socketId = 0;
   std::string m_name;
   std::vector<char> m_sendMsgDataBuf;
+  ec_net::IConnection* m_connection = nullptr;
+  CMainWindow& m_mainWin;
 };

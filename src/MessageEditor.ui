@@ -34,6 +34,9 @@
      <property name="text">
       <string>Message Name</string>
      </property>
+     <property name="textInteractionFlags">
+      <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+     </property>
     </widget>
    </item>
    <item>

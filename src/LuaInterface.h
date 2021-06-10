@@ -178,11 +178,5 @@ namespace lua_api
      * @param name the client session name
      */
     virtual IClient* getClient(const char* name) = 0;
-    /**
-     * This function is log message into app
-     * @param message the message you want to display on the app
-     */
-    virtual void log(const char* message) = 0;
-    virtual void logErr(const char* message) = 0;
   };
 }

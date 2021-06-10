@@ -13,10 +13,8 @@
 #include <QDateTime>
 #include <QStyledItemDelegate>
 
-
-
 #include "google/protobuf/message.h"
-#include "google/protobuf/util/json_util.h"
+#include "LuaScriptSystem.h"
 
 enum EListItemData
 {
@@ -27,7 +25,7 @@ enum EListItemData
 
 class CJsonHighlighter;
 class CECPrinter;
-class CMainWindow : public QMainWindow, public ec_net::INetEvent, public lua_api::IMainApp
+class CMainWindow : public QMainWindow, public lua_api::IMainApp
 {
   enum class EConnectState
   {
@@ -46,14 +44,11 @@ public:
   bool init();
 
 public:
-  // ec_net::INetEvent begin
-  void onParseMessage(SocketId socketId, MessageType msgType, const char* msgFullName, const char* pData, size_t size) override;
-  void onConnectSucceed(const char* remoteIp
-                        , Port port
-                        , SocketId socketId) override;
-  void onDisconnect(SocketId socketId) override;
-  void onError(SocketId socketId, ec_net::ENetError error) override;
-  // ec_net::INetEvent end
+  void onClientConnected(lua_api::IClient& client);
+  void onClientDisconnect(lua_api::IClient& client);
+  void recvMessage(MessageType msgType, const std::string& msgFullName, const google::protobuf::Message& recvMessage);
+
+  CLuaScriptSystem& getLuaScriptSystem();
 
 public slots:
   void saveCache();
@@ -90,6 +85,7 @@ public slots:
   void handleLogInfoAdded(const QModelIndex& parent, int start, int end);
 
 protected:
+  bool event(QEvent* event) override;
   // 程序关闭时候的事件
   void closeEvent(QCloseEvent* event) override;
   void timerEvent(QTimerEvent* event) override;
@@ -117,18 +113,11 @@ private:
   google::protobuf::Message* getMessageByName(const char* name);
   google::protobuf::Message* getOrCreateMessageByName(const char* name);
 
-  CClient* getClientBySocketId(SocketId id);
-
   // lua_api::IMainApp begin
   int addTimer(int interval) override;
   void deleteTimer(int timerId) override;
   lua_api::IClient* createClient(const char* name) override;
   lua_api::IClient* getClient(const char* name) override;
-  /**
-   * 给LUA脚本调用
-   */
-  void log(const char* message) override;
-  void logErr(const char* message) override;
   // lua_api::IMainApp end
 private:
   Ui::MainWindowClass ui;
@@ -154,23 +143,24 @@ private:
 
   ItemSizeDelegate m_itemSizeDelegate;
   DeleteHighlightedItemFilter m_deleteHighlightedItemFilter;
+  CLuaScriptSystem m_luaScriptSystem;
 };
 
-class CECPrinter : public CLogPrinter
+class CECPrinter
 {
 public:
   explicit CECPrinter(QListWidget* widget) : m_logWidget(widget) {
   }
 
-  void onPrintError(const std::string& message) override {
+  void onPrintError(const std::string& message) {
     log(message, Qt::red);
   }
 
-  void onPrintInfo(const std::string& message) override {
+  void onPrintInfo(const std::string& message) {
     log(message);
   }
 
-  void onPrintWarning(const std::string& message) override {
+  void onPrintWarning(const std::string& message) {
     log(message, Qt::darkYellow);
   }
 
