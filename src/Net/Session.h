@@ -5,9 +5,7 @@
 
 #include <asio/ip/tcp.hpp>
 #include <deque>
-#include <optional>
 
-class CSessionManager;
 class CSession : public std::enable_shared_from_this<CSession>
 {
   class CWriteData final : public lua_api::ISocketWriter
@@ -27,12 +25,7 @@ class CSession : public std::enable_shared_from_this<CSession>
   class CReadData final : public lua_api::ISocketReader
   {
   public:
-    explicit CReadData(size_t recvBuffSize) {
-      pReadData = new char[recvBuffSize];
-      dataSize = recvBuffSize;
-      writeSize = 0;
-    }
-    ~CReadData() {
+    virtual ~CReadData() {
       if (pReadData != nullptr) {
         delete[] pReadData;
         pReadData = nullptr;
@@ -59,17 +52,18 @@ class CSession : public std::enable_shared_from_this<CSession>
   };
 
 public:
-  explicit CSession(SocketId id, asio::ip::tcp::socket& s, CSessionManager& mgr, size_t recvBuffSize, size_t sendBuffSize);
+  explicit CSession(SocketId id, asio::ip::tcp::socket& s, size_t recevBuffSize, size_t sendBuffSize);
   virtual ~CSession();
 
   void connect(const char* ip, Port port);
   bool isValid();
   void close(bool notice);
+  const char* getRemoteIP();
+  Port getRemotePort();
   void read();
   void write();
   void sendProtobufMsg(const char* msgFullName, const void* pData, size_t size);
   SocketId getSocketId();
-  std::optional<asio::ip::tcp::endpoint> PeerSocketAddress() const;
 
 private:
   void handleError(ec_net::ENetError error);
@@ -85,5 +79,7 @@ private:
   CReadData m_readData;
 
   size_t m_sendBuffSize = 0;
-  CSessionManager& m_sessionMgr;
+
+  std::string m_ip = "111.111.111.111";
+  Port m_port;
 };

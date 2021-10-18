@@ -8,6 +8,7 @@
 #include "LuaBridge/LuaBridge.h"
 #include <string>
 
+#include "Singleton.h"
 #include "LogHelper.h"
 
 class CLuaScriptSystem
@@ -197,3 +198,5 @@ public:
 protected:
   lua_State* m_L;                 // lua state
 };
+
+typedef CSingleton<CLuaScriptSystem> LuaScriptSystem;

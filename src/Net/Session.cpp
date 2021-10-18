@@ -1,5 +1,5 @@
 #include "Session.h"
-#include "SessionManager.h"
+#include "NetManager.h"
 #include "LuaScriptSystem.h"
 
 #include <asio/read.hpp>
@@ -88,17 +88,20 @@ void CSession::CReadData::bindMessage(MessageType msgType, const char* msgFullNa
   messageSize = size;
 }
 
-CSession::CSession(SocketId id, asio::ip::tcp::socket& s, CSessionManager& mgr, size_t recvBuffSize, size_t sendBuffSize)
+CSession::CSession(SocketId id, asio::ip::tcp::socket& s, size_t recevBuffSize, size_t sendBuffSize)
   : m_id(id)
   , m_socket(std::move(s))
-  , m_readData(recvBuffSize)
-  , m_sendBuffSize(sendBuffSize)
-  , m_sessionMgr(mgr) {
+  , m_sendBuffSize(sendBuffSize) {
+
+  m_readData.pReadData = new char[recevBuffSize];
+  m_readData.dataSize = recevBuffSize;
+  m_readData.writeSize = 0;
 }
 
 CSession::~CSession() {
   close(true);
   freeSendBuf();
+  m_socket.release();
 }
 
 void CSession::connect(const char* ip, Port port) {
@@ -123,6 +126,9 @@ void CSession::connect(const char* ip, Port port) {
     // 开始读数据
     self->read();
   });
+
+  m_ip = ip ;
+  m_port = port;
 }
 
 bool CSession::isValid() {
@@ -134,13 +140,21 @@ void CSession::close(bool notice) {
     std::error_code ec;
     m_socket.close(ec);
     if (ec) {
-      printf("cannot close error: {}", ec.message().c_str());
+      // TODO (Marskey): 错误日志
     }
 
     if (notice) {
       handleDisconnect();
     }
   }
+}
+
+const char* CSession::getRemoteIP() {
+  return m_ip.c_str();
+}
+
+Port CSession::getRemotePort() {
+  return m_port;
 }
 
 void CSession::read() {
@@ -151,7 +165,7 @@ void CSession::read() {
   auto asioBuffer = asio::buffer(m_readData.pReadData + m_readData.writeSize
                                  , m_readData.dataSize - m_readData.writeSize);
   try {
-    m_socket.async_read_some(asioBuffer, [self = shared_from_this(), sessionMgr = &m_sessionMgr](asio::error_code ec, std::size_t size) {
+    m_socket.async_read_some(asioBuffer, [self = shared_from_this()](asio::error_code ec, std::size_t size) {
       if (ec) {
         // 释放内存
         self->close(true);
@@ -161,9 +175,9 @@ void CSession::read() {
       self->m_readData.writeSize += size;
 
       while (self->m_readData.writeSize > 0) {
-        auto packetSize = sessionMgr->getLuaSystem().Invoke<size_t>("__APP_on_read_socket_buffer"
-                                                                    , static_cast<lua_api::ISocketReader*>(&self->m_readData)
-                                                                    , self->m_readData.writeSize);
+        auto packetSize = LuaScriptSystem::instance().Invoke<size_t>("__APP_on_read_socket_buffer"
+                                                                     , static_cast<lua_api::ISocketReader*>(&self->m_readData)
+                                                                     , self->m_readData.writeSize);
 
         if (packetSize > self->m_readData.writeSize) {
           self->handleError(ec_net::eNET_PACKET_PARSE_FAILED);
@@ -176,11 +190,11 @@ void CSession::read() {
           break;
         }
 
-        sessionMgr->handleParseMessage(self->m_id
-                                       , self->m_readData.messageType
-                                       , self->m_readData.messageFullName
-                                       , self->m_readData.pMessageData
-                                       , self->m_readData.messageSize);
+        NetManager::instance().handleParseMessage(self->m_id
+                                                  , self->m_readData.messageType
+                                                  , self->m_readData.messageFullName
+                                                  , self->m_readData.pMessageData
+                                                  , self->m_readData.messageSize);
 
         memmove(self->m_readData.pReadData
                 , self->m_readData.pReadData + packetSize
@@ -239,7 +253,7 @@ void CSession::write() {
 
 void CSession::sendProtobufMsg(const char* msgFullName, const void* pData, size_t size) {
   CWriteData* writeData = new CWriteData;
-  m_sessionMgr.getLuaSystem().Invoke("__APP_on_write_socket_buffer"
+  LuaScriptSystem::instance().Invoke("__APP_on_write_socket_buffer"
                                      , static_cast<lua_api::ISocketWriter*>(writeData)
                                      , msgFullName
                                      , (void*)pData, size);
@@ -263,28 +277,16 @@ SocketId CSession::getSocketId() {
   return m_id;
 }
 
-std::optional<asio::ip::tcp::endpoint> CSession::PeerSocketAddress() const {
-  std::error_code ec;
-  auto ep = m_socket.remote_endpoint(ec);
-  if (ec)
-  {
-    printf("PeerSocketAddress error: {}", ec.message().c_str());
-    return std::nullopt;
-  }
-
-  return ep;
-}
-
 void CSession::handleError(ec_net::ENetError error) {
-  m_sessionMgr.handleError(m_id, error);
+  NetManager::instance().handleError(m_id, error);
 }
 
 void CSession::handleConnectSucceed() {
-  m_sessionMgr.handleConnectSucceed(shared_from_this());
+  NetManager::instance().handleConnectSucceed(m_id);
 }
 
 void CSession::handleDisconnect() {
-  m_sessionMgr.handleDisconnect(getSocketId());
+  NetManager::instance().handleDisconnect(getSocketId());
 }
 
 void CSession::freeSendBuf() {

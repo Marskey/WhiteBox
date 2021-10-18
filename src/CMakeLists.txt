@@ -8,7 +8,7 @@ set(whitebox_sources
     "MainWindow.cpp"
     "MsgEditorDialog.cpp"
     "MsgIgnoreDialog.cpp"
-    "Net/SessionManager.cpp"
+    "Net/NetManager.cpp"
     "ProtoManager.cpp"
     "Net/Session.cpp"
     "SettingDialog.cpp"
@@ -43,7 +43,7 @@ set(whitebox_sources
 
     "MsgEditorDialog.h"
     "MsgIgnoreDialog.h"
-    "Net/SessionManager.h"
+    "Net/NetManager.h"
     "ProtoManager.h"
     "Net/Session.h"
     "SettingDialog.h"
@@ -56,7 +56,7 @@ if (WIN32)
     list(APPEND whitebox_sources WhiteBox.rc)
 endif()
 
-add_executable(${APP_NAME} ${whitebox_sources} "Net/NetModule.h" "Net/NetModule.cpp" "Net/ConnectionImpl.h" "Net/ConnectionImpl.cpp"  )
+add_executable(${APP_NAME} ${whitebox_sources})
 target_include_directories(${APP_NAME} PUBLIC ${protobuf_source_dir}/src)
 
 target_link_libraries(${APP_NAME}

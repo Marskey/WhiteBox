@@ -1,6 +1,6 @@
 #include "MainWindow.h"
 #include "ProtoManager.h"
-#include "Net/NetModule.h"
+#include "Net/NetManager.h"
 #include "Client.h"
 #include "ip4validator.h"
 #include "MsgEditorDialog.h"
@@ -135,7 +135,7 @@ CMainWindow::CMainWindow(QWidget* parent)
 CMainWindow::~CMainWindow() {
   delete m_pPrinter;
 
-  NetModule::instance().stop();
+  NetManager::instance().stop();
 
   for (auto& [key, value] : m_mapMessages) {
     delete value;
@@ -161,14 +161,10 @@ bool CMainWindow::init() {
   }
   // 初始化日志服务
   m_pPrinter = new CECPrinter(ui.listLogs);
-  LogHelper::instance().setPrinter(this);
+  LogHelper::instance().setPrinter(m_pPrinter);
 
   // 初始化通信服务
-  if (!NetModule::instance().start()) {
-    LOG_INFO("Initiate network failed");
-    return false;
-  }
-
+  NetManager::instance().init(this);
   LOG_INFO("Initiated network");
 
   // 启动主定时器
@@ -176,8 +172,8 @@ bool CMainWindow::init() {
   connect(pMainTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::update));
   pMainTimer->start(40);
 
-  //m_pLogUpdateTimer = new QTimer(this);
-  //connect(m_pLogUpdateTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::updateLog));
+  m_pLogUpdateTimer = new QTimer(this);
+  connect(m_pLogUpdateTimer, &QTimer::timeout, this, QOverload<>::of(&CMainWindow::updateLog));
 
   // 加载lua
   if (!loadLua()) {
@@ -194,42 +190,6 @@ bool CMainWindow::init() {
 
   LOG_INFO("Ready.             - Version {} By {}", QApplication::applicationVersion().toStdString(), QApplication::organizationName().toStdString());
   return true;
-}
-
-void CMainWindow::onClientConnected(lua_api::IClient& client) {
-  connectStateChange(EConnectState::kConnected);
-  ui.cbClientName->addItem(fmt::format("{}", client.getName()).c_str()
-                           , client.getName());
-}
-
-void CMainWindow::onClientDisconnect(lua_api::IClient& client) {
-  int cbIdx = ui.cbClientName->findData(client.getName());
-  if (-1 != cbIdx) {
-    ui.cbClientName->removeItem(cbIdx);
-    m_mapClients.erase(client.getName());
-    m_listClientsToDel.insert(static_cast<CClient*>(&client));
-  }
-
-  if (ui.cbClientName->count() == 0) {
-    connectStateChange(EConnectState::kDisconnect);
-  }
-}
-
-void CMainWindow::recvMessage(MessageType msgType, const std::string& msgFullName, const google::protobuf::Message& recvMessage) {
-  // 如果添加忽略则不打印到log
-  if (!ignoreMsgType(msgFullName)) {
-    std::string msgStr;
-    google::protobuf::util::MessageToJsonString(recvMessage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
-    addDetailLogInfo(msgFullName.c_str()
-                     , fmt::format("Received <font color='{0}'>{2}</font> (<font color='{1}'>{3}</font>) size: <font color='{1}'>{4}</font>"
-                                   , "#739d39"
-                                   , "#3498DB"
-                                   , msgFullName
-                                   , msgType
-                                   , recvMessage.ByteSizeLong())
-                     , msgStr.c_str()
-    );
-  }
 }
 
 void CMainWindow::connectStateChange(EConnectState state) {
@@ -300,6 +260,15 @@ google::protobuf::Message* CMainWindow::getOrCreateMessageByName(const char* nam
   return itr->second;
 }
 
+CClient* CMainWindow::getClientBySocketId(SocketId id) {
+  for (auto& [key, client] : m_mapClients) {
+    if (id == client->getSocketID()) {
+      return client;
+    }
+  }
+  return nullptr;
+}
+
 int CMainWindow::addTimer(int interval) {
   return startTimer(interval);
 }
@@ -318,7 +287,7 @@ lua_api::IClient* CMainWindow::createClient(const char* name) {
 
   auto* pClient = static_cast<CClient*>(getClient(name));
   if (pClient == nullptr) {
-    pClient = new CClient(*this);
+    pClient = new CClient();
     pClient->setName(name);
     m_mapClients[name] = pClient;
   } else if (pClient->isConnected()) {
@@ -342,8 +311,12 @@ lua_api::IClient* CMainWindow::getClient(const char* name) {
   return nullptr;
 }
 
-CLuaScriptSystem& CMainWindow::getLuaScriptSystem() {
-  return m_luaScriptSystem;
+void CMainWindow::log(const char* message) {
+  m_pPrinter->log(message);
+}
+
+void CMainWindow::logErr(const char* message) {
+  m_pPrinter->log(message, Qt::red);
 }
 
 void CMainWindow::saveCache() {
@@ -486,6 +459,8 @@ void CMainWindow::clearCache() {
 }
 
 void CMainWindow::update() {
+  NetManager::instance().run();
+
   for (auto* client : m_listClientsToDel) {
     m_mapClients.erase(client->getName());
     delete client;
@@ -511,6 +486,118 @@ void CMainWindow::openSettingDlg() {
     doReload();
   }
   delete pDlg;
+}
+
+void CMainWindow::onParseMessage(SocketId socketId, MessageType msgType, const char* msgFullName, const char* pData, size_t size) {
+  if (msgFullName == nullptr) {
+    LOG_ERR("Message name is nullptr, check lua script's function \"bindMessage\"", msgFullName);
+    return;
+  }
+
+  if (nullptr == pData) {
+    LOG_ERR("Message data is nullptr, check lua script's function \"bindMessage\"", msgFullName);
+    return;
+  }
+
+  google::protobuf::Message* pRecvMesage = ProtoManager::instance().createMessage(msgFullName);
+  if (nullptr == pRecvMesage) {
+    LOG_INFO("Cannot find code of message({0}:{1})", msgFullName, msgType);
+    return;
+  }
+
+  if (pRecvMesage->ParseFromArray(pData, size)) {
+    // 如果添加忽略则不打印到log
+    if (!ignoreMsgType(msgFullName)) {
+      std::string msgStr;
+      google::protobuf::util::MessageToJsonString(*pRecvMesage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
+      addDetailLogInfo(msgFullName
+                       , fmt::format("Received <font color='{0}'>{2}</font> (<font color='{1}'>{3}</font>) size: <font color='{1}'>{4}</font>"
+                                     , "#739d39"
+                                     , "#3498DB"
+                                     , msgFullName
+                                     , msgType
+                                     , pRecvMesage->ByteSizeLong())
+                       , msgStr.c_str()
+      );
+    }
+
+    CClient* pClient = getClientBySocketId(socketId);
+    if (nullptr == pClient) {
+      LOG_WARN("Cannot find client whose socket id is {}.", socketId);
+      return;
+    }
+    LuaScriptSystem::instance().Invoke("__APP_on_message_recv"
+                                       , static_cast<lua_api::IClient*>(pClient)
+                                       , msgFullName
+                                       , (void*)(&pRecvMesage));
+  } else {
+    LOG_ERR("Protobuf message {}({}) parse failed!", msgFullName, msgType);
+  }
+
+  delete pRecvMesage;
+  qApp->processEvents();
+}
+
+void CMainWindow::onConnectSucceed(const char* remoteIp, Port port, SocketId socketId) {
+  LOG_INFO("Connect succeed socket id: {0}, ip: {1}:{2} ", socketId, remoteIp, port);
+  connectStateChange(EConnectState::kConnected);
+
+  CClient* pClient = getClientBySocketId(socketId);
+  if (nullptr != pClient) {
+    ui.cbClientName->addItem(fmt::format("[socket:{}] {}", socketId, pClient->getName()).c_str()
+                             , pClient->getName());
+    pClient->onConnectSucceed(remoteIp, port, socketId);
+  }
+}
+
+void CMainWindow::onDisconnect(SocketId socketId) {
+  LOG_ERR("Connection closed, socket id: {}", socketId);
+  for (auto& [key, client] : m_mapClients) {
+    if (client->getSocketID() == socketId) {
+      client->onDisconnect(socketId);
+      m_listClientsToDel.insert(client);
+      int cbIdx = ui.cbClientName->findData(client->getName());
+      if (-1 != cbIdx) {
+        ui.cbClientName->removeItem(cbIdx);
+      }
+      break;
+    }
+  }
+
+  if (ui.cbClientName->count() == 0) {
+    connectStateChange(EConnectState::kDisconnect);
+  }
+}
+
+void CMainWindow::onError(SocketId socketId, ec_net::ENetError error) {
+  switch (error) {
+  case ec_net::eNET_CONNECT_FAIL:
+    {
+      std::string remoteIp = NetManager::instance().getRemoteIP(socketId);
+      Port port = NetManager::instance().getRemotePort(socketId);
+
+      LOG_ERR("Connect {0}:{1} failed", remoteIp, port);
+    }
+    break;
+  case ec_net::eNET_SEND_OVERFLOW:
+    LOG_ERR("Send buffer overflow! check \"BuffSize send\" size you've passed in \"conncet\" function on Lua script");
+    break;
+  case ec_net::eNET_PACKET_PARSE_FAILED:
+    LOG_ERR("Packet parse failed! Packet size you returned from Lua is bigger then receive. check \"__APP_on_read_socket_buffer\" on Lua script");
+    break;
+  default:;
+  }
+
+  for (auto& [key, client] : m_mapClients) {
+    if (client->getSocketID() == socketId) {
+      client->onError(socketId, error);
+      break;
+    }
+  }
+
+  if (ui.cbClientName->count() == 0) {
+    connectStateChange(EConnectState::kDisconnect);
+  }
 }
 
 void CMainWindow::handleListMessageItemDoubleClicked(QListWidgetItem* pItem) {
@@ -740,7 +827,7 @@ void CMainWindow::handleSendBtnClicked() {
 
     if (0 == idx) {
       auto* pItem = new QListWidgetItem(selectMsgName.append(" [")
-                                        .append(pClient->getName())
+                                        .append(std::to_string(pClient->getSocketID()).c_str())
                                         .append("]"));
       //pItem->setToolTip(msgStr.c_str());
       pItem->setData(Qt::UserRole + kMessageData, msgStr.c_str());
@@ -790,7 +877,7 @@ void CMainWindow::handleConnectBtnClicked() {
   std::string ip = ipAndPort[0].toStdString();
   Port port = ipAndPort[1].toUShort();
 
-  m_luaScriptSystem.Invoke("__APP_on_connect_btn_click"
+  LuaScriptSystem::instance().Invoke("__APP_on_connect_btn_click"
                                      , ip
                                      , port
                                      , ui.cbAccount->currentText().toStdString().c_str()
@@ -1038,31 +1125,6 @@ void CMainWindow::handleLogInfoAdded(const QModelIndex& parent, int start, int e
   }
 }
 
-bool CMainWindow::event(QEvent* event) {
-  switch (static_cast<AppEventType>(event->type())) {
-  case AppEventType::eAPP_EVENT_TYPE_LOG:
-    {
-      auto* e = static_cast<QLogEvent*>(event);
-      switch (e->m_type) {
-      case ELogType::eLOG_TYPE_INFO:
-        m_pPrinter->onPrintInfo(e->m_message);
-        return true;
-      case ELogType::eLOG_TYPE_WARN:
-        m_pPrinter->onPrintWarning(e->m_message);
-        return true;
-      case ELogType::eLOG_TYPE_ERR:
-        m_pPrinter->onPrintError(e->m_message);
-        return true;
-      default: ;
-      }
-    }
-    break;
-    default: break;
-  }
-  QMainWindow::event(event);
-  return true;
-}
-
 void CMainWindow::doReload() {
   m_pMaskWidget->setGeometry(0, 0, width(), height());
   m_pMaskWidget->show();
@@ -1072,10 +1134,8 @@ void CMainWindow::doReload() {
     client->disconnect();
   }
 
-  NetModule::instance().stop();
-
   // 关闭lua
-  m_luaScriptSystem.Shutdown();
+  LuaScriptSystem::instance().Shutdown();
 
   clearProto();
   clearCache();
@@ -1094,13 +1154,6 @@ void CMainWindow::doReload() {
     m_pMaskWidget->hide();
     return;
   }
-
-  LOG_INFO("Restart network...");
-  if (!NetModule::instance().start()) {
-    LOG_ERR("Restart network failed");
-    return;
-  }
-
   // 加载缓存 
   LOG_INFO("Reloading cache...");
   qApp->processEvents();
@@ -1127,7 +1180,7 @@ void CMainWindow::closeEvent(QCloseEvent* event) {
 }
 
 void CMainWindow::timerEvent(QTimerEvent* event) {
-  m_luaScriptSystem.Invoke("__APP_on_timer", event->timerId());
+  LuaScriptSystem::instance().Invoke("__APP_on_timer", event->timerId());
 }
 
 void CMainWindow::keyPressEvent(QKeyEvent* event) {
@@ -1187,7 +1240,7 @@ bool CMainWindow::loadProto() {
     return false;
   }
 
-  m_luaScriptSystem.Invoke("__APP_on_proto_reload"
+  LuaScriptSystem::instance().Invoke("__APP_on_proto_reload"
                                      , static_cast<lua_api::IProtoManager*>(&ProtoManager::instance()));
 
   // 填充消息列表
@@ -1205,15 +1258,15 @@ bool CMainWindow::loadProto() {
 }
 
 bool CMainWindow::loadLua() {
-  m_luaScriptSystem.Setup();
-  luaopen_protobuf(m_luaScriptSystem.GetLuaState());
-  luaopen_json(m_luaScriptSystem.GetLuaState());
+  LuaScriptSystem::instance().Setup();
+  luaopen_protobuf(LuaScriptSystem::instance().GetLuaState());
+  luaopen_json(LuaScriptSystem::instance().GetLuaState());
   luaRegisterCppClass();
   LOG_INFO("Initiated lua script system");
 
   QString luaScriptPath = ConfigHelper::instance().getWidgetComboBoxStateText("LuaScriptPath", 0);
   LOG_INFO("Loading lua script: \"{}\"", luaScriptPath.toStdString());
-  if (!m_luaScriptSystem.RunScript(luaScriptPath.toStdString().c_str())) {
+  if (!LuaScriptSystem::instance().RunScript(luaScriptPath.toStdString().c_str())) {
     LOG_ERR("Error: Load lua script: \"{}\" failed!", luaScriptPath.toStdString());
     return false;
   }
@@ -1229,11 +1282,34 @@ void CMainWindow::clearProto() {
 }
 
 void CMainWindow::luaRegisterCppClass() {
-  auto* pLuaState = m_luaScriptSystem.GetLuaState();
+  auto* pLuaState = LuaScriptSystem::instance().GetLuaState();
   if (nullptr == pLuaState) {
     return;
   }
   using namespace  lua_api;
+  luabridge::getGlobalNamespace(pLuaState)
+    .beginClass<ISocketReader>("ISocketReader")
+    .addFunction("readUint8", &ISocketReader::readUint8)
+    .addFunction("readInt8", &ISocketReader::readInt8)
+    .addFunction("readUint16", &ISocketReader::readUint16)
+    .addFunction("readInt16", &ISocketReader::readInt16)
+    .addFunction("readUint32", &ISocketReader::readUint32)
+    .addFunction("readInt32", &ISocketReader::readInt32)
+    .addFunction("getDataPtr", &ISocketReader::getDataPtr)
+    .addFunction("bindMessage", &ISocketReader::bindMessage)
+    .endClass();
+
+  luabridge::getGlobalNamespace(pLuaState)
+    .beginClass<ISocketWriter>("ISocketWriter")
+    .addFunction("writeUint8", &ISocketWriter::writeUint8)
+    .addFunction("writeUint8", &ISocketWriter::writeInt8)
+    .addFunction("writeUint16", &ISocketWriter::writeUint16)
+    .addFunction("writeInt16", &ISocketWriter::writeInt16)
+    .addFunction("writeUint32", &ISocketWriter::writeUint32)
+    .addFunction("writeInt32", &ISocketWriter::writeInt32)
+    .addFunction("writeBinary", &ISocketWriter::writeBinary)
+    .endClass();
+
   luabridge::getGlobalNamespace(pLuaState)
     .beginClass<IProtoManager>("IProtoManager")
     .addFunction("addProtoMessage", &IProtoManager::addProtoMessage)
@@ -1255,18 +1331,11 @@ void CMainWindow::luaRegisterCppClass() {
     .addFunction("deleteTimer", &IMainApp::deleteTimer)
     .addFunction("createClient", &IMainApp::createClient)
     .addFunction("getClient", &IMainApp::getClient)
+    .addFunction("log", &IMainApp::log)
+    .addFunction("logErr", &IMainApp::logErr)
     .endClass();
 
   luabridge::setGlobal(pLuaState, static_cast<IMainApp*>(this), "App");
-
-  luabridge::getGlobalNamespace(pLuaState)
-    .beginClass<CLogHelper>("Logger")
-    .addFunction("log", &CLogHelper::logScriptInfo)
-    .addFunction("logErr", &CLogHelper::logScriptErr)
-    .endClass();
-
-  luabridge::setGlobal(pLuaState, &(LogHelper::instance()), "Logger");
-
 }
 
 void CMainWindow::addDetailLogInfo(const char* msgFullName, const std::string& msg, const char* detail) {
