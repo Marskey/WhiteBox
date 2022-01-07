@@ -23,6 +23,7 @@ CMsgEditorDialog::CMsgEditorDialog(QWidget* parent)
   connect(tabWidget, SIGNAL(currentChanged(int)), this, SLOT(handleTabBarChanged(int)));
   connect(textEdit, SIGNAL(textChanged()), this, SLOT(handleTextEditTextChange()));
   connect(okButton, SIGNAL(clicked()), this, SLOT(handleApplyButtonClicked()));
+  connect(btnParseBinary, SIGNAL(clicked()), this, SLOT(handleBinaryParseBtnClicked()));
 
   m_highlighter = new CJsonHighlighter(textEdit->document());
   treeView->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -202,7 +203,29 @@ void CMsgEditorDialog::handleJsonParseBtnClicked() {
       updateGUIData();
     }
   } else {
-    QMessageBox::warning(nullptr, "Parse error", status.error_message().data());
+    QMessageBox::warning(nullptr, "Parse error", status.message().data());
+  }
+}
+
+void CMsgEditorDialog::handleBinaryBrowseBtnClicked() {
+}
+
+void CMsgEditorDialog::handleBinaryParseBtnClicked() {
+  auto text = textEditBinary->toPlainText();
+  text.remove(0, 8);
+  QByteArray data = QByteArray::fromHex(text.toStdString().c_str());
+
+  if (m_pMessage->ParseFromArray(data.data(), data.size())) {
+    btnParseBinary->setText("Parsed");
+    btnParseBinary->setDisabled(true);
+    okButton->setDisabled(false);
+    okButton->setDefault(true);
+    // 刷新
+    if (!m_isAnyType) {
+      updateGUIData();
+    }
+  } else {
+    QMessageBox::warning(nullptr, "Parse error", "");
   }
 }
 
@@ -220,7 +243,7 @@ void CMsgEditorDialog::handleTabBarChanged(int index) {
       btnParse->setText("Parsed");
       btnParse->setDisabled(true);
     } else {
-      QMessageBox::warning(nullptr, "Serialize error", status.error_message().data());
+      QMessageBox::warning(nullptr, "Serialize error", status.message().data());
     }
   }
   okButton->setDisabled(false);

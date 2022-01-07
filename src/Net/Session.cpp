@@ -1,6 +1,6 @@
 #include "Session.h"
 #include "NetManager.h"
-#include "LuaScriptSystem.h"
+#include "src/LuaScriptSystem.h"
 
 #include <asio/read.hpp>
 #include <asio/write.hpp>
@@ -88,9 +88,10 @@ void CSession::CReadData::bindMessage(MessageType msgType, const char* msgFullNa
   messageSize = size;
 }
 
-CSession::CSession(SocketId id, asio::ip::tcp::socket& s, size_t recevBuffSize, size_t sendBuffSize)
+CSession::CSession(SocketId id, asio::ip::tcp::socket& s, asio::ip::tcp::resolver& r, size_t recevBuffSize, size_t sendBuffSize)
   : m_id(id)
   , m_socket(std::move(s))
+  , m_resolver(std::move(r))
   , m_sendBuffSize(sendBuffSize) {
 
   m_readData.pReadData = new char[recevBuffSize];
@@ -106,7 +107,20 @@ CSession::~CSession() {
 
 void CSession::connect(const char* ip, Port port) {
   // 创建一个目标服务器的连接点
-  asio::ip::tcp::endpoint ep(asio::ip::address_v4::from_string(ip), port);
+  asio::error_code ec;
+  auto ipAddress = asio::ip::address_v4::from_string(ip, ec);
+  asio::ip::tcp::endpoint ep;
+  if (!ec) {
+    ep = { ipAddress, port };
+  } else {
+    asio::ip::tcp::resolver::query query(ip, std::to_string(port));
+    asio::ip::tcp::resolver::iterator it =
+      m_resolver.resolve(query, ec);
+
+    if (!ec) {
+      ep = it->endpoint();
+    }
+  }
 
   if (isValid()) {
     return;
@@ -180,11 +194,8 @@ void CSession::read() {
                                                                      , self->m_readData.writeSize);
 
         if (packetSize > self->m_readData.writeSize) {
-          self->handleError(ec_net::eNET_PACKET_PARSE_FAILED);
-          self->close(true);
           break;
         }
-
 
         if (0 == packetSize) {
           break;
@@ -203,7 +214,7 @@ void CSession::read() {
         self->m_readData.writeSize -= packetSize;
       }
 
-      self->read();
+      self->write();
     }
     );
   }
@@ -217,6 +228,7 @@ void CSession::read() {
 
 void CSession::write() {
   if (m_sendQueue.empty()) {
+    read();
     return;
   }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "define.h"
+#include "src/define.h"
 
 namespace ec_net
 {

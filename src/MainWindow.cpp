@@ -32,6 +32,10 @@ CMainWindow::CMainWindow(QWidget* parent)
   : QMainWindow(parent) {
   ui.setupUi(this);
 
+  QVector<int> l;
+  l.push_back(1);
+  l.push_back(2);
+
   // 用户名
   {
     auto* pLineEdit = new CLineEdit(ui.cbAccount);
@@ -505,9 +509,9 @@ void CMainWindow::onParseMessage(SocketId socketId, MessageType msgType, const c
     return;
   }
 
-  if (pRecvMesage->ParseFromArray(pData, size)) {
-    // 如果添加忽略则不打印到log
-    if (!ignoreMsgType(msgFullName)) {
+  if (!ignoreMsgType(msgFullName)) {
+    if (pRecvMesage->ParseFromArray(pData, size)) {
+      // 如果添加忽略则不打印到log
       std::string msgStr;
       google::protobuf::util::MessageToJsonString(*pRecvMesage, &msgStr, ConfigHelper::instance().getJsonPrintOption());
       addDetailLogInfo(msgFullName
@@ -519,19 +523,19 @@ void CMainWindow::onParseMessage(SocketId socketId, MessageType msgType, const c
                                      , pRecvMesage->ByteSizeLong())
                        , msgStr.c_str()
       );
-    }
 
-    CClient* pClient = getClientBySocketId(socketId);
-    if (nullptr == pClient) {
-      LOG_WARN("Cannot find client whose socket id is {}.", socketId);
-      return;
+      CClient* pClient = getClientBySocketId(socketId);
+      if (nullptr == pClient) {
+        LOG_WARN("Cannot find client whose socket id is {}.", socketId);
+        return;
+      }
+      LuaScriptSystem::instance().Invoke("__APP_on_message_recv"
+                                         , static_cast<lua_api::IClient*>(pClient)
+                                         , msgFullName
+                                         , (void*)(&pRecvMesage));
+    } else {
+      LOG_ERR("Protobuf message {}({}) parse failed!", msgFullName, msgType);
     }
-    LuaScriptSystem::instance().Invoke("__APP_on_message_recv"
-                                       , static_cast<lua_api::IClient*>(pClient)
-                                       , msgFullName
-                                       , (void*)(&pRecvMesage));
-  } else {
-    LOG_ERR("Protobuf message {}({}) parse failed!", msgFullName, msgType);
   }
 
   delete pRecvMesage;

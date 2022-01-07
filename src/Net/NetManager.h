@@ -5,7 +5,7 @@
 #include <asio/io_context.hpp>
 #include <unordered_map>
 
-#include "Singleton.h"
+#include "src/Singleton.h"
 
 class CSession;
 typedef std::shared_ptr<CSession> SessionPtr;
@@ -35,6 +35,7 @@ public:
   void handleParseMessage(SocketId socketId, MessageType msgType, const char* fullName, const char* pData, size_t size);
 private:
   SocketId genSocketId();
+  bool checkIfIsIp(const char* ip);
 
 private:
   ec_net::INetEvent* m_pNetEvent = nullptr;

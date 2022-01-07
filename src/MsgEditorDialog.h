@@ -53,6 +53,8 @@ private slots:
   void treeViewDataChanged();
   void handleJsonBrowseBtnClicked();
   void handleJsonParseBtnClicked();
+  void handleBinaryBrowseBtnClicked();
+  void handleBinaryParseBtnClicked();
   void handleTabBarChanged(int index);
   void handleTextEditTextChange();
   void handleCustomContextMenuRequested(const QPoint& pos);

@@ -47,7 +47,6 @@ int main(int argc, char* argv[]) {
   p.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(127, 127, 127));
   qApp->setPalette(p);
   QToolTip::setPalette(p);
-  std::true_type
 #endif
 
   CMainWindow w;

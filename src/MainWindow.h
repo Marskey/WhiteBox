@@ -131,7 +131,7 @@ private:
   void logErr(const char* message) override;
   // lua_api::IMainApp end
 private:
-  Ui::MainWindowClass ui;
+  Ui::MainWindowClass ui{};
   MapMessages m_mapMessages;
   std::list<::google::protobuf::Message*> m_listRecentMessages;
 

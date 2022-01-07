@@ -216,7 +216,7 @@ const char* protobuf_message_jsondecode(void* m, const char* json) {
   auto status = google::protobuf::util::JsonStringToMessage(json, (google::protobuf::Message*)m, option);
   if (status.ok()) return nullptr;
 
-  temp = status.error_message().ToString();
+  temp = status.message().ToString();
   return temp.c_str();
 }
 

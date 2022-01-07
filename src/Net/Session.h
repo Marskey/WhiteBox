@@ -1,7 +1,7 @@
 #pragma once
 
 #include "INetEvent.h"
-#include "LuaInterface.h"
+#include "src/LuaInterface.h"
 
 #include <asio/ip/tcp.hpp>
 #include <deque>
@@ -52,7 +52,7 @@ class CSession : public std::enable_shared_from_this<CSession>
   };
 
 public:
-  explicit CSession(SocketId id, asio::ip::tcp::socket& s, size_t recevBuffSize, size_t sendBuffSize);
+  explicit CSession(SocketId id, asio::ip::tcp::socket& s, asio::ip::tcp::resolver& r, size_t recevBuffSize, size_t sendBuffSize);
   virtual ~CSession();
 
   void connect(const char* ip, Port port);
@@ -75,6 +75,7 @@ private:
 private:
   SocketId m_id = 0;
   asio::ip::tcp::socket m_socket;
+  asio::ip::tcp::resolver m_resolver;
   std::deque<CWriteData*> m_sendQueue;
   CReadData m_readData;
 

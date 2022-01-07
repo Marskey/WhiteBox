@@ -37,8 +37,9 @@ void CNetManager::stop() {
 
 SocketId CNetManager::connect(const char* ip, Port port, BuffSize recv, BuffSize send) {
   asio::ip::tcp::socket socket(m_ioContext);
+  asio::ip::tcp::resolver resolver(m_ioContext);
 
-  SessionPtr session = std::make_shared<CSession>(genSocketId(), socket, recv, send);
+  SessionPtr session = std::make_shared<CSession>(genSocketId(), socket, resolver, recv, send);
   session->connect(ip, port);
   m_mapSessions[session->getSocketId()] = session;
 
@@ -124,5 +125,14 @@ void CNetManager::handleParseMessage(SocketId socketId, MessageType msgType, con
 
 SocketId CNetManager::genSocketId() {
   return ++m_incrediId;
+}
+
+bool CNetManager::checkIfIsIp(const char* ip) {
+  asio::error_code ec;
+  asio::ip::address_v4::from_string(ip, ec);
+  if (ec) {
+    return false;
+  }
+  return true;
 }
 
